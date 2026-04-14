@@ -1,7 +1,48 @@
 'use client';
+import { useState, useEffect } from 'react';
 import { T, getGrade } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS, PASS_THRESHOLD } from '@/data/courseData';
 import { Ring } from '@/components/ui';
+
+/* ── Deterministic gradient from name ── */
+const AVATAR_GRADIENTS = [
+  ['#818cf8','#6366f1'],['#60a5fa','#3b82f6'],['#c084fc','#a855f7'],
+  ['#34d399','#10b981'],['#f87171','#ef4444'],['#fbbf24','#f59e0b'],
+  ['#22d3ee','#06b6d4'],['#fb923c','#f97316'],
+];
+function gradientForName(name='') {
+  let h = 0;
+  for (let i=0;i<name.length;i++) h = (h*31+name.charCodeAt(i))&0xffffffff;
+  return AVATAR_GRADIENTS[Math.abs(h)%AVATAR_GRADIENTS.length];
+}
+function initials(name='') {
+  const p = name.trim().split(/\s+/);
+  return p.length===1 ? p[0].slice(0,2).toUpperCase() : (p[0][0]+p[p.length-1][0]).toUpperCase();
+}
+
+function SidebarAvatar({ name, avatarUrl, size=32, fontSize=12, color }) {
+  const [imgOk,setImgOk] = useState(true);
+  useEffect(()=>setImgOk(true),[avatarUrl]);
+  const colors = gradientForName(name);
+  if (avatarUrl && imgOk) {
+    return (
+      <img src={avatarUrl} alt={name} onError={()=>setImgOk(false)}
+        style={{ width:size, height:size, borderRadius:'50%', objectFit:'cover', flexShrink:0,
+          border:`1.5px solid ${color||colors[0]}30` }} />
+    );
+  }
+  return (
+    <div style={{
+      width:size, height:size, borderRadius:'50%', flexShrink:0,
+      background:`linear-gradient(135deg,${colors[0]},${colors[1]})`,
+      display:'flex', alignItems:'center', justifyContent:'center',
+      fontFamily:T.display, fontWeight:800, fontSize, color:'#fff',
+      border:`1.5px solid ${colors[0]}40`,
+    }}>
+      {initials(name)}
+    </div>
+  );
+}
 
 /* Mirrors the logic in CourseApp — determines if a lesson can be accessed */
 function isUnlocked(mi, li, completed, quizScores) {
@@ -21,7 +62,7 @@ function isUnlocked(mi, li, completed, quizScores) {
 
 export default function Sidebar({
   user, activeM, activeL, progress, quizScores,
-  onNavigate, onCert, onLogout, isMobile, isOpen,
+  onNavigate, onCert, onProfile, onLogout, isMobile, isOpen,
 }) {
   const { completed } = progress;
   const completedCount = Object.keys(completed).length;
@@ -41,16 +82,18 @@ export default function Sidebar({
     }}>
       {/* Header */}
       <div style={{ padding: '16px 16px 12px', borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
-        {/* User info */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-          <div style={{
-            width: 34, height: 34, borderRadius: '50%', background: `${mod.color}15`,
-            border: `1.5px solid ${mod.color}30`, display: 'flex', alignItems: 'center',
-            justifyContent: 'center', fontFamily: T.font, fontWeight: 700, fontSize: 14,
-            color: mod.color, flexShrink: 0,
-          }}>
-            {user.name.charAt(0).toUpperCase()}
-          </div>
+        {/* User info — clickable → profile page */}
+        <button onClick={onProfile} style={{
+          width: '100%', background: 'none', border: 'none', padding: 0,
+          display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14,
+          cursor: 'pointer', borderRadius: 8, transition: 'background 0.15s',
+          textAlign: 'left',
+        }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
+          title="View Profile"
+        >
+          <SidebarAvatar name={user.name} avatarUrl={user.avatarUrl || ''} size={34} fontSize={12} color={mod.color} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
               fontFamily: T.font, fontWeight: 700, fontSize: 13, color: T.text,
@@ -62,7 +105,7 @@ export default function Sidebar({
             }}>{user.email}</div>
           </div>
           <Ring pct={prog} color={mod.color} size={36} stroke={3} />
-        </div>
+        </button>
 
         {/* Progress bar */}
         <div style={{ background: T.bg2, borderRadius: 100, height: 3 }}>
@@ -109,7 +152,7 @@ export default function Sidebar({
       </nav>
 
       {/* Footer */}
-      <div style={{ padding: '10px 14px', borderTop: `1px solid ${T.border}`, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ padding: '10px 14px', borderTop: `1px solid ${T.border}`, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 7 }}>
         {allDone && (
           <button onClick={onCert} style={{
             width: '100%', background: T.accent, border: 'none', color: '#fff',
@@ -121,16 +164,29 @@ export default function Sidebar({
             🎓 Claim Certificate
           </button>
         )}
-        <button onClick={onLogout} style={{
-          width: '100%', background: 'none', border: `1px solid ${T.border}`,
-          color: T.dim, borderRadius: 7, padding: '7px', cursor: 'pointer',
-          fontFamily: T.font, fontSize: 11, transition: 'all 0.15s',
-        }}
-          onMouseEnter={e => { e.currentTarget.style.color = T.error; e.currentTarget.style.borderColor = 'rgba(220,38,38,0.3)'; }}
-          onMouseLeave={e => { e.currentTarget.style.color = T.dim; e.currentTarget.style.borderColor = T.border; }}
-        >
-          Log Out
-        </button>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button onClick={onProfile} style={{
+            flex: 1, background: 'none', border: `1px solid ${T.border}`,
+            color: T.dim, borderRadius: 7, padding: '7px 0', cursor: 'pointer',
+            fontFamily: T.font, fontSize: 11, transition: 'all 0.15s',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+          }}
+            onMouseEnter={e => { e.currentTarget.style.color = T.accent; e.currentTarget.style.borderColor = T.accentBorder; }}
+            onMouseLeave={e => { e.currentTarget.style.color = T.dim; e.currentTarget.style.borderColor = T.border; }}
+          >
+            👤 Profile
+          </button>
+          <button onClick={onLogout} style={{
+            flex: 1, background: 'none', border: `1px solid ${T.border}`,
+            color: T.dim, borderRadius: 7, padding: '7px 0', cursor: 'pointer',
+            fontFamily: T.font, fontSize: 11, transition: 'all 0.15s',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.color = T.error; e.currentTarget.style.borderColor = 'rgba(248,113,113,0.3)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = T.dim; e.currentTarget.style.borderColor = T.border; }}
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
     </aside>
   );

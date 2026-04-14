@@ -9,6 +9,7 @@ import Landing         from '@/components/course/Landing';
 import Sidebar         from '@/components/course/Sidebar';
 import QuizView        from '@/components/quiz/QuizView';
 import CertificatePage from '@/components/cert/CertificatePage';
+import ProfilePage     from '@/components/profile/ProfilePage';
 import { LessonBody, ModPill, AccentBtn } from '@/components/ui';
 
 /* ── Unlock logic — a lesson is open only after the previous is complete + passed ── */
@@ -28,7 +29,7 @@ function isLessonUnlocked(mi, li, completed, quizScores) {
 }
 
 export default function CourseApp() {
-  const { user, progress, ready, login, register, logout, updateProgress } = useAuth();
+  const { user, progress, ready, login, register, logout, updateProgress, updateProfile, updatePassword } = useAuth();
 
   const [page,        setPage]        = useState('landing');
   const [activeM,     setActiveM]     = useState(0);
@@ -169,6 +170,17 @@ export default function CourseApp() {
     />
   );
 
+  if (page === 'profile') return (
+    <ProfilePage
+      user={user}
+      progress={progress}
+      updateProfile={updateProfile}
+      updatePassword={updatePassword}
+      onBack={() => setPage('course')}
+      onLogout={() => { logout(); setPage('landing'); }}
+    />
+  );
+
   /* ── COURSE VIEW ────────────────────────────────────────────────────── */
   return (
     <div style={{ display: 'flex', height: '100dvh', background: T.bg, overflow: 'hidden', position: 'relative' }}>
@@ -201,6 +213,7 @@ export default function CourseApp() {
             if (isLessonUnlocked(mi, li, completed, quizScores)) navigate(mi, li);
           }}
           onCert={() => setPage('cert')}
+          onProfile={() => setPage('profile')}
           onLogout={() => { logout(); setPage('landing'); }}
           isMobile={isMobile}
           completed={completed}

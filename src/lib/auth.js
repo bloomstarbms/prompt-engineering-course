@@ -1,10 +1,10 @@
 // ─── auth.js — all user management via localStorage ───────────────────────
 // No backend required. Data persists in the browser per device.
 // Structure:
-//   pe_users          → { [email]: { name, email, passwordHash, createdAt } }
+//   pe_users          → { [email]: { name, email, passwordHash, bio, avatarUrl, createdAt } }
 //   pe_progress_{email} → { completed, quizScores, lastLesson }
 //   pe_certs          → { [certId]: { name, email, pct, grade, date, modules } }
-//   pe_session        → { email, name }
+//   pe_session        → { email, name, bio, avatarUrl }
 
 const USERS_KEY     = 'pe_users';
 const SESSION_KEY   = 'pe_session';
@@ -56,10 +56,13 @@ export function register(name, email, password) {
     name: name.trim(),
     email: key,
     passwordHash: hashPassword(password),
+    bio: '',
+    avatarUrl: '',
     createdAt: new Date().toISOString(),
   };
   set(USERS_KEY, users);
-  set(SESSION_KEY, { email: key, name: name.trim() });
+  const sessionUser = { email: key, name: name.trim(), bio: '', avatarUrl: '' };
+  set(SESSION_KEY, sessionUser);
   return { ok: true, user: users[key] };
 }
 
@@ -69,8 +72,48 @@ export function login(email, password) {
   const user = users[key];
   if (!user) return { ok: false, error: 'No account found with this email.' };
   if (user.passwordHash !== hashPassword(password)) return { ok: false, error: 'Incorrect password.' };
-  set(SESSION_KEY, { email: key, name: user.name });
+  const sessionUser = { email: key, name: user.name, bio: user.bio || '', avatarUrl: user.avatarUrl || '' };
+  set(SESSION_KEY, sessionUser);
   return { ok: true, user };
+}
+
+export function getUser(email) {
+  const users = get(USERS_KEY) || {};
+  return users[email.toLowerCase().trim()] || null;
+}
+
+export function updateProfile(email, { name, bio, avatarUrl }) {
+  const users = get(USERS_KEY) || {};
+  const key = email.toLowerCase().trim();
+  if (!users[key]) return { ok: false, error: 'User not found.' };
+  if (name !== undefined && !name.trim()) return { ok: false, error: 'Name cannot be empty.' };
+
+  if (name !== undefined) users[key].name = name.trim();
+  if (bio !== undefined) users[key].bio = bio;
+  if (avatarUrl !== undefined) users[key].avatarUrl = avatarUrl;
+  set(USERS_KEY, users);
+
+  // Keep session in sync
+  const session = get(SESSION_KEY);
+  if (session && session.email === key) {
+    session.name = users[key].name;
+    session.bio = users[key].bio;
+    session.avatarUrl = users[key].avatarUrl;
+    set(SESSION_KEY, session);
+  }
+  return { ok: true, user: users[key] };
+}
+
+export function updatePassword(email, currentPassword, newPassword) {
+  const users = get(USERS_KEY) || {};
+  const key = email.toLowerCase().trim();
+  if (!users[key]) return { ok: false, error: 'User not found.' };
+  if (users[key].passwordHash !== hashPassword(currentPassword)) return { ok: false, error: 'Current password is incorrect.' };
+  if (newPassword.length < 6) return { ok: false, error: 'New password must be at least 6 characters.' };
+  if (currentPassword === newPassword) return { ok: false, error: 'New password must be different from current password.' };
+  users[key].passwordHash = hashPassword(newPassword);
+  set(USERS_KEY, users);
+  return { ok: true };
 }
 
 export function logout() {
