@@ -46,8 +46,96 @@ export default function Landing({ onStart, onLogin }) {
         background: 'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99,102,241,0.18) 0%, transparent 70%), linear-gradient(180deg, #101014 0%, #09090b 100%)',
         borderBottom: `1px solid ${T.border}`,
         padding: 'clamp(64px,10vw,120px) clamp(20px,6vw,80px)',
+        position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ maxWidth: 960, margin: '0 auto' }}>
+        {/* AI / Neural-network decorative background */}
+        <svg
+          aria-hidden="true"
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            opacity: 0.09, pointerEvents: 'none', userSelect: 'none',
+          }}
+          viewBox="0 0 900 520" preserveAspectRatio="xMidYMid slice"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Connection lines */}
+          <g stroke="#818cf8" strokeWidth="0.8" opacity="0.7">
+            {/* Layer 0 → Layer 1 */}
+            <line x1="80" y1="120" x2="260" y2="80"/><line x1="80" y1="120" x2="260" y2="180"/>
+            <line x1="80" y1="120" x2="260" y2="280"/><line x1="80" y1="120" x2="260" y2="380"/>
+            <line x1="80" y1="260" x2="260" y2="80"/><line x1="80" y1="260" x2="260" y2="180"/>
+            <line x1="80" y1="260" x2="260" y2="280"/><line x1="80" y1="260" x2="260" y2="380"/>
+            <line x1="80" y1="400" x2="260" y2="80"/><line x1="80" y1="400" x2="260" y2="180"/>
+            <line x1="80" y1="400" x2="260" y2="280"/><line x1="80" y1="400" x2="260" y2="380"/>
+            {/* Layer 1 → Layer 2 */}
+            <line x1="260" y1="80"  x2="450" y2="60"/><line x1="260" y1="80"  x2="450" y2="160"/>
+            <line x1="260" y1="80"  x2="450" y2="260"/><line x1="260" y1="80"  x2="450" y2="360"/>
+            <line x1="260" y1="80"  x2="450" y2="460"/>
+            <line x1="260" y1="180" x2="450" y2="60"/><line x1="260" y1="180" x2="450" y2="160"/>
+            <line x1="260" y1="180" x2="450" y2="260"/><line x1="260" y1="180" x2="450" y2="360"/>
+            <line x1="260" y1="180" x2="450" y2="460"/>
+            <line x1="260" y1="280" x2="450" y2="60"/><line x1="260" y1="280" x2="450" y2="160"/>
+            <line x1="260" y1="280" x2="450" y2="260"/><line x1="260" y1="280" x2="450" y2="360"/>
+            <line x1="260" y1="380" x2="450" y2="160"/><line x1="260" y1="380" x2="450" y2="260"/>
+            <line x1="260" y1="380" x2="450" y2="360"/><line x1="260" y1="380" x2="450" y2="460"/>
+            {/* Layer 2 → Layer 3 */}
+            <line x1="450" y1="60"  x2="640" y2="120"/><line x1="450" y1="60"  x2="640" y2="260"/>
+            <line x1="450" y1="60"  x2="640" y2="400"/>
+            <line x1="450" y1="160" x2="640" y2="120"/><line x1="450" y1="160" x2="640" y2="260"/>
+            <line x1="450" y1="160" x2="640" y2="400"/>
+            <line x1="450" y1="260" x2="640" y2="120"/><line x1="450" y1="260" x2="640" y2="260"/>
+            <line x1="450" y1="260" x2="640" y2="400"/>
+            <line x1="450" y1="360" x2="640" y2="120"/><line x1="450" y1="360" x2="640" y2="260"/>
+            <line x1="450" y1="360" x2="640" y2="400"/>
+            <line x1="450" y1="460" x2="640" y2="260"/><line x1="450" y1="460" x2="640" y2="400"/>
+            {/* Layer 3 → Layer 4 */}
+            <line x1="640" y1="120" x2="820" y2="200"/><line x1="640" y1="120" x2="820" y2="320"/>
+            <line x1="640" y1="260" x2="820" y2="200"/><line x1="640" y1="260" x2="820" y2="320"/>
+            <line x1="640" y1="400" x2="820" y2="200"/><line x1="640" y1="400" x2="820" y2="320"/>
+          </g>
+          {/* Highlighted active-path lines */}
+          <g stroke="#c084fc" strokeWidth="1.4" opacity="0.5">
+            <line x1="80" y1="260" x2="260" y2="180"/>
+            <line x1="260" y1="180" x2="450" y2="260"/>
+            <line x1="450" y1="260" x2="640" y2="260"/>
+            <line x1="640" y1="260" x2="820" y2="320"/>
+          </g>
+          {/* Nodes — Layer 0 (input) */}
+          <g fill="#6366f1">
+            <circle cx="80" cy="120" r="7"/><circle cx="80" cy="260" r="7"/><circle cx="80" cy="400" r="7"/>
+          </g>
+          {/* Nodes — Layer 1 */}
+          <g fill="#818cf8">
+            <circle cx="260" cy="80"  r="6"/><circle cx="260" cy="180" r="6"/>
+            <circle cx="260" cy="280" r="6"/><circle cx="260" cy="380" r="6"/>
+          </g>
+          {/* Nodes — Layer 2 */}
+          <g fill="#818cf8">
+            <circle cx="450" cy="60"  r="6"/><circle cx="450" cy="160" r="6"/>
+            <circle cx="450" cy="260" r="6"/><circle cx="450" cy="360" r="6"/>
+            <circle cx="450" cy="460" r="6"/>
+          </g>
+          {/* Nodes — Layer 3 */}
+          <g fill="#818cf8">
+            <circle cx="640" cy="120" r="6"/><circle cx="640" cy="260" r="6"/><circle cx="640" cy="400" r="6"/>
+          </g>
+          {/* Nodes — Layer 4 (output) */}
+          <g fill="#a78bfa">
+            <circle cx="820" cy="200" r="8"/><circle cx="820" cy="320" r="8"/>
+          </g>
+          {/* Highlighted active nodes */}
+          <circle cx="80"  cy="260" r="8"  fill="none" stroke="#c084fc" strokeWidth="2"/>
+          <circle cx="260" cy="180" r="7"  fill="none" stroke="#c084fc" strokeWidth="2"/>
+          <circle cx="450" cy="260" r="7"  fill="none" stroke="#c084fc" strokeWidth="2"/>
+          <circle cx="640" cy="260" r="7"  fill="none" stroke="#c084fc" strokeWidth="2"/>
+          <circle cx="820" cy="320" r="9"  fill="none" stroke="#c084fc" strokeWidth="2.5"/>
+          {/* Small floating particles */}
+          <circle cx="160" cy="340" r="2" fill="#6366f1" opacity="0.5"/>
+          <circle cx="355" cy="130" r="1.5" fill="#818cf8" opacity="0.4"/>
+          <circle cx="550" cy="430" r="2" fill="#a78bfa" opacity="0.45"/>
+          <circle cx="730" cy="80"  r="1.5" fill="#818cf8" opacity="0.35"/>
+        </svg>
+        <div style={{ maxWidth: 960, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           {/* Badge */}
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,

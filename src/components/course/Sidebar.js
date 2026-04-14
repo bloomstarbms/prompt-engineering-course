@@ -1,7 +1,23 @@
 'use client';
 import { T, getGrade } from '@/lib/theme';
-import { MODULES, TOTAL_LESSONS } from '@/data/courseData';
+import { MODULES, TOTAL_LESSONS, PASS_THRESHOLD } from '@/data/courseData';
 import { Ring } from '@/components/ui';
+
+/* Mirrors the logic in CourseApp — determines if a lesson can be accessed */
+function isUnlocked(mi, li, completed, quizScores) {
+  if (mi === 0 && li === 0) return true;
+  let pmi = mi, pli = li - 1;
+  if (pli < 0) {
+    pmi = mi - 1;
+    if (pmi < 0) return true;
+    pli = MODULES[pmi].lessons.length - 1;
+  }
+  const pk = `${pmi}-${pli}`;
+  if (!completed[pk]) return false;
+  const qs = quizScores[pk];
+  if (qs && Math.round(qs.score / qs.total * 100) < PASS_THRESHOLD) return false;
+  return true;
+}
 
 export default function Sidebar({
   user, activeM, activeL, progress, quizScores,
@@ -78,12 +94,14 @@ export default function Sidebar({
           });
           const mPct = mT > 0 ? Math.round(mC / mT * 100) : null;
           const allLessonsDone = m.lessons.every((_, li) => completed[`${mi}-${li}`]);
+          // Module is locked if its first lesson is locked
+          const modLocked = !isUnlocked(mi, 0, completed, quizScores);
 
           return (
             <ModuleSection
               key={mi} m={m} mi={mi} isActive={isActive}
               activeL={activeL} completed={completed} quizScores={quizScores}
-              mPct={mPct} allLessonsDone={allLessonsDone}
+              mPct={mPct} allLessonsDone={allLessonsDone} modLocked={modLocked}
               onNavigate={onNavigate}
             />
           );
@@ -118,27 +136,35 @@ export default function Sidebar({
   );
 }
 
-function ModuleSection({ m, mi, isActive, activeL, completed, quizScores, mPct, allLessonsDone, onNavigate }) {
+function ModuleSection({ m, mi, isActive, activeL, completed, quizScores, mPct, allLessonsDone, modLocked, onNavigate }) {
   return (
     <div>
       <button
-        onClick={() => onNavigate(mi, 0)}
+        onClick={() => {
+          if (!modLocked) onNavigate(mi, 0);
+        }}
         style={{
           width: '100%', background: isActive ? `${m.color}07` : 'transparent',
           border: 'none', borderLeft: `2.5px solid ${isActive ? m.color : 'transparent'}`,
-          padding: '10px 14px', cursor: 'pointer', display: 'flex',
-          alignItems: 'center', gap: 10, textAlign: 'left', transition: 'all 0.15s',
+          padding: '10px 14px', cursor: modLocked ? 'not-allowed' : 'pointer',
+          display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', transition: 'all 0.15s',
+          opacity: modLocked ? 0.45 : 1,
         }}
-        onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(0,0,0,0.025)'; }}
+        onMouseEnter={e => { if (!isActive && !modLocked) e.currentTarget.style.background = 'rgba(0,0,0,0.025)'; }}
         onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
       >
         <div style={{
-          width: 28, height: 28, borderRadius: 7, background: `${m.color}12`,
-          border: `1px solid ${m.color}25`, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', fontSize: 12, color: m.color, flexShrink: 0,
-        }}>{m.icon}</div>
+          width: 28, height: 28, borderRadius: 7,
+          background: modLocked ? `${T.bg3}` : `${m.color}12`,
+          border: `1px solid ${modLocked ? T.faint : `${m.color}25`}`,
+          display: 'flex', alignItems: 'center',
+          justifyContent: 'center', fontSize: 12,
+          color: modLocked ? T.dim : m.color, flexShrink: 0,
+        }}>
+          {modLocked ? '🔒' : m.icon}
+        </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: 'var(--mono, monospace)', fontSize: 9, color: m.color, letterSpacing: '0.1em', marginBottom: 2 }}>
+          <div style={{ fontFamily: 'var(--mono, monospace)', fontSize: 9, color: modLocked ? T.dim : m.color, letterSpacing: '0.1em', marginBottom: 2 }}>
             {m.tag}
           </div>
           <div style={{
@@ -147,54 +173,69 @@ function ModuleSection({ m, mi, isActive, activeL, completed, quizScores, mPct, 
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>{m.title}</div>
         </div>
-        {mPct !== null && (
+        {modLocked ? (
+          <span style={{ fontFamily: 'var(--mono, monospace)', fontSize: 9, color: T.faint, flexShrink: 0 }}>LOCKED</span>
+        ) : mPct !== null ? (
           <span style={{ fontFamily: 'var(--mono, monospace)', fontSize: 10, color: getGrade(mPct).color, flexShrink: 0 }}>
             {mPct}%
           </span>
-        )}
-        {allLessonsDone && mPct === null && (
+        ) : allLessonsDone ? (
           <span style={{ fontSize: 12, color: T.success, flexShrink: 0 }}>✓</span>
-        )}
+        ) : null}
       </button>
 
       {/* Always show lessons for active module */}
       {isActive && (
         <div style={{ background: T.bg1 }}>
           {m.lessons.map((l, li) => {
-            const lk  = `${mi}-${li}`;
+            const lk     = `${mi}-${li}`;
             const isDone = completed[lk];
-            const qs  = quizScores[lk];
-            const isAct = activeL === li;
+            const qs     = quizScores[lk];
+            const isAct  = activeL === li;
+            const locked = !isUnlocked(mi, li, completed, quizScores);
+
             return (
               <button key={li}
-                onClick={() => onNavigate(mi, li)}
+                onClick={() => { if (!locked) onNavigate(mi, li); }}
                 style={{
                   width: '100%', background: isAct ? `${m.color}07` : 'transparent',
                   border: 'none', borderLeft: `2.5px solid ${isAct ? m.color : 'transparent'}`,
-                  padding: '8px 14px 8px 46px', cursor: 'pointer', textAlign: 'left',
-                  transition: 'all 0.1s', display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '8px 14px 8px 46px', cursor: locked ? 'not-allowed' : 'pointer',
+                  textAlign: 'left', transition: 'all 0.1s', display: 'flex', alignItems: 'center', gap: 8,
+                  opacity: locked ? 0.4 : 1,
                 }}
-                onMouseEnter={e => { if (!isAct) e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; }}
+                onMouseEnter={e => { if (!isAct && !locked) e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; }}
                 onMouseLeave={e => { if (!isAct) e.currentTarget.style.background = 'transparent'; }}
               >
-                <div style={{
-                  width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
-                  border: `1.5px solid ${isDone ? m.color : T.faint}`,
-                  background: isDone ? `${m.color}18` : 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 8, color: m.color,
-                }}>
-                  {isDone ? '✓' : ''}
-                </div>
+                {/* Status dot / lock icon */}
+                {locked ? (
+                  <div style={{
+                    width: 16, height: 16, flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 10, color: T.faint,
+                  }}>🔒</div>
+                ) : (
+                  <div style={{
+                    width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
+                    border: `1.5px solid ${isDone ? m.color : T.faint}`,
+                    background: isDone ? `${m.color}18` : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 8, color: m.color,
+                  }}>
+                    {isDone ? '✓' : ''}
+                  </div>
+                )}
+
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     fontFamily: 'var(--font, sans-serif)', fontSize: 12,
-                    color: isAct ? T.text : T.muted, lineHeight: 1.35,
+                    color: locked ? T.faint : isAct ? T.text : T.muted,
+                    lineHeight: 1.35,
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>{l.title}</div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 1 }}>
                     <span style={{ fontFamily: 'var(--mono, monospace)', fontSize: 9, color: T.faint }}>{l.dur}</span>
-                    {qs && (
+                    {qs && !locked && (
                       <span style={{
                         fontFamily: 'var(--mono, monospace)', fontSize: 9,
                         color: getGrade(Math.round(qs.score / qs.total * 100)).color,

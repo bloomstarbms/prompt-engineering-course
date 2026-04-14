@@ -1,27 +1,38 @@
 'use client';
 import { useState } from 'react';
 import { T, getGrade } from '@/lib/theme';
-import { QUIZZES } from '@/data/courseData';
+import { QUIZZES, PASS_THRESHOLD } from '@/data/courseData';
 import { AccentBtn, GhostBtn } from '@/components/ui';
 
 export default function QuizView({ mod, lKey, prevScore, onDone, onBack }) {
   const quiz = QUIZZES[lKey];
-  const [answers, setAnswers]   = useState({});
+  const [answers, setAnswers]     = useState({});
   const [submitted, setSubmitted] = useState(false);
-  const [current, setCurrent]   = useState(0);
+  const [current, setCurrent]     = useState(0);
 
   if (!quiz) { onBack(); return null; }
 
-  const q = quiz.questions[current];
-  const isLast = current === quiz.questions.length - 1;
-  const allAnswered = quiz.questions.every((_, i) => answers[i] !== undefined);
+  const q            = quiz.questions[current];
+  const isLast       = current === quiz.questions.length - 1;
+  const allAnswered  = quiz.questions.every((_, i) => answers[i] !== undefined);
   const correctCount = quiz.questions.filter((q, i) => answers[i] === q.a).length;
-  const pct   = Math.round(correctCount / quiz.questions.length * 100);
-  const grade = submitted ? getGrade(pct) : null;
+  const pct          = Math.round(correctCount / quiz.questions.length * 100);
+  const passed       = pct >= PASS_THRESHOLD;
+  const grade        = submitted ? getGrade(pct) : null;
 
   function submit() {
     setSubmitted(true);
-    onDone({ score: correctCount, total: quiz.questions.length });
+    // Do NOT call onDone yet — wait for user to click Continue or Retry
+  }
+
+  function handleContinue() {
+    onDone({ score: correctCount, total: quiz.questions.length, passed: true });
+  }
+
+  function handleRetry() {
+    setSubmitted(false);
+    setAnswers({});
+    setCurrent(0);
   }
 
   return (
@@ -55,6 +66,14 @@ export default function QuizView({ mod, lKey, prevScore, onDone, onBack }) {
                 color: getGrade(Math.round(prevScore.score / prevScore.total * 100)).color,
               }}>
                 Previous: {prevScore.score}/{prevScore.total}
+              </span>
+            )}
+            {!submitted && (
+              <span style={{
+                marginLeft: prevScore ? 8 : 'auto',
+                fontFamily: T.mono, fontSize: 9, color: T.dim, letterSpacing: '0.06em',
+              }}>
+                PASS ≥ {PASS_THRESHOLD}%
               </span>
             )}
           </div>
@@ -138,28 +157,52 @@ export default function QuizView({ mod, lKey, prevScore, onDone, onBack }) {
         ) : (
           /* Results */
           <div style={{ animation: 'fadeUp 0.4s ease both' }}>
+
+            {/* ── PASSED / FAILED Banner ── */}
             <div style={{
-              background: T.bg1, border: `1.5px solid ${grade.color}30`,
-              borderRadius: 16, padding: 'clamp(24px,4vw,32px)',
-              textAlign: 'center', marginBottom: 16,
+              borderRadius: 14, padding: '20px 24px', marginBottom: 16,
+              display: 'flex', alignItems: 'center', gap: 16,
+              background: passed
+                ? 'linear-gradient(135deg, rgba(5,150,105,0.12) 0%, rgba(5,150,105,0.06) 100%)'
+                : 'linear-gradient(135deg, rgba(220,38,38,0.12) 0%, rgba(220,38,38,0.06) 100%)',
+              border: `2px solid ${passed ? 'rgba(5,150,105,0.4)' : 'rgba(220,38,38,0.4)'}`,
+              animation: 'fadeUp 0.35s ease both',
             }}>
               <div style={{
-                fontFamily: T.font, fontWeight: 800, fontSize: 72,
+                width: 52, height: 52, borderRadius: '50%', flexShrink: 0,
+                background: passed ? 'rgba(5,150,105,0.15)' : 'rgba(220,38,38,0.15)',
+                border: `2px solid ${passed ? 'rgba(5,150,105,0.5)' : 'rgba(220,38,38,0.5)'}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 24,
+              }}>
+                {passed ? '✓' : '✗'}
+              </div>
+              <div>
+                <div style={{
+                  fontFamily: T.font, fontWeight: 800, fontSize: 22,
+                  color: passed ? T.success : T.error,
+                  letterSpacing: '-0.02em', lineHeight: 1,
+                }}>
+                  {passed ? 'PASSED' : 'FAILED'}
+                </div>
+                <div style={{
+                  fontFamily: T.mono, fontSize: 11, color: T.dim, marginTop: 4, letterSpacing: '0.04em',
+                }}>
+                  {pct}% · {correctCount}/{quiz.questions.length} correct · need {PASS_THRESHOLD}% to pass
+                </div>
+              </div>
+              <div style={{
+                marginLeft: 'auto',
+                fontFamily: T.font, fontWeight: 800, fontSize: 52,
                 color: grade.color, lineHeight: 1, letterSpacing: '-0.04em',
                 animation: 'countPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both',
               }}>
                 {grade.letter}
               </div>
-              <div style={{ fontFamily: T.font, fontWeight: 700, fontSize: 28, color: T.text, margin: '8px 0 4px' }}>
-                {pct}%
-              </div>
-              <div style={{ fontFamily: T.mono, fontSize: 12, color: T.dim }}>
-                {correctCount} / {quiz.questions.length} correct · {grade.label}
-              </div>
             </div>
 
             {/* Answer review */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
               {quiz.questions.map((q, i) => {
                 const correct = answers[i] === q.a;
                 return (
@@ -182,9 +225,39 @@ export default function QuizView({ mod, lKey, prevScore, onDone, onBack }) {
               })}
             </div>
 
-            <AccentBtn onClick={onBack} fullWidth style={{ padding: 14, fontSize: 15 }}>
-              Continue Learning →
-            </AccentBtn>
+            {/* Action buttons */}
+            {passed ? (
+              <AccentBtn onClick={handleContinue} fullWidth style={{ padding: 14, fontSize: 15 }}>
+                Continue Learning →
+              </AccentBtn>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <button onClick={handleRetry} style={{
+                  width: '100%', background: 'rgba(220,38,38,0.08)',
+                  border: '1.5px solid rgba(220,38,38,0.35)',
+                  color: T.error, borderRadius: 10, padding: 14, cursor: 'pointer',
+                  fontFamily: T.font, fontWeight: 700, fontSize: 15,
+                  transition: 'all 0.15s',
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(220,38,38,0.14)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(220,38,38,0.08)'; }}
+                >
+                  ↺ Retry Quiz
+                </button>
+                <button onClick={onBack} style={{
+                  width: '100%', background: 'none',
+                  border: `1px solid ${T.border}`,
+                  color: T.muted, borderRadius: 10, padding: 11, cursor: 'pointer',
+                  fontFamily: T.font, fontWeight: 600, fontSize: 13,
+                  transition: 'all 0.15s',
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.color = T.text; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = T.muted; }}
+                >
+                  ← Back to Lesson
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
