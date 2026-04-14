@@ -292,6 +292,31 @@ export default function Landing({ onStart, onLogin }) {
           </AccentBtn>
         </div>
       </section>
+
+      {/* ── Bottom footer ── */}
+      <footer style={{
+        background: T.bg, borderTop: `1px solid ${T.border}`,
+        padding: '14px 24px',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <span style={{ fontFamily: T.mono, fontSize: 11, color: T.faint, letterSpacing: '0.04em' }}>
+          Powered by{' '}
+          <a
+            href="https://x.com/bloomstar042"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: T.dim, textDecoration: 'none',
+              borderBottom: '1px solid transparent',
+              transition: 'color 0.15s, border-color 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = T.accent; e.currentTarget.style.borderBottomColor = T.accentBorder; }}
+            onMouseLeave={e => { e.currentTarget.style.color = T.dim; e.currentTarget.style.borderBottomColor = 'transparent'; }}
+          >
+            BMS
+          </a>
+        </span>
+      </footer>
     </div>
   );
 }
