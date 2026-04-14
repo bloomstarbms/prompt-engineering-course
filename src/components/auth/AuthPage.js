@@ -40,7 +40,7 @@ export default function AuthPage({ onAuth }) {
           </span>
         </div>
         <h1 style={{
-          fontFamily: T.font, fontWeight: 800,
+          fontFamily: T.display, fontWeight: 700,
           fontSize: 'clamp(26px,5vw,34px)', letterSpacing: '-0.04em',
           color: T.text, lineHeight: 1.1, marginBottom: 6,
         }}>
@@ -119,7 +119,7 @@ export default function AuthPage({ onAuth }) {
             padding: '13px', borderRadius: 10, cursor: loading ? 'default' : 'pointer',
             fontFamily: T.font, fontWeight: 700, fontSize: 15,
             letterSpacing: '-0.01em', transition: 'all 0.15s',
-            boxShadow: loading ? 'none' : '0 4px 14px rgba(232,80,10,0.35)',
+            boxShadow: loading ? 'none' : '0 4px 14px rgba(99,102,241,0.40)',
           }}>
             {loading ? 'Please wait…' : mode === 'login' ? 'Log In →' : 'Create Account →'}
           </button>

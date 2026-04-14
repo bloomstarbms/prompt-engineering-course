@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&family=Space+Grotesk:wght@500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 /* ── RESET & BASE ─────────────────────────────────────────────────────────── */
 *, *::before, *::after {
@@ -8,29 +8,36 @@
 }
 
 :root {
-  /* Palette */
-  --bg:       #ffffff;
-  --bg1:      #f8f8f6;
-  --bg2:      #f2f1ee;
-  --bg3:      #ebebe8;
-  --surface:  #ffffff;
-  --border:   rgba(0,0,0,0.08);
-  --border2:  rgba(0,0,0,0.14);
+  /* ── Dark premium palette (Linear / Vercel style) ── */
+  --bg:       #09090b;
+  --bg1:      #101014;
+  --bg2:      #18181c;
+  --bg3:      #1f1f24;
+  --surface:  #141418;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.13);
 
-  /* Text */
-  --text:       #0f0f10;
-  --text-muted: #5c5c6e;
-  --text-dim:   #a0a0b0;
+  /* Text — crisp on dark */
+  --text:       #fafafa;
+  --text-muted: #a1a1aa;
+  --text-dim:   #52525b;
 
-  /* Accent */
-  --accent:        #E8500A;
-  --accent-light:  rgba(232,80,10,0.09);
-  --accent-border: rgba(232,80,10,0.28);
+  /* Accent — indigo / violet (trusted, intelligent, premium) */
+  --accent:        #818cf8;
+  --accent-deep:   #6366f1;
+  --accent-light:  rgba(129,140,248,0.10);
+  --accent-border: rgba(129,140,248,0.30);
+
+  /* Status */
+  --success: #34d399;
+  --error:   #f87171;
+  --warning: #fbbf24;
+  --info:    #60a5fa;
 
   /* Typography */
-  --font:  'Syne', system-ui, sans-serif;
-  --serif: 'Instrument Serif', Georgia, serif;
-  --mono:  'JetBrains Mono', 'Fira Code', monospace;
+  --font:    'Inter', system-ui, -apple-system, sans-serif;
+  --display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --mono:    'JetBrains Mono', 'Fira Code', monospace;
 
   /* Radii */
   --r-sm: 6px;
@@ -38,10 +45,15 @@
   --r-lg: 16px;
   --r-xl: 24px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow:    0 4px 12px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.06);
+  /* Shadows — dark-mode glow shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+  --shadow:    0 4px 16px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.6), 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-xl: 0 24px 64px rgba(0,0,0,0.7), 0 8px 24px rgba(0,0,0,0.5);
+
+  /* Accent glow */
+  --glow:    0 0 24px rgba(129,140,248,0.15), 0 0 8px rgba(129,140,248,0.08);
+  --glow-lg: 0 0 48px rgba(129,140,248,0.20), 0 0 16px rgba(129,140,248,0.10);
 }
 
 html {
@@ -55,19 +67,28 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
-  line-height: 1.6;
+  line-height: 1.65;
   min-height: 100vh;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
 /* ── SCROLLBAR ────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar            { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track      { background: transparent; }
-::-webkit-scrollbar-thumb      { background: #d0cfcc; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover{ background: #b0afab; }
+::-webkit-scrollbar-thumb      { background: #3f3f46; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover{ background: #52525b; }
+
+/* ── TYPOGRAPHY SCALE ─────────────────────────────────────────────────────── */
+h1, h2, h3, h4 {
+  font-family: var(--display);
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  line-height: 1.2;
+}
 
 /* ── ANIMATIONS ───────────────────────────────────────────────────────────── */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(18px); }
+  from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0);    }
 }
 @keyframes fadeIn {
@@ -98,16 +119,24 @@ body {
   0%   { width: 0%;   }
   100% { width: 100%; }
 }
+@keyframes accentPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(129,140,248,0); }
+  50%      { box-shadow: 0 0 0 6px rgba(129,140,248,0.10); }
+}
+@keyframes borderGlow {
+  0%,100% { border-color: rgba(129,140,248,0.3); }
+  50%      { border-color: rgba(129,140,248,0.6); }
+}
 
 /* ── UTILITY CLASSES ──────────────────────────────────────────────────────── */
-.fade-up  { animation: fadeUp 0.5s ease both; }
-.fade-in  { animation: fadeIn 0.4s ease both; }
+.fade-up  { animation: fadeUp  0.5s cubic-bezier(0.22,1,0.36,1) both; }
+.fade-in  { animation: fadeIn  0.4s ease both; }
 
 /* ── INTERACTIVE STATES ───────────────────────────────────────────────────── */
-.lesson-btn:hover  { background: rgba(0,0,0,0.04) !important; }
+.lesson-btn:hover  { background: rgba(255,255,255,0.04) !important; }
 .quiz-opt:hover    { border-color: var(--accent) !important; background: var(--accent-light) !important; }
 .hover-lift:hover  { transform: translateY(-2px); box-shadow: var(--shadow-lg) !important; }
-.btn-ghost:hover   { background: rgba(0,0,0,0.05) !important; }
+.btn-ghost:hover   { background: rgba(255,255,255,0.06) !important; }
 
 /* ── FOCUS STATES ─────────────────────────────────────────────────────────── */
 button:focus-visible,
@@ -121,9 +150,32 @@ input:focus {
   box-shadow: 0 0 0 3px var(--accent-light) !important;
 }
 
+/* ── GLASS SURFACE HELPER ─────────────────────────────────────────────────── */
+.glass {
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ── GRADIENT TEXT HELPER ─────────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── CODE BLOCKS ──────────────────────────────────────────────────────────── */
+pre, code {
+  font-family: var(--mono);
+  font-size: 0.875em;
+}
+
 /* ── PRINT ────────────────────────────────────────────────────────────────── */
 @media print {
   .no-print { display: none !important; }
+  body { background: white; color: black; }
 }
 
 /* ── MOBILE OVERRIDES ─────────────────────────────────────────────────────── */
@@ -131,5 +183,12 @@ input:focus {
   :root {
     --r-lg: 12px;
     --r-xl: 16px;
+    font-size: 15px;
   }
+}
+
+/* ── SELECTION ────────────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(129,140,248,0.25);
+  color: #fafafa;
 }

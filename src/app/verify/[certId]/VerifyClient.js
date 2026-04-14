@@ -39,7 +39,7 @@ export default function VerifyClient({ certId }) {
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
-            background: 'rgba(232,80,10,0.08)', border: '1px solid rgba(232,80,10,0.2)',
+            background: 'rgba(129,140,248,0.10)', border: '1px solid rgba(129,140,248,0.25)',
             borderRadius: 100, padding: '5px 14px', marginBottom: 16,
           }}>
             <span style={{ fontFamily: T.mono, fontSize: 11, color: T.accent, letterSpacing: '0.1em' }}>

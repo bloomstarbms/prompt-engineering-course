@@ -98,7 +98,7 @@ export default function Sidebar({
             borderRadius: 8, padding: 10, cursor: 'pointer',
             fontFamily: T.font, fontWeight: 700, fontSize: 12,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            boxShadow: '0 4px 12px rgba(232,80,10,0.3)', transition: 'all 0.15s',
+            boxShadow: '0 4px 12px rgba(99,102,241,0.35)', transition: 'all 0.15s',
           }}>
             🎓 Claim Certificate
           </button>

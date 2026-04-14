@@ -221,7 +221,7 @@ export default function CourseApp() {
                   borderRadius: 6, fontSize: 11, fontWeight: 700, fontFamily: T.font,
                   transition: 'all 0.15s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(232,80,10,0.15)'}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(129,140,248,0.18)'}
                 onMouseLeave={e => e.currentTarget.style.background = T.accentLight}
               >🎓 Certificate</button>
             )}
@@ -317,7 +317,7 @@ function VideoTab({ lesson, mod, lKey, completed, quiz, onQuiz }) {
         <ModPill icon={mod.icon} title={mod.title} color={mod.color} />
 
         <h1 style={{
-          fontFamily: T.font, fontWeight: 800,
+          fontFamily: T.display, fontWeight: 700,
           fontSize: 'clamp(18px,3vw,24px)', color: T.text,
           letterSpacing: '-0.03em', margin: '10px 0', lineHeight: 1.2,
         }}>

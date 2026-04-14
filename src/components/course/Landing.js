@@ -10,7 +10,7 @@ export default function Landing({ onStart, onLogin }) {
       {/* ── Top nav ── */}
       <nav style={{
         position: 'sticky', top: 0, zIndex: 10,
-        background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)',
+        background: 'rgba(9,9,11,0.85)', backdropFilter: 'blur(16px)',
         borderBottom: `1px solid ${T.border}`,
         padding: '0 clamp(16px,5vw,48px)', height: 56,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -43,7 +43,7 @@ export default function Landing({ onStart, onLogin }) {
 
       {/* ── Hero ── */}
       <section style={{
-        background: 'linear-gradient(160deg, #fff 0%, #f9f8f5 60%, #f2f0eb 100%)',
+        background: 'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99,102,241,0.18) 0%, transparent 70%), linear-gradient(180deg, #101014 0%, #09090b 100%)',
         borderBottom: `1px solid ${T.border}`,
         padding: 'clamp(64px,10vw,120px) clamp(20px,6vw,80px)',
       }}>
@@ -62,7 +62,7 @@ export default function Landing({ onStart, onLogin }) {
           </div>
 
           <h1 style={{
-            fontFamily: T.font, fontWeight: 800,
+            fontFamily: T.display, fontWeight: 700,
             fontSize: 'clamp(40px,7.5vw,84px)', lineHeight: 0.95,
             letterSpacing: '-0.04em', color: T.text,
             marginBottom: 10, animation: 'fadeUp 0.5s 0.08s ease both', opacity: 0,
@@ -73,10 +73,10 @@ export default function Landing({ onStart, onLogin }) {
             fontFamily: T.serif, fontStyle: 'italic', fontWeight: 400,
             fontSize: 'clamp(40px,7.5vw,84px)', lineHeight: 0.95,
             letterSpacing: '-0.02em', marginBottom: 28,
-            background: 'linear-gradient(120deg, #E8500A 0%, #f07230 50%, #E8500A 100%)',
+            background: 'linear-gradient(120deg, #818cf8 0%, #c084fc 40%, #818cf8 100%)',
             backgroundSize: '200% auto',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-            animation: 'fadeUp 0.5s 0.14s ease both, shimmer 4s linear infinite',
+            animation: 'fadeUp 0.5s 0.14s ease both, shimmer 5s linear infinite',
             opacity: 0,
           }}>
             Prompting
@@ -114,7 +114,7 @@ export default function Landing({ onStart, onLogin }) {
               color: T.muted, padding: '14px 24px', borderRadius: 10, cursor: 'pointer',
               fontFamily: T.font, fontWeight: 600, fontSize: 15, transition: 'all 0.15s',
             }}
-              onMouseEnter={e => { e.currentTarget.style.color = T.text; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.3)'; }}
+              onMouseEnter={e => { e.currentTarget.style.color = T.text; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.22)'; }}
               onMouseLeave={e => { e.currentTarget.style.color = T.muted; e.currentTarget.style.borderColor = T.border2; }}
             >
               Log In
@@ -127,7 +127,7 @@ export default function Landing({ onStart, onLogin }) {
       <section style={{ padding: 'clamp(48px,7vw,80px) clamp(20px,6vw,80px)' }}>
         <div style={{ maxWidth: 960, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 32, flexWrap: 'wrap' }}>
-            <h2 style={{ fontFamily: T.font, fontWeight: 800, fontSize: 'clamp(22px,3vw,28px)', letterSpacing: '-0.03em', color: T.text }}>
+            <h2 style={{ fontFamily: T.display, fontWeight: 700, fontSize: 'clamp(22px,3vw,28px)', letterSpacing: '-0.03em', color: T.text }}>
               Course Curriculum
             </h2>
             <span style={{ fontFamily: T.mono, fontSize: 11, color: T.dim, letterSpacing: '0.06em' }}>
@@ -191,12 +191,12 @@ export default function Landing({ onStart, onLogin }) {
       </section>
 
       {/* ── Footer CTA ── */}
-      <section style={{ background: '#0f0f10', padding: 'clamp(48px,7vw,72px) clamp(20px,6vw,80px)', textAlign: 'center' }}>
+      <section style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 120%, rgba(99,102,241,0.15) 0%, transparent 70%), linear-gradient(180deg, #09090b 0%, #101014 100%)', padding: 'clamp(48px,7vw,72px) clamp(20px,6vw,80px)', textAlign: 'center', borderTop: `1px solid ${T.border}` }}>
         <div style={{ maxWidth: 560, margin: '0 auto' }}>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 'clamp(22px,3.5vw,32px)', color: '#fff', marginBottom: 14, lineHeight: 1.3 }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 'clamp(22px,3.5vw,32px)', color: T.text, marginBottom: 14, lineHeight: 1.3 }}>
             Ready to level up your prompting?
           </div>
-          <p style={{ fontFamily: T.font, fontSize: 14, color: 'rgba(255,255,255,0.45)', marginBottom: 28, lineHeight: 1.6 }}>
+          <p style={{ fontFamily: T.font, fontSize: 14, color: T.muted, marginBottom: 28, lineHeight: 1.6 }}>
             Free course. Create an account in 30 seconds. Start immediately.
           </p>
           <AccentBtn onClick={onStart} style={{ fontSize: 15, padding: '14px 36px' }}>

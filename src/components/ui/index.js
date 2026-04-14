@@ -56,11 +56,11 @@ export function AccentBtn({ children, onClick, disabled, fullWidth, size = 'md',
         fontFamily: T.font, fontWeight: 700, fontSize: fs,
         letterSpacing: '-0.01em', transition: 'all 0.15s',
         width: fullWidth ? '100%' : undefined,
-        boxShadow: disabled ? 'none' : '0 4px 12px rgba(232,80,10,0.3)',
+        boxShadow: disabled ? 'none' : '0 4px 16px rgba(99,102,241,0.35)',
         ...extra,
       }}
-      onMouseEnter={e => { if (!disabled) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(232,80,10,0.4)'; } }}
-      onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = disabled ? 'none' : '0 4px 12px rgba(232,80,10,0.3)'; }}
+      onMouseEnter={e => { if (!disabled) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(99,102,241,0.50)'; } }}
+      onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = disabled ? 'none' : '0 4px 16px rgba(99,102,241,0.35)'; }}
     >
       {children}
     </button>
@@ -121,7 +121,7 @@ export function LessonBody({ text, color }) {
           background: T.bg1, border: `1px solid ${T.border}`,
           borderLeft: `3px solid ${color}`, borderRadius: 8,
           padding: '14px 16px', margin: '16px 0', overflowX: 'auto',
-          fontSize: 12.5, lineHeight: 1.8, color: '#444', fontFamily: T.mono,
+          fontSize: 12.5, lineHeight: 1.8, color: '#d4d4d8', fontFamily: T.mono,
         }}>
           <code>{code.join('\n')}</code>
         </pre>
