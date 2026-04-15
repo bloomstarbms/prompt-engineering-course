@@ -53,6 +53,12 @@ export function useAuth() {
         avatarUrl: result.user.avatarUrl ?? '',
       });
       setProgress(loadProgress(result.user.email));
+      /* Fire-and-forget enrollment tracking */
+      fetch('/api/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: 'enroll', email: result.user.email, name: result.user.name }),
+      }).catch(() => {});
     }
     return result;
   }, []);
