@@ -273,7 +273,7 @@ Zero-shot, few-shot, and many-shot are your three tiers. They represent increasi
         title: "Chain-of-Thought Prompting",
         dur: "20 min",
         vid: "H4YK_7MAckk",
-        intro: "When you ask the AI to "show its work," something surprising happens — the answers get dramatically better. In this lesson, you'll learn Chain-of-Thought prompting: a simple technique of asking the AI to reason step by step before answering, which reduces errors and makes complex tasks manageable.",
+        intro: "When you ask the AI to show its work, something surprising happens — the answers get dramatically better. In this lesson, you'll learn Chain-of-Thought prompting: a simple technique of asking the AI to reason step by step before answering, which reduces errors and makes complex tasks manageable.",
         body: `**The Core Insight**
 The AI reasons better when it thinks out loud. Asking it to show its steps produces more accurate answers — one of the most impactful discoveries in prompt engineering.
 
