@@ -350,9 +350,86 @@ export default function CourseApp() {
 /* ── Combined Lesson View: video + notes in single scroll ──────────────── */
 function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed, quizPct, activeL, onQuiz, onMarkComplete, goNext }) {
   const isComplete = completed[lKey];
+  const [mi, li] = lKey.split('-').map(Number);
+  const isCourseStart = mi === 0 && li === 0;
 
   return (
     <div>
+      {/* ── Course welcome banner (first lesson only) ── */}
+      {isCourseStart && (
+        <div style={{
+          background: `linear-gradient(135deg, ${mod.color}12, ${mod.color}06)`,
+          borderBottom: `1px solid ${mod.color}20`,
+          padding: 'clamp(20px,4vw,32px) clamp(16px,4vw,32px) clamp(16px,3vw,24px)',
+        }}>
+          <div style={{ maxWidth: 860 }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: `${mod.color}18`, border: `1px solid ${mod.color}30`,
+              borderRadius: 20, padding: '4px 12px', marginBottom: 14,
+            }}>
+              <span style={{ fontSize: 12 }}>🎓</span>
+              <span style={{ fontFamily: T.mono, fontSize: 10, color: mod.color, letterSpacing: '0.1em', fontWeight: 600 }}>
+                COURSE INTRODUCTION
+              </span>
+            </div>
+            <h2 style={{
+              fontFamily: T.display, fontWeight: 800, fontSize: 'clamp(20px,3vw,28px)',
+              color: T.text, margin: '0 0 12px', letterSpacing: '-0.03em', lineHeight: 1.2,
+            }}>
+              Welcome to Prompt Engineering Mastery
+            </h2>
+            <p style={{
+              fontFamily: T.font, fontSize: 'clamp(13px,1.8vw,15px)', color: T.muted,
+              lineHeight: 1.7, margin: '0 0 16px', maxWidth: 680,
+            }}>
+              This course takes you from zero to confident — no AI background required. You'll learn how to communicate with AI models so they produce exactly what you need, every time. By the end, you'll have a practical, hands-on toolkit of prompting techniques used by professionals building real AI-powered workflows.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+              {[
+                { icon: '📚', label: '7 Modules' },
+                { icon: '🎬', label: '22 Lessons' },
+                { icon: '✅', label: 'Quizzes & Certificate' },
+                { icon: '⚡', label: 'Beginner Friendly' },
+              ].map(({ icon, label }) => (
+                <div key={label} style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: T.bg2, border: `1px solid ${T.border}`,
+                  borderRadius: 8, padding: '6px 12px',
+                }}>
+                  <span style={{ fontSize: 12 }}>{icon}</span>
+                  <span style={{ fontFamily: T.mono, fontSize: 10, color: T.dim, letterSpacing: '0.05em' }}>{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Lesson intro (shown for every lesson) ── */}
+      {lesson.intro && (
+        <div style={{
+          padding: 'clamp(14px,3vw,20px) clamp(16px,4vw,32px)',
+          borderBottom: `1px solid ${T.border}`,
+          background: T.bg1,
+        }}>
+          <div style={{ maxWidth: 860, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 8, flexShrink: 0, marginTop: 1,
+              background: `${mod.color}14`, border: `1px solid ${mod.color}28`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 14,
+            }}>▶</div>
+            <p style={{
+              fontFamily: T.font, fontSize: 'clamp(13px,1.6vw,14px)', color: T.muted,
+              lineHeight: 1.7, margin: 0,
+            }}>
+              {lesson.intro}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Video embed ── */}
       <div style={{ background: '#000', position: 'relative', paddingBottom: '56.25%' }}>
         <iframe

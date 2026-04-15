@@ -302,7 +302,7 @@ export default function Landing({ onStart, onLogin }) {
         <span style={{ fontFamily: T.mono, fontSize: 11, color: T.faint, letterSpacing: '0.04em' }}>
           Powered by{' '}
           <a
-            href="https://x.com/bloomstar042"
+            href="https://x.com/bloomstarbms"
             target="_blank"
             rel="noopener noreferrer"
             style={{
