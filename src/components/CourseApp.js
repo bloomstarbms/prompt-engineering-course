@@ -434,7 +434,7 @@ function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed,
               fontSize: 14,
             }}>▶</div>
             <p style={{
-              fontFamily: T.font, fontSize: 'clamp(13px,1.6vw,14px)', color: T.muted,
+              fontFamily: T.font, fontSize: 'clamp(15px,1.8vw,16px)', color: T.muted,
               lineHeight: 1.7, margin: 0,
             }}>
               {lesson.intro}

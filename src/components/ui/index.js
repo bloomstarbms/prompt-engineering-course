@@ -120,19 +120,53 @@ export function LessonBody({ text, color }) {
         <pre key={i} style={{
           background: T.bg1, border: `1px solid ${T.border}`,
           borderLeft: `3px solid ${color}`, borderRadius: 8,
-          padding: '14px 16px', margin: '16px 0', overflowX: 'auto',
-          fontSize: 12.5, lineHeight: 1.8, color: '#d4d4d8', fontFamily: T.mono,
+          padding: '16px 18px', margin: '18px 0', overflowX: 'auto',
+          fontSize: 14, lineHeight: 1.8, color: '#d4d4d8', fontFamily: T.mono,
         }}>
           <code>{code.join('\n')}</code>
         </pre>
       );
 
-    // Bold heading line
+    // --- horizontal divider
+    } else if (ln.trim() === '---') {
+      els.push(
+        <div key={i} style={{
+          margin: '28px 0',
+          height: 1,
+          background: `linear-gradient(90deg, transparent, ${color}30, transparent)`,
+        }} />
+      );
+
+    // ## Section heading
+    } else if (ln.startsWith('## ')) {
+      els.push(
+        <h2 key={i} style={{
+          fontFamily: T.display, fontWeight: 700,
+          fontSize: 18, color: T.text,
+          marginTop: 32, marginBottom: 10, letterSpacing: '-0.02em',
+        }}>
+          {ln.slice(3)}
+        </h2>
+      );
+
+    // ### Sub-heading
+    } else if (ln.startsWith('### ')) {
+      els.push(
+        <h3 key={i} style={{
+          fontFamily: T.font, fontWeight: 700,
+          fontSize: 16, color: T.text,
+          marginTop: 24, marginBottom: 8,
+        }}>
+          {ln.slice(4)}
+        </h3>
+      );
+
+    // Bold-only line → treated as a labelled section heading
     } else if (ln.startsWith('**') && ln.endsWith('**') && ln.length > 4 && !ln.slice(2, -2).includes('**')) {
       els.push(
         <h4 key={i} style={{
           color, fontFamily: T.mono, fontSize: 11, fontWeight: 700,
-          marginTop: 24, marginBottom: 8, letterSpacing: '0.1em', textTransform: 'uppercase',
+          marginTop: 26, marginBottom: 8, letterSpacing: '0.1em', textTransform: 'uppercase',
         }}>
           {ln.replace(/\*\*/g, '')}
         </h4>
@@ -144,7 +178,7 @@ export function LessonBody({ text, color }) {
       while (i < lines.length && lines[i].startsWith('|')) { tl.push(lines[i]); i++; }
       const rows = tl.filter(l => !l.match(/^\|[-| ]+\|$/));
       els.push(
-        <div key={i} style={{ overflowX: 'auto', margin: '14px 0', borderRadius: 8, border: `1px solid ${T.border}`, overflow: 'hidden' }}>
+        <div key={i} style={{ overflowX: 'auto', margin: '16px 0', borderRadius: 8, border: `1px solid ${T.border}`, overflow: 'hidden' }}>
           <table style={{ borderCollapse: 'collapse', width: '100%' }}>
             <tbody>
               {rows.map((r, ri) => {
@@ -152,8 +186,8 @@ export function LessonBody({ text, color }) {
                 return (
                   <tr key={ri} style={{ borderBottom: `1px solid ${T.border}`, background: ri === 0 ? T.bg1 : T.bg }}>
                     {cells.map((c, ci) => ri === 0
-                      ? <th key={ci} style={{ padding: '10px 14px', textAlign: 'left', color, fontFamily: T.mono, fontSize: 11, letterSpacing: '0.05em' }}>{c.trim()}</th>
-                      : <td key={ci} style={{ padding: '10px 14px', color: T.muted, fontSize: 13, fontFamily: T.font }}>{c.trim()}</td>
+                      ? <th key={ci} style={{ padding: '11px 14px', textAlign: 'left', color, fontFamily: T.mono, fontSize: 12, letterSpacing: '0.05em' }}>{c.trim()}</th>
+                      : <td key={ci} style={{ padding: '11px 14px', color: T.muted, fontSize: 15, fontFamily: T.font }}>{c.trim()}</td>
                     )}
                   </tr>
                 );
@@ -169,9 +203,9 @@ export function LessonBody({ text, color }) {
       const items = [ln.slice(2)]; i++;
       while (i < lines.length && (lines[i].startsWith('- ') || lines[i].startsWith('* '))) { items.push(lines[i].slice(2)); i++; }
       els.push(
-        <ul key={i} style={{ margin: '8px 0 14px', paddingLeft: 20 }}>
+        <ul key={i} style={{ margin: '10px 0 16px', paddingLeft: 22 }}>
           {items.map((it, li) => (
-            <li key={li} style={{ color: T.muted, marginBottom: 6, lineHeight: 1.75, fontSize: 14, fontFamily: T.font }}>
+            <li key={li} style={{ color: T.muted, marginBottom: 7, lineHeight: 1.75, fontSize: 15.5, fontFamily: T.font }}>
               {inlineMarkup(it, color)}
             </li>
           ))}
@@ -184,9 +218,9 @@ export function LessonBody({ text, color }) {
       const items = [ln]; i++;
       while (i < lines.length && /^\d+\. /.test(lines[i])) { items.push(lines[i]); i++; }
       els.push(
-        <ol key={i} style={{ margin: '8px 0 14px', paddingLeft: 20 }}>
+        <ol key={i} style={{ margin: '10px 0 16px', paddingLeft: 22 }}>
           {items.map((it, li) => (
-            <li key={li} style={{ color: T.muted, marginBottom: 6, lineHeight: 1.75, fontSize: 14, fontFamily: T.font }}>
+            <li key={li} style={{ color: T.muted, marginBottom: 7, lineHeight: 1.75, fontSize: 15.5, fontFamily: T.font }}>
               {inlineMarkup(it.replace(/^\d+\. /, ''), color)}
             </li>
           ))}
@@ -196,12 +230,12 @@ export function LessonBody({ text, color }) {
 
     // Empty line
     } else if (ln === '') {
-      els.push(<div key={i} style={{ height: 8 }} />);
+      els.push(<div key={i} style={{ height: 10 }} />);
 
     // Paragraph
     } else {
       els.push(
-        <p key={i} style={{ color: T.muted, lineHeight: 1.8, fontSize: 14, fontFamily: T.font, margin: '3px 0' }}>
+        <p key={i} style={{ color: T.muted, lineHeight: 1.85, fontSize: 15.5, fontFamily: T.font, margin: '4px 0' }}>
           {inlineMarkup(ln, color)}
         </p>
       );
@@ -220,7 +254,7 @@ function inlineMarkup(text, color) {
       return (
         <code key={i} style={{
           background: `${color}12`, color, padding: '2px 6px',
-          borderRadius: 4, fontSize: 12.5, fontFamily: T.mono, border: `1px solid ${color}25`,
+          borderRadius: 4, fontSize: 13.5, fontFamily: T.mono, border: `1px solid ${color}25`,
         }}>
           {p.slice(1, -1)}
         </code>
