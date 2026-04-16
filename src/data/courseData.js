@@ -2015,11 +2015,4 @@ export const TOTAL_LESSONS = MODULES.reduce((a, m) => a + m.lessons.length, 0);
 
 export const PASS_THRESHOLD = 70; // % score needed to pass a quiz and unlock the next lesson
 
-export function getGrade(pct) {
-  if (pct >= 90) return { letter: "A+", label: "Exceptional", color: "#059669" };
-  if (pct >= 80) return { letter: "A",  label: "Excellent",   color: "#0A7CFF" };
-  if (pct >= 70) return { letter: "B",  label: "Proficient",  color: "#7C3AED" };
-  if (pct >= 60) return { letter: "C",  label: "Competent",   color: "#D97706" };
-  if (pct >= 50) return { letter: "D",  label: "Developing",  color: "#818cf8" };
-  return { letter: "F", label: "Needs Review", color: "#DC2626" };
-}
+/* getGrade lives in src/lib/theme.js — imported from there by all components */

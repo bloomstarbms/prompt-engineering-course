@@ -62,7 +62,7 @@ function isUnlocked(mi, li, completed, quizScores) {
 
 export default function Sidebar({
   user, activeM, activeL, progress, quizScores,
-  onNavigate, onCert, onProfile, onLogout, isMobile, isOpen,
+  onNavigate, onCert, onProfile, onLogout, isMobile,
 }) {
   const { completed } = progress;
   const completedCount = Object.keys(completed).length;

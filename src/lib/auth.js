@@ -33,7 +33,7 @@ function generateCertId(email, date) {
   return 'PE-' + Math.abs(hash).toString(36).toUpperCase().padStart(8, '0');
 }
 
-// ── safe localStorage wrappers ─────────────────────────────────────────────
+// ── safe localStorage wrappers (persistent: users, progress, certs) ────────
 function get(key) {
   try {
     const v = localStorage.getItem(key);
@@ -42,6 +42,21 @@ function get(key) {
 }
 function set(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* quota */ }
+}
+
+// ── sessionStorage wrappers (session only — cleared when browser closes) ───
+// This ensures users must enter their password every time they open the site.
+function sessionGet(key) {
+  try {
+    const v = sessionStorage.getItem(key);
+    return v ? JSON.parse(v) : null;
+  } catch { return null; }
+}
+function sessionSet(key, value) {
+  try { sessionStorage.setItem(key, JSON.stringify(value)); } catch { /* quota */ }
+}
+function sessionRemove(key) {
+  try { sessionStorage.removeItem(key); } catch { /* */ }
 }
 
 // ── USER AUTH ──────────────────────────────────────────────────────────────
@@ -62,7 +77,7 @@ export function register(name, email, password) {
   };
   set(USERS_KEY, users);
   const sessionUser = { email: key, name: name.trim(), bio: '', avatarUrl: '' };
-  set(SESSION_KEY, sessionUser);
+  sessionSet(SESSION_KEY, sessionUser);
   return { ok: true, user: users[key] };
 }
 
@@ -73,7 +88,7 @@ export function login(email, password) {
   if (!user) return { ok: false, error: 'No account found with this email.' };
   if (user.passwordHash !== hashPassword(password)) return { ok: false, error: 'Incorrect password.' };
   const sessionUser = { email: key, name: user.name, bio: user.bio || '', avatarUrl: user.avatarUrl || '' };
-  set(SESSION_KEY, sessionUser);
+  sessionSet(SESSION_KEY, sessionUser);
   return { ok: true, user };
 }
 
@@ -94,12 +109,12 @@ export function updateProfile(email, { name, bio, avatarUrl }) {
   set(USERS_KEY, users);
 
   // Keep session in sync
-  const session = get(SESSION_KEY);
+  const session = sessionGet(SESSION_KEY);
   if (session && session.email === key) {
     session.name = users[key].name;
     session.bio = users[key].bio;
     session.avatarUrl = users[key].avatarUrl;
-    set(SESSION_KEY, session);
+    sessionSet(SESSION_KEY, session);
   }
   return { ok: true, user: users[key] };
 }
@@ -117,11 +132,11 @@ export function updatePassword(email, currentPassword, newPassword) {
 }
 
 export function logout() {
-  try { localStorage.removeItem(SESSION_KEY); } catch { /* */ }
+  sessionRemove(SESSION_KEY);
 }
 
 export function getSession() {
-  return get(SESSION_KEY);
+  return sessionGet(SESSION_KEY);
 }
 
 // ── PROGRESS ───────────────────────────────────────────────────────────────
