@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { getCertificate } from '@/lib/auth';
 import { getGrade, MOD_COLORS, T } from '@/lib/theme';
+import { TOTAL_LESSONS } from '@/data/courseData';
 import Link from 'next/link';
 
 export default function VerifyClient({ certId }) {
@@ -102,7 +103,7 @@ export default function VerifyClient({ certId }) {
                   Prompt Engineering: Zero to Mastery
                 </div>
                 <div style={{ fontFamily: T.font, fontSize: 13, color: T.muted }}>
-                  Full course completion · All 22 lessons
+                  Full course completion · All {TOTAL_LESSONS} lessons
                 </div>
               </div>
 
@@ -111,7 +112,7 @@ export default function VerifyClient({ certId }) {
                 {[
                   { label: 'FINAL GRADE', value: cert.grade, color: getGrade(cert.pct).color },
                   { label: 'SCORE', value: `${cert.pct}%`, color: T.text },
-                  { label: 'ISSUED', value: issuedDate?.split(' ').slice(-1)[0], color: T.text },
+                  { label: 'ISSUED', value: cert ? new Date(cert.issuedAt).getFullYear().toString() : null, color: T.text },
                 ].map(({ label, value, color }) => (
                   <div key={label} style={{
                     background: T.bg1, borderRadius: 8, padding: '12px 8px', textAlign: 'center',

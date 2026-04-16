@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { T, getGrade } from '@/lib/theme';
 import { MODULES, QUIZZES, TOTAL_LESSONS, PASS_THRESHOLD } from '@/data/courseData';
+import { isLessonUnlocked } from '@/lib/lessonUnlock';
 import AuthPage        from '@/components/auth/AuthPage';
 import Landing         from '@/components/course/Landing';
 import Sidebar         from '@/components/course/Sidebar';
@@ -12,21 +13,6 @@ import CertificatePage from '@/components/cert/CertificatePage';
 import ProfilePage     from '@/components/profile/ProfilePage';
 import { LessonBody, ModPill, AccentBtn } from '@/components/ui';
 
-/* ── Unlock logic — a lesson is open only after the previous is complete + passed ── */
-function isLessonUnlocked(mi, li, completed, quizScores) {
-  if (mi === 0 && li === 0) return true;
-  let pmi = mi, pli = li - 1;
-  if (pli < 0) {
-    pmi = mi - 1;
-    if (pmi < 0) return true;
-    pli = MODULES[pmi].lessons.length - 1;
-  }
-  const pk = `${pmi}-${pli}`;
-  if (!completed[pk]) return false;
-  const qs = quizScores[pk];
-  if (qs && Math.round(qs.score / qs.total * 100) < PASS_THRESHOLD) return false;
-  return true;
-}
 
 export default function CourseApp() {
   const { user, progress, ready, login, register, logout, updateProgress, updateProfile, updatePassword } = useAuth();

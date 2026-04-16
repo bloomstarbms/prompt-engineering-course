@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { T, getGrade } from '@/lib/theme';
-import { MODULES, TOTAL_LESSONS, PASS_THRESHOLD } from '@/data/courseData';
+import { MODULES, TOTAL_LESSONS } from '@/data/courseData';
+import { isLessonUnlocked } from '@/lib/lessonUnlock';
 import { Ring } from '@/components/ui';
 
 /* ── Deterministic gradient from name ── */
@@ -44,21 +45,8 @@ function SidebarAvatar({ name, avatarUrl, size=32, fontSize=12, color }) {
   );
 }
 
-/* Mirrors the logic in CourseApp — determines if a lesson can be accessed */
-function isUnlocked(mi, li, completed, quizScores) {
-  if (mi === 0 && li === 0) return true;
-  let pmi = mi, pli = li - 1;
-  if (pli < 0) {
-    pmi = mi - 1;
-    if (pmi < 0) return true;
-    pli = MODULES[pmi].lessons.length - 1;
-  }
-  const pk = `${pmi}-${pli}`;
-  if (!completed[pk]) return false;
-  const qs = quizScores[pk];
-  if (qs && Math.round(qs.score / qs.total * 100) < PASS_THRESHOLD) return false;
-  return true;
-}
+/* Alias for backwards compat within this file */
+const isUnlocked = isLessonUnlocked;
 
 export default function Sidebar({
   user, activeM, activeL, progress, quizScores,

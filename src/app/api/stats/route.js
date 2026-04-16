@@ -1,9 +1,10 @@
 import { createAdminClient } from '@/lib/supabase';
 
-export async function GET(req) {
-  /* Auth check */
-  const { searchParams } = new URL(req.url);
-  const token = searchParams.get('token');
+export async function POST(req) {
+  /* Auth check — token travels in the request body, not the URL, to avoid
+     it appearing in server logs or browser history. */
+  const body = await req.json().catch(() => ({}));
+  const token = body.token;
   const secret = process.env.ADMIN_SECRET;
 
   if (!secret || token !== secret) {

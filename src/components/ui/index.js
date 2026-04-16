@@ -107,6 +107,7 @@ export function LessonBody({ text, color }) {
   const lines = text.split('\n');
   const els = [];
   let i = 0;
+  let k = 0; // stable key counter — never tied to the line index
 
   while (i < lines.length) {
     const ln = lines[i];
@@ -117,7 +118,7 @@ export function LessonBody({ text, color }) {
       i++;
       while (i < lines.length && !lines[i].startsWith('```')) { code.push(lines[i]); i++; }
       els.push(
-        <pre key={i} style={{
+        <pre key={k++} style={{
           background: T.bg1, border: `1px solid ${T.border}`,
           borderLeft: `3px solid ${color}`, borderRadius: 8,
           padding: '16px 18px', margin: '18px 0', overflowX: 'auto',
@@ -130,7 +131,7 @@ export function LessonBody({ text, color }) {
     // --- horizontal divider
     } else if (ln.trim() === '---') {
       els.push(
-        <div key={i} style={{
+        <div key={k++} style={{
           margin: '28px 0',
           height: 1,
           background: `linear-gradient(90deg, transparent, ${color}30, transparent)`,
@@ -140,7 +141,7 @@ export function LessonBody({ text, color }) {
     // ## Section heading
     } else if (ln.startsWith('## ')) {
       els.push(
-        <h2 key={i} style={{
+        <h2 key={k++} style={{
           fontFamily: T.display, fontWeight: 700,
           fontSize: 18, color: T.text,
           marginTop: 32, marginBottom: 10, letterSpacing: '-0.02em',
@@ -152,7 +153,7 @@ export function LessonBody({ text, color }) {
     // ### Sub-heading
     } else if (ln.startsWith('### ')) {
       els.push(
-        <h3 key={i} style={{
+        <h3 key={k++} style={{
           fontFamily: T.font, fontWeight: 700,
           fontSize: 16, color: T.text,
           marginTop: 24, marginBottom: 8,
@@ -164,7 +165,7 @@ export function LessonBody({ text, color }) {
     // Bold-only line → treated as a labelled section heading
     } else if (ln.startsWith('**') && ln.endsWith('**') && ln.length > 4 && !ln.slice(2, -2).includes('**')) {
       els.push(
-        <h4 key={i} style={{
+        <h4 key={k++} style={{
           color, fontFamily: T.mono, fontSize: 11, fontWeight: 700,
           marginTop: 26, marginBottom: 8, letterSpacing: '0.1em', textTransform: 'uppercase',
         }}>
@@ -178,7 +179,7 @@ export function LessonBody({ text, color }) {
       while (i < lines.length && lines[i].startsWith('|')) { tl.push(lines[i]); i++; }
       const rows = tl.filter(l => !l.match(/^\|[-| ]+\|$/));
       els.push(
-        <div key={i} style={{ overflowX: 'auto', margin: '16px 0', borderRadius: 8, border: `1px solid ${T.border}`, overflow: 'hidden' }}>
+        <div key={k++} style={{ overflowX: 'auto', margin: '16px 0', borderRadius: 8, border: `1px solid ${T.border}`, overflow: 'hidden' }}>
           <table style={{ borderCollapse: 'collapse', width: '100%' }}>
             <tbody>
               {rows.map((r, ri) => {
@@ -203,7 +204,7 @@ export function LessonBody({ text, color }) {
       const items = [ln.slice(2)]; i++;
       while (i < lines.length && (lines[i].startsWith('- ') || lines[i].startsWith('* '))) { items.push(lines[i].slice(2)); i++; }
       els.push(
-        <ul key={i} style={{ margin: '10px 0 16px', paddingLeft: 22 }}>
+        <ul key={k++} style={{ margin: '10px 0 16px', paddingLeft: 22 }}>
           {items.map((it, li) => (
             <li key={li} style={{ color: T.muted, marginBottom: 7, lineHeight: 1.75, fontSize: 15.5, fontFamily: T.font }}>
               {inlineMarkup(it, color)}
@@ -218,7 +219,7 @@ export function LessonBody({ text, color }) {
       const items = [ln]; i++;
       while (i < lines.length && /^\d+\. /.test(lines[i])) { items.push(lines[i]); i++; }
       els.push(
-        <ol key={i} style={{ margin: '10px 0 16px', paddingLeft: 22 }}>
+        <ol key={k++} style={{ margin: '10px 0 16px', paddingLeft: 22 }}>
           {items.map((it, li) => (
             <li key={li} style={{ color: T.muted, marginBottom: 7, lineHeight: 1.75, fontSize: 15.5, fontFamily: T.font }}>
               {inlineMarkup(it.replace(/^\d+\. /, ''), color)}
@@ -230,12 +231,12 @@ export function LessonBody({ text, color }) {
 
     // Empty line
     } else if (ln === '') {
-      els.push(<div key={i} style={{ height: 10 }} />);
+      els.push(<div key={k++} style={{ height: 10 }} />);
 
     // Paragraph
     } else {
       els.push(
-        <p key={i} style={{ color: T.muted, lineHeight: 1.85, fontSize: 15.5, fontFamily: T.font, margin: '4px 0' }}>
+        <p key={k++} style={{ color: T.muted, lineHeight: 1.85, fontSize: 15.5, fontFamily: T.font, margin: '4px 0' }}>
           {inlineMarkup(ln, color)}
         </p>
       );

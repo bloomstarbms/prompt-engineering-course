@@ -26,7 +26,7 @@ export default function QuizView({ mod, lKey, prevScore, onDone, onBack }) {
   }
 
   function handleContinue() {
-    onDone({ score: correctCount, total: quiz.questions.length, passed: true });
+    onDone({ score: correctCount, total: quiz.questions.length, passed });
   }
 
   function handleRetry() {

@@ -91,7 +91,11 @@ export default function AdminDashboard() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/stats?token=${encodeURIComponent(tkn)}`);
+      const res = await fetch('/api/stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: tkn }),
+      });
       if (res.status === 401) { setError('Wrong password.'); setLoading(false); return; }
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();

@@ -171,6 +171,10 @@ export default function ProfilePage({ user, progress, onBack, onLogout, updatePr
 
   async function handleSave() {
     if (!name.trim()) { setSaveMsg('Name cannot be empty.'); return; }
+    if (avatarUrl && !avatarUrl.startsWith('https://')) {
+      setSaveMsg('Avatar URL must start with https://');
+      return;
+    }
     setSaving(true);
     const result = updateProfile({ name, bio, avatarUrl });
     setSaving(false);
@@ -303,7 +307,7 @@ export default function ProfilePage({ user, progress, onBack, onLogout, updatePr
             <input
               type="url" value={avatarUrl}
               onChange={e => { setAvatarUrl(e.target.value); markDirty(); }}
-              placeholder="https://example.com/photo.jpg"
+              placeholder="https://example.com/photo.jpg (must be https)"
               style={{
                 flex: 1, background: T.bg1, border: `1px solid ${T.border}`,
                 borderRadius: 9, padding: '10px 14px',
@@ -315,7 +319,7 @@ export default function ProfilePage({ user, progress, onBack, onLogout, updatePr
             <Avatar name={name || user.name} avatarUrl={avatarUrl} size={38} fontSize={12} />
           </div>
           <div style={{ fontFamily: T.font, fontSize: 11, color: T.dim, marginTop: 5 }}>
-            Paste a direct image URL. If it doesn't load, your initials avatar is shown.
+            Paste a direct image URL (https only). If it doesn't load, your initials avatar is shown.
           </div>
         </div>
 
