@@ -1,5 +1,5 @@
 'use client';
-import { T, MOD_COLORS } from '@/lib/theme';
+import { T } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS } from '@/data/courseData';
 import { AccentBtn } from '@/components/ui';
 

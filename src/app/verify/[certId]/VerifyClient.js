@@ -138,7 +138,7 @@ export default function VerifyClient({ certId }) {
                           background: T.bg1, border: `1px solid ${T.border}`,
                           borderRadius: 8, padding: '8px 4px', textAlign: 'center',
                         }}>
-                          <div style={{ fontFamily: T.mono, fontSize: 8, color: MOD_COLORS[i], marginBottom: 3 }}>
+                          <div style={{ fontFamily: T.mono, fontSize: 8, color: ms.color || MOD_COLORS[i] || T.accent, marginBottom: 3 }}>
                             {ms.tag}
                           </div>
                           <div style={{ fontFamily: T.font, fontWeight: 700, fontSize: 14, color: mg ? mg.color : T.faint }}>

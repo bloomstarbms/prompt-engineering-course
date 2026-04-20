@@ -9,6 +9,7 @@ export const MOD_COLORS = [
   '#f87171', // M05 — red
   '#fbbf24', // M06 — amber
   '#22d3ee', // M07 — cyan
+  '#f472b6', // M08 — pink (Advanced Frontiers)
 ];
 
 export const T = {
