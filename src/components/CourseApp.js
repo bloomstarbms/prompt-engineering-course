@@ -14,6 +14,117 @@ import ProfilePage     from '@/components/profile/ProfilePage';
 import { LessonBody, ModPill, AccentBtn } from '@/components/ui';
 
 
+/* ─── Pendulum Splash Screen ──────────────────────────────────────────── */
+function SplashScreen() {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      background: T.bg,
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      fontFamily: T.font,
+    }}>
+      <style>{`
+        @keyframes pmSwing {
+          from { transform: rotate(-30deg); }
+          to   { transform: rotate(30deg); }
+        }
+        @keyframes pmShadow {
+          from { transform: translateX(-50%) scaleX(0.55) scaleY(0.7); opacity: 0.28; }
+          to   { transform: translateX(-50%) scaleX(1.3)  scaleY(1.0); opacity: 0.07; }
+        }
+        @keyframes pmFadeUp {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pmBlink {
+          0%, 80%, 100% { opacity: 0.45; }
+          40%            { opacity: 1; }
+        }
+      `}</style>
+
+      {/* Pendulum assembly */}
+      <div style={{ position: 'relative', width: 80, height: 210, marginBottom: 44 }}>
+
+        {/* Ceiling mount bar */}
+        <div style={{
+          position: 'absolute', top: 0, left: '50%',
+          transform: 'translateX(-50%)',
+          width: 38, height: 4, borderRadius: 2,
+          background: `linear-gradient(90deg, transparent, rgba(129,140,248,0.25), transparent)`,
+        }}/>
+
+        {/* Pivot bearing */}
+        <div style={{
+          position: 'absolute', top: 2, left: '50%',
+          transform: 'translateX(-50%)',
+          width: 11, height: 11, borderRadius: '50%',
+          background: T.bg3,
+          border: '1.8px solid rgba(129,140,248,0.50)',
+          boxShadow: '0 0 8px rgba(129,140,248,0.2)',
+          zIndex: 2,
+        }}/>
+
+        {/* Swinging arm */}
+        <div style={{
+          position: 'absolute', top: 7, left: '50%',
+          marginLeft: -1,
+          transformOrigin: 'top center',
+          animation: 'pmSwing 1.3s ease-in-out infinite alternate',
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+        }}>
+          {/* Rod */}
+          <div style={{
+            width: 2, height: 136,
+            background: 'linear-gradient(to bottom, rgba(129,140,248,0.55) 0%, rgba(99,102,241,0.12) 100%)',
+            borderRadius: 2,
+          }}/>
+          {/* Bob */}
+          <div style={{
+            width: 32, height: 32, borderRadius: '50%', marginTop: -1,
+            background: 'radial-gradient(circle at 33% 30%, #c7d2fe 0%, #818cf8 42%, #3730a3 100%)',
+            boxShadow: '0 0 20px rgba(99,102,241,0.70), 0 0 42px rgba(99,102,241,0.28)',
+            border: '1.5px solid rgba(129,140,248,0.65)',
+          }}/>
+        </div>
+
+        {/* Floor shadow */}
+        <div style={{
+          position: 'absolute', bottom: -4, left: '50%',
+          width: 48, height: 7, borderRadius: '50%',
+          background: 'rgba(99,102,241,0.22)',
+          filter: 'blur(4px)',
+          animation: 'pmShadow 1.3s ease-in-out infinite alternate',
+        }}/>
+      </div>
+
+      {/* Brand lock-up */}
+      <div style={{ animation: 'pmFadeUp 0.65s 0.15s ease both', textAlign: 'center' }}>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 10,
+        }}>
+          <div style={{
+            width: 26, height: 26, borderRadius: 7,
+            background: T.accentLight, border: `1px solid ${T.accentBorder}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: T.mono, fontSize: 10, color: T.accent, fontWeight: 700,
+          }}>PE</div>
+          <span style={{
+            fontFamily: T.font, fontWeight: 800, fontSize: 19,
+            color: T.text, letterSpacing: '-0.03em',
+          }}>PromptMastery</span>
+        </div>
+        <div style={{
+          fontFamily: T.mono, fontSize: 10, color: T.dim, letterSpacing: '0.16em',
+          animation: 'pmBlink 2s ease-in-out infinite',
+        }}>
+          LOADING…
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CourseApp() {
   const { user, progress, ready, login, register, logout, updateProgress, updateProfile, updatePassword } = useAuth();
 
@@ -22,7 +133,14 @@ export default function CourseApp() {
   const [activeL,     setActiveL]     = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile,    setIsMobile]    = useState(false);
+  const [splashDone,  setSplashDone]  = useState(false);
   const contentRef = useRef(null);
+
+  /* minimum splash display — 1.3 s so the pendulum is always visible */
+  useEffect(() => {
+    const t = setTimeout(() => setSplashDone(true), 1300);
+    return () => clearTimeout(t);
+  }, []);
 
   /* responsive */
   useEffect(() => {
@@ -129,12 +247,8 @@ export default function CourseApp() {
     return mode === 'register' ? register(name, email, password) : login(email, password);
   }
 
-  /* loading */
-  if (!ready) return (
-    <div style={{ minHeight: '100vh', background: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ fontFamily: T.mono, fontSize: 12, color: T.dim, letterSpacing: '0.1em' }}>LOADING…</div>
-    </div>
-  );
+  /* loading — show splash until auth resolves AND minimum time has elapsed */
+  if (!ready || !splashDone) return <SplashScreen />;
 
   /* routing */
   if (page === 'landing') return (

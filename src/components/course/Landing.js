@@ -6,6 +6,140 @@ import { AccentBtn } from '@/components/ui';
 /* Total quiz questions across the course */
 const TOTAL_QUIZ_Q = 81;
 
+/* ─── Brand SVG Logos ──────────────────────────────────────────────────── */
+const AnthropicLogo = () => (
+  <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#D97706" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 21L12 3L19 21"/>
+    <line x1="8.2" y1="15" x2="15.8" y2="15"/>
+  </svg>
+);
+
+const OpenAILogo = () => (
+  <svg viewBox="0 0 24 24" width="30" height="30" fill="#10b981">
+    <path d="M22.28 9.82a5.98 5.98 0 00-.52-4.91 6.05 6.05 0 00-6.51-2.9A6.07 6.07 0 004.98 4.18a5.98 5.98 0 00-4 2.9 6.05 6.05 0 00.74 7.1 5.98 5.98 0 00.51 4.91 6.05 6.05 0 006.51 2.9A5.98 5.98 0 0013.26 24a6.06 6.06 0 005.77-4.21 5.99 5.99 0 004-2.9 6.06 6.06 0 00-.75-7.07zM13.26 22.43a4.48 4.48 0 01-2.88-1.04l.14-.08 4.78-2.76a.79.79 0 00.39-.68v-6.74l2.02 1.17a.07.07 0 01.04.05v5.58a4.5 4.5 0 01-4.49 4.5zm-9.66-4.13a4.47 4.47 0 01-.53-3.01l.14.08 4.78 2.76a.77.77 0 00.78 0l5.84-3.37v2.33a.08.08 0 01-.03.06L9.74 19.95a4.5 4.5 0 01-6.14-1.65zM2.34 7.9a4.49 4.49 0 012.37-1.97V11.6a.77.77 0 00.39.68l5.81 3.35-2.02 1.17a.08.08 0 01-.07 0l-4.83-2.79A4.5 4.5 0 012.34 7.9zm16.6 3.85l-5.84-3.37 2.02-1.17a.08.08 0 01.07 0l4.83 2.79a4.5 4.5 0 01-.68 8.1v-5.68a.79.79 0 00-.4-.67zm2.01-3.02l-.14-.09-4.77-2.78a.78.78 0 00-.79 0L9.41 9.23V6.9a.07.07 0 01.03-.06l4.83-2.79a4.5 4.5 0 016.68 4.66zM8.31 12.86l-2.02-1.16a.08.08 0 01-.04-.06V6.07a4.5 4.5 0 017.38-3.45l-.14.08-4.78 2.76a.79.79 0 00-.4.68zm1.1-2.37l2.6-1.5 2.61 1.5v2.99l-2.6 1.5-2.61-1.5z"/>
+  </svg>
+);
+
+const ChatGPTLogo = () => (
+  <svg viewBox="0 0 24 24" width="30" height="30" fill="#74aa9c">
+    <path d="M22.28 9.82a5.98 5.98 0 00-.52-4.91 6.05 6.05 0 00-6.51-2.9A6.07 6.07 0 004.98 4.18a5.98 5.98 0 00-4 2.9 6.05 6.05 0 00.74 7.1 5.98 5.98 0 00.51 4.91 6.05 6.05 0 006.51 2.9A5.98 5.98 0 0013.26 24a6.06 6.06 0 005.77-4.21 5.99 5.99 0 004-2.9 6.06 6.06 0 00-.75-7.07zM13.26 22.43a4.48 4.48 0 01-2.88-1.04l.14-.08 4.78-2.76a.79.79 0 00.39-.68v-6.74l2.02 1.17a.07.07 0 01.04.05v5.58a4.5 4.5 0 01-4.49 4.5zm-9.66-4.13a4.47 4.47 0 01-.53-3.01l.14.08 4.78 2.76a.77.77 0 00.78 0l5.84-3.37v2.33a.08.08 0 01-.03.06L9.74 19.95a4.5 4.5 0 01-6.14-1.65zM2.34 7.9a4.49 4.49 0 012.37-1.97V11.6a.77.77 0 00.39.68l5.81 3.35-2.02 1.17a.08.08 0 01-.07 0l-4.83-2.79A4.5 4.5 0 012.34 7.9zm16.6 3.85l-5.84-3.37 2.02-1.17a.08.08 0 01.07 0l4.83 2.79a4.5 4.5 0 01-.68 8.1v-5.68a.79.79 0 00-.4-.67zm2.01-3.02l-.14-.09-4.77-2.78a.78.78 0 00-.79 0L9.41 9.23V6.9a.07.07 0 01.03-.06l4.83-2.79a4.5 4.5 0 016.68 4.66zM8.31 12.86l-2.02-1.16a.08.08 0 01-.04-.06V6.07a4.5 4.5 0 017.38-3.45l-.14.08-4.78 2.76a.79.79 0 00-.4.68zm1.1-2.37l2.6-1.5 2.61 1.5v2.99l-2.6 1.5-2.61-1.5z"/>
+  </svg>
+);
+
+const GoogleLogo = () => (
+  <svg viewBox="0 0 24 24" width="30" height="30">
+    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+  </svg>
+);
+
+/* ─── Trust badge data ─────────────────────────────────────────────────── */
+const TRUST_BADGES = [
+  {
+    name: 'Anthropic',
+    sub: 'CLAUDE AI GUIDELINES',
+    color: '#D97706',
+    border: 'rgba(217,119,6,0.28)',
+    logoBg: 'rgba(217,119,6,0.08)',
+    glow: 'rgba(217,119,6,0.14)',
+    Logo: AnthropicLogo,
+  },
+  {
+    name: 'OpenAI',
+    sub: 'GPT MODEL BEST PRACTICES',
+    color: '#10b981',
+    border: 'rgba(16,185,129,0.28)',
+    logoBg: 'rgba(16,185,129,0.08)',
+    glow: 'rgba(16,185,129,0.14)',
+    Logo: OpenAILogo,
+  },
+  {
+    name: 'ChatGPT',
+    sub: 'PROMPT DESIGN STANDARDS',
+    color: '#74aa9c',
+    border: 'rgba(116,170,156,0.28)',
+    logoBg: 'rgba(116,170,156,0.08)',
+    glow: 'rgba(116,170,156,0.14)',
+    Logo: ChatGPTLogo,
+  },
+  {
+    name: 'Google DeepMind',
+    sub: 'GEMINI RESEARCH & GUIDELINES',
+    color: '#4285F4',
+    border: 'rgba(66,133,244,0.28)',
+    logoBg: 'rgba(66,133,244,0.08)',
+    glow: 'rgba(66,133,244,0.14)',
+    Logo: GoogleLogo,
+  },
+];
+
+/* ─── Module SVG Icons (index matches MODULES array) ──────────────────── */
+const MODULE_SVGS = [
+  // M01 — Foundations of LLMs — neural network nodes
+  ({ color }) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round">
+      <circle cx="12" cy="4" r="2"/><circle cx="4" cy="12" r="2"/><circle cx="20" cy="12" r="2"/>
+      <circle cx="7" cy="20" r="2"/><circle cx="17" cy="20" r="2"/>
+      <line x1="12" y1="6" x2="5.4" y2="10.3"/><line x1="12" y1="6" x2="18.6" y2="10.3"/>
+      <line x1="5.4" y1="13.7" x2="7" y2="18"/><line x1="18.6" y1="13.7" x2="17" y2="18"/>
+      <line x1="6" y1="12" x2="18" y2="12"/>
+    </svg>
+  ),
+  // M02 — Core Techniques — lightning bolt
+  ({ color }) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill={color} stroke="none">
+      <path d="M13 2L4 14h7l-1 8 9-12h-7z"/>
+    </svg>
+  ),
+  // M03 — Advanced Systems — linked squares (chain)
+  ({ color }) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="9" width="6" height="6" rx="1.2"/><rect x="9" y="2" width="6" height="6" rx="1.2"/>
+      <rect x="16" y="9" width="6" height="6" rx="1.2"/><rect x="9" y="16" width="6" height="6" rx="1.2"/>
+      <line x1="8" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="16" y2="12"/>
+      <line x1="12" y1="8" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="16"/>
+    </svg>
+  ),
+  // M04 — Output Engineering — code brackets
+  ({ color }) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 6L3 12l5 6"/><path d="M16 6l5 6-5 6"/><line x1="14" y1="4" x2="10" y2="20"/>
+    </svg>
+  ),
+  // M05 — Optimization & Evaluation — target / bullseye
+  ({ color }) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round">
+      <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill={color}/>
+      <line x1="20" y1="4" x2="15" y2="9"/><line x1="20" y1="9" x2="15" y2="4"/>
+    </svg>
+  ),
+  // M06 — Domain Applications — 2×2 app grid
+  ({ color }) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
+      <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+    </svg>
+  ),
+  // M07 — Production & Mastery — rocket
+  ({ color }) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2s6 3.5 6 10l-3 4H9l-3-4C6 5.5 12 2 12 2z"/>
+      <circle cx="12" cy="10" r="1.8" fill={color}/>
+      <path d="M9 16l-2.5 5.5L12 19l5.5 2.5L15 16"/>
+    </svg>
+  ),
+  // M08 — Advanced Frontiers — multi-sparkle
+  ({ color }) => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill={color} stroke="none">
+      <path d="M12 2l1.8 5.5L19.5 9l-5.7 1.7L12 16.5l-1.8-5.8L4.5 9l5.7-1.5z"/>
+      <path d="M19.5 2.5l.9 2.8 2.6.9-2.6.9-.9 2.7-.9-2.7-2.6-.9 2.6-.9z" opacity=".7"/>
+      <path d="M4 17.5l.7 2 2.3.7-2.3.7-.7 2.1-.7-2.1-2.3-.7 2.3-.7z" opacity=".7"/>
+    </svg>
+  ),
+];
+
 export default function Landing({ onStart, onLogin }) {
   return (
     <div style={{ minHeight: '100vh', background: T.bg, overflowX: 'hidden' }}>
@@ -224,96 +358,103 @@ export default function Landing({ onStart, onLogin }) {
         background: T.bg1,
         borderTop: `1px solid ${T.border}`,
         borderBottom: `1px solid ${T.border}`,
-        padding: 'clamp(20px,3vw,28px) clamp(20px,6vw,80px)',
+        padding: 'clamp(36px,5vw,52px) clamp(20px,6vw,80px)',
       }}>
-        <div style={{ maxWidth: 960, margin: '0 auto' }}>
-          {/* Label */}
-          <div style={{
-            textAlign: 'center', marginBottom: 20,
-            fontFamily: T.mono, fontSize: 10, color: T.dim, letterSpacing: '0.14em',
-          }}>
-            CURRICULUM APPROVED &amp; ALIGNED WITH BEST PRACTICES FROM
+        <div style={{ maxWidth: 920, margin: '0 auto' }}>
+
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 7,
+              background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.18)',
+              borderRadius: 100, padding: '4px 14px', marginBottom: 14,
+            }}>
+              <span style={{ fontSize: 9, color: '#34d399' }}>✦</span>
+              <span style={{ fontFamily: T.mono, fontSize: 10, color: '#34d399', letterSpacing: '0.12em' }}>
+                CURRICULUM ALIGNMENT
+              </span>
+            </div>
+            <div style={{
+              fontFamily: T.display, fontWeight: 700,
+              fontSize: 'clamp(17px,2.5vw,22px)', color: T.text,
+              letterSpacing: '-0.025em',
+            }}>
+              Approved &amp; Aligned with Official AI Best Practices
+            </div>
           </div>
 
-          {/* Badges row */}
+          {/* Badge grid */}
           <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexWrap: 'wrap', gap: 14,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+            gap: 14, marginBottom: 24,
           }}>
-            {[
-              {
-                name: 'Anthropic',
-                sub: 'Claude',
-                color: '#d97706',
-                bg: 'rgba(217,119,6,0.08)',
-                border: 'rgba(217,119,6,0.25)',
-                icon: '◈',
-              },
-              {
-                name: 'OpenAI',
-                sub: 'GPT Models',
-                color: '#10b981',
-                bg: 'rgba(16,185,129,0.08)',
-                border: 'rgba(16,185,129,0.25)',
-                icon: '⬡',
-              },
-              {
-                name: 'ChatGPT',
-                sub: 'Best Practices',
-                color: '#818cf8',
-                bg: 'rgba(129,140,248,0.08)',
-                border: 'rgba(129,140,248,0.25)',
-                icon: '◎',
-              },
-              {
-                name: 'Google DeepMind',
-                sub: 'Gemini',
-                color: '#60a5fa',
-                bg: 'rgba(96,165,250,0.08)',
-                border: 'rgba(96,165,250,0.25)',
-                icon: '✦',
-              },
-            ].map(b => (
+            {TRUST_BADGES.map(b => (
               <div key={b.name} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: b.bg, border: `1px solid ${b.border}`,
-                borderRadius: 10, padding: '10px 18px',
-                transition: 'transform 0.15s',
+                background: T.bg, border: `1px solid ${T.border}`,
+                borderRadius: 14, padding: '22px 18px 18px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                gap: 11, textAlign: 'center',
+                transition: 'border-color 0.2s, box-shadow 0.2s, transform 0.2s',
+                cursor: 'default',
+                borderTop: `2px solid ${b.color}30`,
               }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = b.border;
+                  e.currentTarget.style.boxShadow = `0 8px 28px ${b.glow}`;
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = T.border;
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.transform = 'none';
+                }}
               >
+                {/* Logo container */}
                 <div style={{
-                  width: 30, height: 30, borderRadius: 7, flexShrink: 0,
-                  background: b.bg, border: `1px solid ${b.border}`,
+                  width: 54, height: 54, borderRadius: 13,
+                  background: b.logoBg, border: `1px solid ${b.border}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 14, color: b.color,
-                }}>{b.icon}</div>
+                }}>
+                  <b.Logo />
+                </div>
+
+                {/* Brand name + sub */}
                 <div>
-                  <div style={{ fontFamily: T.font, fontWeight: 700, fontSize: 13, color: T.text, lineHeight: 1.2 }}>
+                  <div style={{
+                    fontFamily: T.font, fontWeight: 700, fontSize: 14,
+                    color: T.text, marginBottom: 4, letterSpacing: '-0.01em',
+                  }}>
                     {b.name}
                   </div>
-                  <div style={{ fontFamily: T.mono, fontSize: 9, color: b.color, letterSpacing: '0.06em', marginTop: 1 }}>
+                  <div style={{
+                    fontFamily: T.mono, fontSize: 9, color: b.color,
+                    letterSpacing: '0.07em', lineHeight: 1.4,
+                  }}>
                     {b.sub}
                   </div>
                 </div>
+
+                {/* Aligned pill */}
                 <div style={{
-                  width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
-                  background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.35)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 9, color: '#34d399', fontWeight: 700,
-                }}>✓</div>
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.2)',
+                  borderRadius: 100, padding: '4px 11px',
+                }}>
+                  <span style={{ fontSize: 10, color: '#34d399' }}>✓</span>
+                  <span style={{ fontFamily: T.mono, fontSize: 9, color: '#34d399', letterSpacing: '0.08em' }}>ALIGNED</span>
+                </div>
               </div>
             ))}
           </div>
 
           {/* Fine print */}
-          <div style={{
-            textAlign: 'center', marginTop: 14,
-            fontFamily: T.font, fontSize: 11, color: T.faint, lineHeight: 1.5,
+          <p style={{
+            textAlign: 'center', fontFamily: T.font, fontSize: 11,
+            color: T.faint, lineHeight: 1.6, margin: 0,
           }}>
             Course content reflects official prompting guidelines, documentation, and research published by each platform.
-          </div>
+          </p>
         </div>
       </section>
 
@@ -330,38 +471,52 @@ export default function Landing({ onStart, onLogin }) {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 268px), 1fr))', gap: 14 }}>
-            {MODULES.map(m => (
-              <div key={m.id} onClick={onStart} style={{
-                background: T.bg, border: `1px solid ${T.border}`,
-                borderRadius: 14, padding: '20px 22px', cursor: 'pointer',
-                transition: 'all 0.2s', boxShadow: T.shadowSm,
-              }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = T.shadowLg; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = T.shadowSm; }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 9,
-                    background: `${m.color}12`, border: `1px solid ${m.color}28`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 15, color: m.color, flexShrink: 0,
-                  }}>{m.icon}</div>
-                  <span style={{ fontFamily: T.mono, fontSize: 10, color: m.color, letterSpacing: '0.1em', fontWeight: 700 }}>
-                    MODULE {m.tag}
-                  </span>
+            {MODULES.map(m => {
+              const ModIcon = MODULE_SVGS[m.id];
+              return (
+                <div key={m.id} onClick={onStart} style={{
+                  background: T.bg, border: `1px solid ${T.border}`,
+                  borderRadius: 14, padding: '20px 22px', cursor: 'pointer',
+                  transition: 'all 0.2s', boxShadow: T.shadowSm,
+                  borderTop: `2px solid ${m.color}22`,
+                }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = `${T.shadowLg}, 0 0 0 1px ${m.color}20`;
+                    e.currentTarget.style.borderColor = `${m.color}30`;
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = 'none';
+                    e.currentTarget.style.boxShadow = T.shadowSm;
+                    e.currentTarget.style.borderColor = T.border;
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                    <div style={{
+                      width: 38, height: 38, borderRadius: 10,
+                      background: `${m.color}12`, border: `1px solid ${m.color}28`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>
+                      {ModIcon ? <ModIcon color={m.color} /> : <span style={{ fontSize: 15, color: m.color }}>{m.icon}</span>}
+                    </div>
+                    <span style={{ fontFamily: T.mono, fontSize: 10, color: m.color, letterSpacing: '0.1em', fontWeight: 700 }}>
+                      MODULE {m.tag}
+                    </span>
+                  </div>
+                  <div style={{ fontFamily: T.font, fontWeight: 700, fontSize: 14, color: T.text, marginBottom: 6, lineHeight: 1.3, letterSpacing: '-0.01em' }}>
+                    {m.title}
+                  </div>
+                  <div style={{ fontFamily: T.font, fontSize: 12.5, color: T.muted, lineHeight: 1.55, marginBottom: 14 }}>
+                    {m.summary}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontFamily: T.mono, fontSize: 10, color: T.dim }}>{m.lessons.length} lessons</span>
+                    <span style={{ fontSize: 13, color: m.color, fontWeight: 600 }}>→</span>
+                  </div>
                 </div>
-                <div style={{ fontFamily: T.font, fontWeight: 700, fontSize: 14, color: T.text, marginBottom: 6, lineHeight: 1.3, letterSpacing: '-0.01em' }}>
-                  {m.title}
-                </div>
-                <div style={{ fontFamily: T.font, fontSize: 12.5, color: T.muted, lineHeight: 1.55, marginBottom: 14 }}>
-                  {m.summary}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontFamily: T.mono, fontSize: 10, color: T.dim }}>{m.lessons.length} lessons</span>
-                  <span style={{ fontSize: 12, color: m.color }}>→</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
