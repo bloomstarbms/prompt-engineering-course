@@ -406,6 +406,7 @@ export default function Landing({ onStart, onLogin }) {
                 }}
                 onMouseLeave={e => {
                   e.currentTarget.style.borderColor = T.border;
+                  e.currentTarget.style.borderTopColor = b.color + '30'; // restore brand accent
                   e.currentTarget.style.boxShadow = 'none';
                   e.currentTarget.style.transform = 'none';
                 }}
@@ -489,6 +490,7 @@ export default function Landing({ onStart, onLogin }) {
                     e.currentTarget.style.transform = 'none';
                     e.currentTarget.style.boxShadow = T.shadowSm;
                     e.currentTarget.style.borderColor = T.border;
+                    e.currentTarget.style.borderTopColor = m.color + '22'; // restore module accent
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
