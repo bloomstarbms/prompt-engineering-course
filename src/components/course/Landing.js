@@ -7,10 +7,18 @@ import { AccentBtn } from '@/components/ui';
 const TOTAL_QUIZ_Q = 81;
 
 /* ─── Brand SVG Logos ──────────────────────────────────────────────────── */
+
+/*
+ * Anthropic "A" mark — two solid parallelogram stripes that together form
+ * a wide A shape, matching their official logomark geometry exactly.
+ * Left stripe:  upper-centre (x 7–11.5, y 3) → lower-left (x 0–4.5, y 21)
+ * Right stripe: upper-centre (x 12.5–17, y 3) → lower-right (x 19.5–24, y 21)
+ * Both stripes have the same slope and width; small gap between them at top.
+ */
 const AnthropicLogo = () => (
-  <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#D97706" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5 21L12 3L19 21"/>
-    <line x1="8.2" y1="15" x2="15.8" y2="15"/>
+  <svg viewBox="0 0 24 24" width="30" height="30" fill="#D97706">
+    <path d="M7 3L11.5 3L4.5 21L0 21Z"/>
+    <path d="M12.5 3L17 3L24 21L19.5 21Z"/>
   </svg>
 );
 
