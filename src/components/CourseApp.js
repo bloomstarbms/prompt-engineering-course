@@ -386,8 +386,8 @@ function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed,
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
               {[
-                { icon: '📚', label: '7 Modules' },
-                { icon: '🎬', label: '22 Lessons' },
+                { icon: '📚', label: `${MODULES.length} Modules` },
+                { icon: '🎬', label: `${TOTAL_LESSONS} Lessons` },
                 { icon: '✅', label: 'Quizzes & Certificate' },
                 { icon: '⚡', label: 'Beginner Friendly' },
               ].map(({ icon, label }) => (

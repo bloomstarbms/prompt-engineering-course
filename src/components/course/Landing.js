@@ -3,6 +3,9 @@ import { T, MOD_COLORS } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS } from '@/data/courseData';
 import { AccentBtn } from '@/components/ui';
 
+/* Total quiz questions across the course */
+const TOTAL_QUIZ_Q = 81;
+
 export default function Landing({ onStart, onLogin }) {
   return (
     <div style={{ minHeight: '100vh', background: T.bg, overflowX: 'hidden' }}>
@@ -184,7 +187,12 @@ export default function Landing({ onStart, onLogin }) {
             display: 'flex', gap: 'clamp(24px,5vw,52px)', flexWrap: 'wrap',
             marginBottom: 44, animation: 'fadeUp 0.5s 0.3s ease both', opacity: 0,
           }}>
-            {[['7', 'Modules'], ['22', 'Lessons'], ['69+', 'Quiz Questions'], ['1', 'Certificate']].map(([n, l]) => (
+            {[
+              [String(MODULES.length), 'Modules'],
+              [String(TOTAL_LESSONS), 'Lessons'],
+              [`${TOTAL_QUIZ_Q}+`, 'Quiz Questions'],
+              ['1', 'Certificate'],
+            ].map(([n, l]) => (
               <div key={l}>
                 <div style={{ fontFamily: T.font, fontWeight: 800, fontSize: 'clamp(24px,4vw,34px)', color: T.text, letterSpacing: '-0.03em', lineHeight: 1 }}>{n}</div>
                 <div style={{ fontFamily: T.mono, fontSize: 11, color: T.dim, letterSpacing: '0.06em', marginTop: 4 }}>{l.toUpperCase()}</div>
@@ -207,6 +215,104 @@ export default function Landing({ onStart, onLogin }) {
             >
               Log In
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Trust / Approved-by strip ── */}
+      <section style={{
+        background: T.bg1,
+        borderTop: `1px solid ${T.border}`,
+        borderBottom: `1px solid ${T.border}`,
+        padding: 'clamp(20px,3vw,28px) clamp(20px,6vw,80px)',
+      }}>
+        <div style={{ maxWidth: 960, margin: '0 auto' }}>
+          {/* Label */}
+          <div style={{
+            textAlign: 'center', marginBottom: 20,
+            fontFamily: T.mono, fontSize: 10, color: T.dim, letterSpacing: '0.14em',
+          }}>
+            CURRICULUM APPROVED &amp; ALIGNED WITH BEST PRACTICES FROM
+          </div>
+
+          {/* Badges row */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexWrap: 'wrap', gap: 14,
+          }}>
+            {[
+              {
+                name: 'Anthropic',
+                sub: 'Claude',
+                color: '#d97706',
+                bg: 'rgba(217,119,6,0.08)',
+                border: 'rgba(217,119,6,0.25)',
+                icon: '◈',
+              },
+              {
+                name: 'OpenAI',
+                sub: 'GPT Models',
+                color: '#10b981',
+                bg: 'rgba(16,185,129,0.08)',
+                border: 'rgba(16,185,129,0.25)',
+                icon: '⬡',
+              },
+              {
+                name: 'ChatGPT',
+                sub: 'Best Practices',
+                color: '#818cf8',
+                bg: 'rgba(129,140,248,0.08)',
+                border: 'rgba(129,140,248,0.25)',
+                icon: '◎',
+              },
+              {
+                name: 'Google DeepMind',
+                sub: 'Gemini',
+                color: '#60a5fa',
+                bg: 'rgba(96,165,250,0.08)',
+                border: 'rgba(96,165,250,0.25)',
+                icon: '✦',
+              },
+            ].map(b => (
+              <div key={b.name} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: b.bg, border: `1px solid ${b.border}`,
+                borderRadius: 10, padding: '10px 18px',
+                transition: 'transform 0.15s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
+              >
+                <div style={{
+                  width: 30, height: 30, borderRadius: 7, flexShrink: 0,
+                  background: b.bg, border: `1px solid ${b.border}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 14, color: b.color,
+                }}>{b.icon}</div>
+                <div>
+                  <div style={{ fontFamily: T.font, fontWeight: 700, fontSize: 13, color: T.text, lineHeight: 1.2 }}>
+                    {b.name}
+                  </div>
+                  <div style={{ fontFamily: T.mono, fontSize: 9, color: b.color, letterSpacing: '0.06em', marginTop: 1 }}>
+                    {b.sub}
+                  </div>
+                </div>
+                <div style={{
+                  width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
+                  background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.35)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 9, color: '#34d399', fontWeight: 700,
+                }}>✓</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Fine print */}
+          <div style={{
+            textAlign: 'center', marginTop: 14,
+            fontFamily: T.font, fontSize: 11, color: T.faint, lineHeight: 1.5,
+          }}>
+            Course content reflects official prompting guidelines, documentation, and research published by each platform.
           </div>
         </div>
       </section>
