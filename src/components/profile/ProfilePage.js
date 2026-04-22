@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { T, getGrade } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS, PASS_THRESHOLD } from '@/data/courseData';
 
@@ -79,13 +79,36 @@ function StatCard({ label, value, sub, color = T.accent }) {
   );
 }
 
+/* ── Eye icons for password toggle ──────────────────────────────────── */
+function EyeIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  );
+}
+function EyeOffIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </svg>
+  );
+}
+
 /* ── Input / Textarea ────────────────────────────────────────────────── */
 function Field({ label, value, onChange, type = 'text', multiline = false, readOnly = false, placeholder = '', maxLength }) {
+  const [visible, setVisible] = useState(false);
+  const isPassword = type === 'password';
+  const inputType  = isPassword && visible ? 'text' : type;
+
   const style = {
     width: '100%', boxSizing: 'border-box',
     background: readOnly ? T.bg2 : T.bg1,
     border: `1px solid ${T.border}`, borderRadius: 9,
-    padding: '10px 14px',
+    padding: isPassword ? '10px 42px 10px 14px' : '10px 14px',
     fontFamily: T.font, fontSize: 14, color: readOnly ? T.muted : T.text,
     outline: 'none', resize: 'none',
     transition: 'border-color 0.15s',
@@ -99,18 +122,37 @@ function Field({ label, value, onChange, type = 'text', multiline = false, readO
         <textarea
           value={value} onChange={e => onChange && onChange(e.target.value)}
           placeholder={placeholder} maxLength={maxLength}
-          rows={3} readOnly={readOnly} style={style}
+          rows={3} readOnly={readOnly} style={{ ...style, padding: '10px 14px' }}
           onFocus={e => { if (!readOnly) e.target.style.borderColor = T.accent; }}
           onBlur={e => { e.target.style.borderColor = T.border; }}
         />
       ) : (
-        <input
-          type={type} value={value} onChange={e => onChange && onChange(e.target.value)}
-          placeholder={placeholder} maxLength={maxLength}
-          readOnly={readOnly} style={style}
-          onFocus={e => { if (!readOnly) e.target.style.borderColor = T.accent; }}
-          onBlur={e => { e.target.style.borderColor = T.border; }}
-        />
+        <div style={{ position: 'relative' }}>
+          <input
+            type={inputType} value={value} onChange={e => onChange && onChange(e.target.value)}
+            placeholder={placeholder} maxLength={maxLength}
+            readOnly={readOnly} style={style}
+            onFocus={e => { if (!readOnly) e.target.style.borderColor = T.accent; }}
+            onBlur={e => { e.target.style.borderColor = T.border; }}
+          />
+          {isPassword && (
+            <button
+              type="button" tabIndex={-1}
+              onClick={() => setVisible(v => !v)}
+              style={{
+                position: 'absolute', right: 11, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: T.dim, padding: 2, display: 'flex', alignItems: 'center',
+                transition: 'color 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = T.muted; }}
+              onMouseLeave={e => { e.currentTarget.style.color = T.dim; }}
+              aria-label={visible ? 'Hide password' : 'Show password'}
+            >
+              {visible ? <EyeOffIcon /> : <EyeIcon />}
+            </button>
+          )}
+        </div>
       )}
       {maxLength && !readOnly && (
         <div style={{ fontFamily: T.mono, fontSize: 9, color: T.faint, textAlign: 'right', marginTop: 3 }}>
@@ -164,14 +206,64 @@ export default function ProfilePage({ user, progress, onBack, onLogout, updatePr
   const [pwMsg,     setPwMsg]     = useState({ ok: null, text: '' });
   const [pwLoading, setPwLoading] = useState(false);
 
+  /* avatar upload */
+  const fileInputRef                      = useRef(null);
+  const [uploadError,  setUploadError]    = useState('');
+  const [uploadLoading, setUploadLoading] = useState(false);
+
   /* logout confirm */
   const [logoutConfirm, setLogoutConfirm] = useState(false);
 
   function markDirty() { setDirty(true); setSaveMsg(''); }
 
+  /* Resize image to max maxPx on longest side, returns data URL */
+  const resizeToDataURL = useCallback((file, maxPx = 200, quality = 0.85) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const { naturalWidth: w, naturalHeight: h } = img;
+        const scale = Math.min(1, maxPx / Math.max(w, h));
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(w * scale);
+        canvas.height = Math.round(h * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not load image')); };
+      img.src = url;
+    });
+  }, []);
+
+  async function handleFileSelect(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';           // allow re-selecting the same file
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select an image file (JPG, PNG, GIF, WebP…)');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('Image must be smaller than 10 MB.');
+      return;
+    }
+    setUploadError('');
+    setUploadLoading(true);
+    try {
+      const dataUrl = await resizeToDataURL(file, 200, 0.85);
+      setAvatarUrl(dataUrl);
+      markDirty();
+    } catch {
+      setUploadError('Failed to process image. Please try another file.');
+    } finally {
+      setUploadLoading(false);
+    }
+  }
+
   async function handleSave() {
     if (!name.trim()) { setSaveMsg('Name cannot be empty.'); return; }
-    if (avatarUrl && !avatarUrl.startsWith('https://')) {
+    if (avatarUrl && !avatarUrl.startsWith('https://') && !avatarUrl.startsWith('data:image/')) {
       setSaveMsg('Avatar URL must start with https://');
       return;
     }
@@ -298,29 +390,92 @@ export default function ProfilePage({ user, progress, onBack, onLogout, updatePr
           maxLength={280}
         />
 
-        {/* Avatar URL */}
+        {/* Avatar upload */}
         <div style={{ marginBottom: 14 }}>
-          <div style={{ fontFamily: T.mono, fontSize: 10, color: T.dim, letterSpacing: '0.08em', marginBottom: 6 }}>
-            AVATAR IMAGE URL (optional)
+          <div style={{ fontFamily: T.mono, fontSize: 10, color: T.dim, letterSpacing: '0.08em', marginBottom: 8 }}>
+            PROFILE PHOTO (optional)
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input
-              type="url" value={avatarUrl}
-              onChange={e => { setAvatarUrl(e.target.value); markDirty(); }}
-              placeholder="https://example.com/photo.jpg (must be https)"
-              style={{
-                flex: 1, background: T.bg1, border: `1px solid ${T.border}`,
-                borderRadius: 9, padding: '10px 14px',
-                fontFamily: T.font, fontSize: 13, color: T.text, outline: 'none',
-              }}
-              onFocus={e => { e.target.style.borderColor = T.accent; }}
-              onBlur={e => { e.target.style.borderColor = T.border; }}
-            />
-            <Avatar name={name || user.name} avatarUrl={avatarUrl} size={38} fontSize={12} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            {/* Preview */}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <Avatar name={name || user.name} avatarUrl={avatarUrl} size={62} fontSize={18} />
+              {avatarUrl && (
+                <button
+                  type="button" tabIndex={-1}
+                  onClick={() => { setAvatarUrl(''); markDirty(); setUploadError(''); }}
+                  title="Remove photo"
+                  style={{
+                    position: 'absolute', top: -6, right: -6,
+                    width: 18, height: 18, borderRadius: '50%',
+                    background: T.error, border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#fff', fontSize: 11, fontWeight: 700, lineHeight: 1,
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.35)',
+                  }}
+                >×</button>
+              )}
+            </div>
+
+            {/* Buttons + hint */}
+            <div style={{ flex: 1 }}>
+              <input
+                ref={fileInputRef} type="file" accept="image/*"
+                onChange={handleFileSelect}
+                style={{ display: 'none' }}
+                aria-hidden="true"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadLoading}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 7,
+                  background: T.bg2, border: `1px solid ${T.border2}`,
+                  borderRadius: 8, padding: '8px 14px',
+                  fontFamily: T.font, fontSize: 13, color: T.text,
+                  cursor: uploadLoading ? 'default' : 'pointer',
+                  opacity: uploadLoading ? 0.6 : 1,
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { if (!uploadLoading) e.currentTarget.style.borderColor = T.accent; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = T.border2; }}
+              >
+                {uploadLoading ? (
+                  <>
+                    <span style={{
+                      display: 'inline-block', width: 13, height: 13,
+                      border: `2px solid ${T.dim}`, borderTopColor: T.accent,
+                      borderRadius: '50%', animation: 'spin 0.7s linear infinite',
+                    }} />
+                    Processing…
+                  </>
+                ) : (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="17 8 12 3 7 8"/>
+                      <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    {avatarUrl ? 'Change Photo' : 'Upload Photo'}
+                  </>
+                )}
+              </button>
+              <div style={{ fontFamily: T.font, fontSize: 11, color: T.dim, marginTop: 6, lineHeight: 1.5 }}>
+                JPG, PNG, GIF or WebP · max 10 MB · resized to 200 px
+              </div>
+            </div>
           </div>
-          <div style={{ fontFamily: T.font, fontSize: 11, color: T.dim, marginTop: 5 }}>
-            Paste a direct image URL (https only). If it doesn't load, your initials avatar is shown.
-          </div>
+
+          {uploadError && (
+            <div style={{
+              fontFamily: T.font, fontSize: 12, color: T.error, marginTop: 8,
+              padding: '6px 10px', borderRadius: 7,
+              background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)',
+            }}>
+              {uploadError}
+            </div>
+          )}
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
 
         {/* Save / Cancel */}

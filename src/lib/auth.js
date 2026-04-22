@@ -131,6 +131,19 @@ export function updatePassword(email, currentPassword, newPassword) {
   return { ok: true };
 }
 
+/* Forgot-password reset — bypasses current password check.
+ * Safe because: account data is stored in this browser's localStorage,
+ * so only someone physically on this device can call this. */
+export function resetPasswordByEmail(email, newPassword) {
+  const users = get(USERS_KEY) || {};
+  const key = email.toLowerCase().trim();
+  if (!users[key]) return { ok: false, error: 'No account found with this email on this device.' };
+  if (newPassword.length < 6) return { ok: false, error: 'Password must be at least 6 characters.' };
+  users[key].passwordHash = hashPassword(newPassword);
+  set(USERS_KEY, users);
+  return { ok: true };
+}
+
 export function logout() {
   sessionRemove(SESSION_KEY);
 }
