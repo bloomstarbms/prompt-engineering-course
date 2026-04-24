@@ -4,11 +4,25 @@ import { T, MOD_COLORS, getGrade } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS } from '@/data/courseData';
 import { issueCertificate, getUserCert } from '@/lib/auth';
 
+/* ── Site origin — set NEXT_PUBLIC_SITE_URL in Vercel env settings
+      to your custom domain (e.g. https://prompten.com).
+      Falls back to the current browser origin at runtime.          ── */
+function getSiteOrigin() {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '');
+  if (typeof window !== 'undefined') return window.location.origin;
+  return '';
+}
+
+/* Strip protocol for clean display: "prompten.com/verify/…" */
+function displayUrl(path) {
+  return getSiteOrigin().replace(/^https?:\/\//, '') + path;
+}
+
 /* ── LinkedIn Add-to-Profile button ─────────────────────────────────── */
 function LinkedInBtn({ cert, verifyUrl }) {
   if (!cert) return null;
   const issued = new Date(cert.issuedAt);
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://prompten.vercel.app';
+  const origin = getSiteOrigin();
   const params = new URLSearchParams({
     startTask:        'CERTIFICATION_NAME',
     name:             'Prompt Engineering Mastery — Zero to Mastery',
@@ -122,7 +136,7 @@ export default function CertificatePage({ user, quizScores, onBack }) {
 
   function copyVerifyLink() {
     if (!cert) return;
-    navigator.clipboard.writeText(`${window.location.origin}/verify/${cert.certId}`).then(() => {
+    navigator.clipboard.writeText(`${getSiteOrigin()}/verify/${cert.certId}`).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     });
@@ -478,7 +492,7 @@ export default function CertificatePage({ user, quizScores, onBack }) {
               <div style={{ textAlign: 'center' }}>
                 <div className="cert-footer-label" style={{ fontFamily: T.mono, fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.14em', marginBottom: 3 }}>VERIFY AT</div>
                 <div className="cert-footer-value" style={{ fontFamily: T.mono, fontSize: 10, color: `${ACCENT}80` }}>
-                  {typeof window !== 'undefined' ? window.location.origin : 'prompten.vercel.app'}{verifyUrl}
+                  {displayUrl(verifyUrl)}
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -552,7 +566,7 @@ export default function CertificatePage({ user, quizScores, onBack }) {
           }}>
             Credential ID <strong style={{ color: T.muted }}>{cert.certId}</strong> · verifiable at{' '}
             <a href={verifyUrl} target="_blank" rel="noreferrer" style={{ color: T.dim }}>
-              {typeof window !== 'undefined' ? window.location.origin : ''}{verifyUrl}
+              {displayUrl(verifyUrl)}
             </a>
           </p>
         )}
