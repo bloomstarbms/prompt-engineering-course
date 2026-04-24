@@ -11,6 +11,7 @@ import Sidebar         from '@/components/course/Sidebar';
 import QuizView        from '@/components/quiz/QuizView';
 import CertificatePage from '@/components/cert/CertificatePage';
 import ProfilePage     from '@/components/profile/ProfilePage';
+import { getUserCert } from '@/lib/auth';
 import { LessonBody, ModPill, AccentBtn } from '@/components/ui';
 
 
@@ -169,6 +170,16 @@ export default function CourseApp() {
   const completedCount = Object.keys(completed).length;
   const allDone = completedCount === TOTAL_LESSONS;
 
+  /* Also unlock cert access for students who already have an issued cert
+     (covers: course updated with new lessons after they graduated, or any
+     edge-case where completedCount doesn't equal TOTAL_LESSONS exactly) */
+  const [hasCert, setHasCert] = useState(false);
+  useEffect(() => {
+    if (user) setHasCert(!!getUserCert(user.email));
+  }, [user]);
+
+  const canSeeCert = allDone || hasCert;
+
   /* Track course completion once — fire-and-forget */
   const trackedComplete = useRef(false);
   useEffect(() => {
@@ -279,7 +290,7 @@ export default function CourseApp() {
     <CertificatePage
       user={user}
       quizScores={quizScores}
-      onBack={() => setPage('course')}
+      onBack={() => { setHasCert(true); setPage('course'); }}
     />
   );
 
@@ -325,6 +336,7 @@ export default function CourseApp() {
           onNavigate={(mi, li) => {
             if (isLessonUnlocked(mi, li, completed, quizScores)) navigate(mi, li);
           }}
+          canSeeCert={canSeeCert}
           onCert={() => setPage('cert')}
           onProfile={() => setPage('profile')}
           onLogout={() => { logout(); setPage('landing'); }}
@@ -380,7 +392,7 @@ export default function CourseApp() {
 
           {/* right actions */}
           <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
-            {allDone && !isMobile && (
+            {canSeeCert && !isMobile && (
               <button
                 onClick={() => setPage('cert')}
                 style={{

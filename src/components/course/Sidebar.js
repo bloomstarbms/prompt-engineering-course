@@ -50,6 +50,7 @@ const isUnlocked = isLessonUnlocked;
 
 export default function Sidebar({
   user, activeM, activeL, progress, quizScores,
+  canSeeCert,
   onNavigate, onCert, onProfile, onLogout, isMobile,
 }) {
   const { completed } = progress;
@@ -61,7 +62,6 @@ export default function Sidebar({
   const overallPct    = totalPossible > 0 ? Math.round(totalCorrect / totalPossible * 100) : 0;
   const overallGrade  = getGrade(overallPct);
   const mod           = MODULES[activeM];
-  const allDone       = completedCount === TOTAL_LESSONS;
 
   return (
     <aside style={{
@@ -141,7 +141,7 @@ export default function Sidebar({
 
       {/* Footer */}
       <div style={{ padding: '10px 14px', borderTop: `1px solid ${T.border}`, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 7 }}>
-        {allDone && (
+        {canSeeCert && (
           <button onClick={onCert} style={{
             width: '100%', background: T.accent, border: 'none', color: '#fff',
             borderRadius: 8, padding: 10, cursor: 'pointer',
@@ -149,7 +149,7 @@ export default function Sidebar({
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             boxShadow: '0 4px 12px rgba(99,102,241,0.35)', transition: 'all 0.15s',
           }}>
-            🎓 Claim Certificate
+            🎓 {completedCount === TOTAL_LESSONS ? 'Claim Certificate' : 'My Certificate'}
           </button>
         )}
         <div style={{ display: 'flex', gap: 6 }}>
