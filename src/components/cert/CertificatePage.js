@@ -165,54 +165,71 @@ export default function CertificatePage({ user, quizScores, onBack }) {
 
         /* ── Print / Save as PDF ─────────────────────────────────────── */
         @media print {
-          @page { size: A4 landscape; margin: 12mm; }
+          /* Zero page margins — we control all spacing ourselves */
+          @page { size: A4 landscape; margin: 0; }
 
-          html, body { background: #fff !important; }
+          html, body {
+            margin: 0 !important; padding: 0 !important;
+            background: #fff !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
 
           .no-print { display: none !important; }
 
+          /* Wrapper fills the whole page, centres the card */
           .cert-wrapper {
             background: #fff !important;
+            min-height: 100vh !important;
             padding: 0 !important;
-            min-height: unset !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
           }
 
+          /* Card: scale down to guarantee single-page fit,
+             reduce padding so content breathes without overflowing */
           .cert-card {
             background: #fff !important;
-            border: 2.5pt solid #c7d2fe !important;
+            border: 2pt solid #c7d2fe !important;
             box-shadow: none !important;
             animation: none !important;
-            border-radius: 12px !important;
-            padding: 36px 48px !important;
+            border-radius: 10px !important;
+            padding: 20px 36px !important;
+            width: 920px !important;
+            max-width: 920px !important;
+            zoom: 0.76 !important;
+            page-break-inside: avoid !important;
           }
 
-          .cert-top-bar { background: linear-gradient(90deg, #818cf8, #6366f1, #a855f7, #ec4899, #f59e0b, #10b981, #3b82f6) !important; }
+          .cert-top-bar {
+            background: linear-gradient(90deg,#818cf8,#6366f1,#a855f7,#ec4899,#f59e0b,#10b981,#3b82f6) !important;
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
+          }
 
           .cert-glow, .cert-blob { display: none !important; }
-
           .cert-corner { border-color: #a5b4fc !important; }
 
-          /* Force all text to dark for print */
-          .cert-card * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          /* Collapse vertical gaps for print */
+          .cert-card .cert-divider       { margin-top: 14px !important; margin-bottom: 14px !important; }
+          .cert-card .cert-divider-grad  { margin-top: 12px !important; margin-bottom: 12px !important; }
+          .cert-card .cert-approval-row  { margin-bottom: 14px !important; }
 
+          /* Text colours for white background */
           .cert-heading-label { color: #6366f1 !important; }
           .cert-title         { color: #1e1b4b !important; -webkit-text-fill-color: #1e1b4b !important; }
           .cert-subtitle      { color: #4b5563 !important; }
           .cert-certifies     { color: #6b7280 !important; }
-          .cert-name          { color: #1e1b4b !important; -webkit-text-fill-color: #1e1b4b !important; }
+          .cert-name          { color: #1e1b4b !important; -webkit-text-fill-color: #1e1b4b !important; animation: none !important; }
           .cert-body-text     { color: #374151 !important; }
           .cert-divider       { background: #e5e7eb !important; }
-          .cert-divider-grad  { background: linear-gradient(90deg, transparent, #a5b4fc, transparent) !important; }
-          .cert-module-item   { border-color: #e5e7eb !important; background: #f9fafb !important; }
-          .cert-module-tag    { color: #6366f1 !important; }
-          .cert-module-title  { color: #1f2937 !important; }
+          .cert-divider-grad  { background: linear-gradient(90deg,transparent,#a5b4fc,transparent) !important; }
           .cert-footer-label  { color: #9ca3af !important; }
           .cert-footer-value  { color: #374151 !important; }
           .cert-footer-rule   { border-color: #e5e7eb !important; }
           .cert-issuer-badge  { background: #f5f3ff !important; border-color: #c4b5fd !important; }
           .cert-issuer-text   { color: #6b7280 !important; }
           .cert-issuer-name   { color: #4f46e5 !important; -webkit-text-fill-color: #4f46e5 !important; }
-          .cert-approval-row  { border-top: 1pt solid #e5e7eb !important; }
         }
       `}</style>
 
