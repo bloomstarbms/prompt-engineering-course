@@ -347,60 +347,6 @@ export default function CertificatePage({ user, quizScores, onBack }) {
               height: 1, background: 'rgba(255,255,255,0.07)', marginBottom: 28,
             }} />
 
-            {/* ── Competencies / Modules covered ── */}
-            <div style={{ marginBottom: 30 }}>
-              <div style={{
-                fontFamily: T.mono, fontSize: 9, color: `${ACCENT}70`,
-                letterSpacing: '0.22em', marginBottom: 16,
-              }}>
-                AREAS OF COMPETENCY
-              </div>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '8px 12px',
-                textAlign: 'left',
-              }}>
-                {MODULES.map((m, i) => (
-                  <div key={i} className="cert-module-item" style={{
-                    display: 'flex', alignItems: 'flex-start', gap: 10,
-                    background: 'rgba(255,255,255,0.025)',
-                    border: `1px solid rgba(255,255,255,0.07)`,
-                    borderLeft: `3px solid ${m.color || MOD_COLORS[i]}60`,
-                    borderRadius: 8, padding: '9px 12px',
-                  }}>
-                    <div style={{ flexShrink: 0, marginTop: 1 }}>
-                      <div style={{
-                        width: 6, height: 6, borderRadius: '50%',
-                        background: m.color || MOD_COLORS[i],
-                        boxShadow: `0 0 6px ${m.color || MOD_COLORS[i]}80`,
-                      }} />
-                    </div>
-                    <div>
-                      <div className="cert-module-tag" style={{
-                        fontFamily: T.mono, fontSize: 8,
-                        color: m.color || MOD_COLORS[i],
-                        letterSpacing: '0.12em', marginBottom: 2,
-                      }}>
-                        {m.tag}
-                      </div>
-                      <div className="cert-module-title" style={{
-                        fontFamily: T.font, fontWeight: 600, fontSize: 12,
-                        color: 'rgba(255,255,255,0.75)', lineHeight: 1.35,
-                      }}>
-                        {m.title}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* ── Divider ── */}
-            <div className="cert-divider" style={{
-              height: 1, background: 'rgba(255,255,255,0.07)', marginBottom: 24,
-            }} />
-
             {/* ── Approval badges ── */}
             <div className="cert-approval-row" style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -467,21 +413,37 @@ export default function CertificatePage({ user, quizScores, onBack }) {
                 </div>
               </div>
 
-              {/* Official stamp centre */}
+              {/* Official Prompten stamp */}
               <div style={{ textAlign: 'center' }}>
-                <div style={{
-                  display: 'inline-flex', flexDirection: 'column', alignItems: 'center',
-                  background: `${ACCENT}08`, border: `1.5px solid ${ACCENT}30`,
-                  borderRadius: '50%', width: 72, height: 72,
-                  justifyContent: 'center', gap: 0,
-                }}>
-                  <div style={{
-                    fontFamily: T.mono, fontSize: 7, color: `${ACCENT}90`,
-                    letterSpacing: '0.12em', lineHeight: 1.3,
-                  }}>
-                    OFFICIAL<br/>SEAL
-                  </div>
-                </div>
+                <svg width="86" height="86" viewBox="0 0 86 86">
+                  {/* Outer ring */}
+                  <circle cx="43" cy="43" r="40" fill="none" stroke={`${ACCENT}50`} strokeWidth="1.5"/>
+                  {/* Inner ring */}
+                  <circle cx="43" cy="43" r="33" fill={`${ACCENT}07`} stroke={`${ACCENT}35`} strokeWidth="1"/>
+                  {/* "PROMPTEN · CERTIFIED ·" text on arc */}
+                  <defs>
+                    <path id="topArc" d="M 7,43 A 36,36 0 0,1 79,43"/>
+                    <path id="botArc" d="M 10,49 A 36,36 0 0,0 76,49"/>
+                  </defs>
+                  <text fontFamily="'Courier New', monospace" fontSize="7" fill={`${ACCENT}90`} fontWeight="700" letterSpacing="2.2">
+                    <textPath href="#topArc" startOffset="50%" textAnchor="middle">PROMPTEN · CERTIFIED ·</textPath>
+                  </text>
+                  <text fontFamily="'Courier New', monospace" fontSize="7" fill={`${ACCENT}70`} fontWeight="700" letterSpacing="2.2">
+                    <textPath href="#botArc" startOffset="50%" textAnchor="middle">PROMPT ENGINEERING · 2026</textPath>
+                  </text>
+                  {/* Decorative star dots at 3, 6, 9, 12 o'clock on outer ring */}
+                  {[0, 90, 180, 270].map((deg, i) => {
+                    const r = (deg - 90) * Math.PI / 180;
+                    return <circle key={i} cx={43 + 40 * Math.cos(r)} cy={43 + 40 * Math.sin(r)} r="2" fill={`${ACCENT}80`}/>;
+                  })}
+                  {/* Central P lettermark */}
+                  <text x="43" y="50" textAnchor="middle"
+                    fontFamily="Georgia, 'Times New Roman', serif"
+                    fontWeight="bold" fontSize="26" fill={`${ACCENT}cc`} letterSpacing="-0.5"
+                  >P</text>
+                  {/* Thin horizontal rule under P */}
+                  <line x1="32" y1="54" x2="54" y2="54" stroke={`${ACCENT}40`} strokeWidth="0.8"/>
+                </svg>
               </div>
 
               {/* Date right */}
