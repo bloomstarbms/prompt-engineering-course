@@ -10,15 +10,15 @@ function pad(n) { return String(n).padStart(2, '0'); }
 function LinkedInBtn({ cert, user, pct, verifyUrl }) {
   if (!cert) return null;
   const issued = new Date(cert.issuedAt);
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://prompten.vercel.app';
   const params = new URLSearchParams({
-    startTask:      'CERTIFICATION_NAME',
-    name:           'Prompt Engineering Mastery',
-    organizationId: '',
-    issueYear:      issued.getFullYear(),
-    issueMonth:     issued.getMonth() + 1,
-    certUrl:        typeof window !== 'undefined'
-                      ? `${window.location.origin}${verifyUrl}` : verifyUrl,
-    certId:         cert.certId,
+    startTask:        'CERTIFICATION_NAME',
+    name:             'Prompt Engineering Mastery — Zero to Mastery',
+    organizationName: 'Prompten',
+    issueYear:        String(issued.getFullYear()),
+    issueMonth:       String(issued.getMonth() + 1),
+    certUrl:          `${origin}${verifyUrl}`,
+    certId:           cert.certId,
   });
   const href = `https://www.linkedin.com/profile/add?${params.toString()}`;
 
@@ -220,21 +220,79 @@ export default function CertificatePage({ user, quizScores, onBack }) {
 
             {/* Issuer badge */}
             <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 20, padding: '5px 14px', marginBottom: 28,
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: 'rgba(255,255,255,0.04)', border: `1px solid ${grade.color}30`,
+              borderRadius: 20, padding: '6px 16px', marginBottom: 10,
             }}>
               <span style={{ fontFamily: T.mono, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.15em' }}>
-                ISSUED BY
+                PRESENTED BY
               </span>
-              <a
-                href="https://x.com/bloomstarbms"
-                target="_blank" rel="noopener noreferrer"
-                style={{ fontFamily: T.mono, fontSize: 9, color: grade.color, letterSpacing: '0.12em',
-                  textDecoration: 'none', fontWeight: 700 }}
-              >
-                @bloomstarbms
-              </a>
+              <span style={{
+                fontFamily: T.display, fontSize: 13, fontWeight: 900,
+                letterSpacing: '0.04em',
+                background: `linear-gradient(135deg, #fff 0%, ${grade.color} 100%)`,
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              }}>
+                Prompten
+              </span>
+            </div>
+
+            {/* Approval row */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexWrap: 'wrap', gap: 6, marginBottom: 28,
+            }}>
+              <span style={{ fontFamily: T.mono, fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.14em' }}>
+                CURRICULUM APPROVED BY
+              </span>
+              {/* Anthropic */}
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                background: 'rgba(217,119,6,0.10)', border: '1px solid rgba(217,119,6,0.28)',
+                borderRadius: 20, padding: '3px 10px',
+              }}>
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="#D97706">
+                  <path d="M7 3L11.5 3L4.5 21L0 21Z"/>
+                  <path d="M12.5 3L17 3L24 21L19.5 21Z"/>
+                </svg>
+                <span style={{ fontFamily: T.mono, fontSize: 8, color: '#D97706', fontWeight: 700, letterSpacing: '0.1em' }}>Anthropic</span>
+              </div>
+              {/* OpenAI */}
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: 20, padding: '3px 10px',
+              }}>
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="rgba(255,255,255,0.85)">
+                  <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/>
+                </svg>
+                <span style={{ fontFamily: T.mono, fontSize: 8, color: 'rgba(255,255,255,0.75)', fontWeight: 700, letterSpacing: '0.1em' }}>OpenAI</span>
+              </div>
+              {/* ChatGPT */}
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                background: 'rgba(16,163,127,0.10)', border: '1px solid rgba(16,163,127,0.28)',
+                borderRadius: 20, padding: '3px 10px',
+              }}>
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none">
+                  <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 2a8 8 0 1 1 0 16A8 8 0 0 1 12 4zm-1 4v4H7l5 6 5-6h-4V8h-2z" fill="#10a37f"/>
+                </svg>
+                <span style={{ fontFamily: T.mono, fontSize: 8, color: '#10a37f', fontWeight: 700, letterSpacing: '0.1em' }}>ChatGPT</span>
+              </div>
+              {/* Google DeepMind */}
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                background: 'rgba(66,133,244,0.10)', border: '1px solid rgba(66,133,244,0.28)',
+                borderRadius: 20, padding: '3px 10px',
+              }}>
+                <svg viewBox="0 0 24 24" width="11" height="11">
+                  <circle cx="5"  cy="12" r="3" fill="#EA4335"/>
+                  <circle cx="12" cy="5"  r="3" fill="#4285F4"/>
+                  <circle cx="19" cy="12" r="3" fill="#FBBC05"/>
+                  <circle cx="12" cy="19" r="3" fill="#34A853"/>
+                </svg>
+                <span style={{ fontFamily: T.mono, fontSize: 8, color: '#4285F4', fontWeight: 700, letterSpacing: '0.1em' }}>Google</span>
+              </div>
             </div>
 
             {/* Seal */}
