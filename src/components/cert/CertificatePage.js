@@ -4,21 +4,17 @@ import { T, MOD_COLORS, getGrade } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS } from '@/data/courseData';
 import { issueCertificate, getUserCert } from '@/lib/db';
 
-/* ── Site origin — set NEXT_PUBLIC_SITE_URL in Vercel env settings
-      to your custom domain (e.g. https://prompten.com).
-      Falls back to the current browser origin at runtime.          ── */
+/* ── Site origin ──────────────────────────────────────────── */
 function getSiteOrigin() {
   if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '');
   if (typeof window !== 'undefined') return window.location.origin;
   return '';
 }
-
-/* Strip protocol for clean display: "prompten.com/verify/…" */
 function displayUrl(path) {
   return getSiteOrigin().replace(/^https?:\/\//, '') + path;
 }
 
-/* ── LinkedIn Add-to-Profile button ─────────────────────────────────── */
+/* ── LinkedIn button ──────────────────────────────────────── */
 function LinkedInBtn({ cert, verifyUrl }) {
   if (!cert) return null;
   const issued = new Date(cert.issuedAt);
@@ -54,62 +50,186 @@ function LinkedInBtn({ cert, verifyUrl }) {
   );
 }
 
-/* ── Decorative crest (no grade, just Prompten emblem) ───────────────── */
-function Crest({ color }) {
+/* ── Ornamental divider ───────────────────────────────────── */
+function OrnamentDivider({ color = '#818cf8', width = 340, light = false }) {
+  const a = light ? 0.35 : 0.5;
+  const b = light ? 0.5  : 0.75;
   return (
-    <svg width="100" height="100" viewBox="0 0 100 100" style={{ display: 'block', margin: '0 auto' }}>
+    <svg width={width} height="14" viewBox={`0 0 ${width} 14`} style={{ display: 'block', margin: '0 auto' }}>
+      <line x1="0" y1="7" x2={width * 0.35} y2="7" stroke={color} strokeWidth="0.6" opacity={a}/>
+      <polygon points={`${width*0.38},7 ${width*0.395},3 ${width*0.41},7 ${width*0.395},11`} fill={color} opacity={a}/>
+      <line x1={width*0.42} y1="4" x2={width*0.44} y2="7" stroke={color} strokeWidth="0.6" opacity={b}/>
+      <line x1={width*0.44} y1="7" x2={width*0.46} y2="4" stroke={color} strokeWidth="0.6" opacity={b}/>
+      <polygon points={`${width*0.485},7 ${width*0.5},2 ${width*0.515},7 ${width*0.5},12`} fill={color} opacity={b + 0.1}/>
+      <line x1={width*0.54} y1="4" x2={width*0.56} y2="7" stroke={color} strokeWidth="0.6" opacity={b}/>
+      <line x1={width*0.56} y1="7" x2={width*0.58} y2="4" stroke={color} strokeWidth="0.6" opacity={b}/>
+      <polygon points={`${width*0.59},7 ${width*0.605},3 ${width*0.62},7 ${width*0.605},11`} fill={color} opacity={a}/>
+      <line x1={width*0.63} y1="7" x2={width} y2="7" stroke={color} strokeWidth="0.6" opacity={a}/>
+    </svg>
+  );
+}
+
+/* ── Premium Prompten Crest ───────────────────────────────── */
+function PremiumCrest({ color = '#818cf8', size = 108 }) {
+  const cx = size / 2, cy = size / 2;
+  const R = size * 0.47;   // outer ring
+  const R2 = size * 0.38;  // dashed ring
+  const R3 = size * 0.30;  // inner solid ring
+  // 8 tick marks at 45° intervals on dashed ring
+  const ticks = Array.from({ length: 16 }, (_, i) => {
+    const a = (i * 22.5 - 90) * Math.PI / 180;
+    const r1 = i % 2 === 0 ? R * 0.88 : R * 0.92;
+    const r2 = R * 0.96;
+    return { x1: cx + r1*Math.cos(a), y1: cy + r1*Math.sin(a), x2: cx + r2*Math.cos(a), y2: cy + r2*Math.sin(a), major: i%2===0 };
+  });
+  // 4 diamond dots at cardinal points on outer edge
+  const diamonds = [0, 90, 180, 270].map(deg => {
+    const a = (deg - 90) * Math.PI / 180;
+    return { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
+  });
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block', margin: '0 auto' }}>
       {/* Outer glow ring */}
-      <circle cx="50" cy="50" r="47" fill="none" stroke={`${color}18`} strokeWidth="3"/>
+      <circle cx={cx} cy={cy} r={R} fill="none" stroke={color} strokeWidth="1" opacity="0.15"/>
+      {/* Diamond dots at 4 cardinal points */}
+      {diamonds.map((d, i) => (
+        <polygon key={i}
+          points={`${d.x},${d.y-4} ${d.x+3},${d.y} ${d.x},${d.y+4} ${d.x-3},${d.y}`}
+          fill={color} opacity="0.6"
+        />
+      ))}
       {/* Dashed decorative ring */}
-      <circle cx="50" cy="50" r="41" fill="none" stroke={`${color}30`} strokeWidth="1" strokeDasharray="3 5"/>
-      {/* Solid inner ring */}
-      <circle cx="50" cy="50" r="35" fill={`${color}08`} stroke={`${color}45`} strokeWidth="1.5"/>
-      {/* Tick marks at 12 points */}
-      {Array.from({ length: 24 }).map((_, i) => {
-        const a = (i * 15 - 90) * Math.PI / 180;
-        const r1 = i % 2 === 0 ? 43 : 44.5;
-        const r2 = 46;
-        return (
-          <line key={i}
-            x1={50 + r1 * Math.cos(a)} y1={50 + r1 * Math.sin(a)}
-            x2={50 + r2 * Math.cos(a)} y2={50 + r2 * Math.sin(a)}
-            stroke={`${color}${i % 2 === 0 ? '60' : '30'}`} strokeWidth={i % 2 === 0 ? '1.5' : '0.8'}
-          />
-        );
-      })}
-      {/* "P" lettermark */}
-      <text x="50" y="58" textAnchor="middle"
+      <circle cx={cx} cy={cy} r={R2} fill="none" stroke={color} strokeWidth="1" strokeDasharray="3 5" opacity="0.45"/>
+      {/* Tick marks */}
+      {ticks.map((t, i) => (
+        <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
+          stroke={color} strokeWidth={t.major ? '1.5' : '0.7'}
+          opacity={t.major ? 0.55 : 0.3}
+        />
+      ))}
+      {/* Inner filled circle */}
+      <circle cx={cx} cy={cy} r={R3} fill={color} fillOpacity="0.07" stroke={color} strokeWidth="1.2" opacity="0.55"/>
+      {/* Inner accent ring */}
+      <circle cx={cx} cy={cy} r={R3 * 0.7} fill="none" stroke={color} strokeWidth="0.5" opacity="0.3"/>
+      {/* Italic serif P lettermark */}
+      <text x={cx} y={cy + size * 0.165}
+        textAnchor="middle"
         fontFamily="Georgia, 'Times New Roman', serif"
-        fontWeight="bold" fontSize="36" fill={color} opacity="0.9"
-        letterSpacing="-1"
+        fontStyle="italic"
+        fontWeight="bold"
+        fontSize={size * 0.38}
+        fill={color}
+        opacity="0.92"
       >P</text>
     </svg>
   );
 }
 
-/* ── Approval pill ───────────────────────────────────────────────────── */
-function ApprovalPill({ label, bg, border, textColor, icon }) {
+/* ── Official circular stamp seal ─────────────────────────── */
+function OfficialSeal({ color = '#818cf8', size = 90 }) {
+  const cx = size / 2, cy = size / 2;
+  const R = size * 0.46;
+  const R2 = size * 0.37;
+  const cardinals = [0, 90, 180, 270].map(deg => {
+    const a = (deg - 90) * Math.PI / 180;
+    return { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
+  });
   return (
-    <div style={{
-      display: 'inline-flex', alignItems: 'center', gap: 5,
-      background: bg, border: `1px solid ${border}`,
-      borderRadius: 20, padding: '4px 11px',
-    }}>
-      {icon}
-      <span style={{ fontFamily: T.mono, fontSize: 8, color: textColor, fontWeight: 700, letterSpacing: '0.1em' }}>{label}</span>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {/* Outer ring */}
+      <circle cx={cx} cy={cy} r={R} fill="none" stroke={color} strokeWidth="1.5" opacity="0.5"/>
+      {/* Cardinal dots */}
+      {cardinals.map((d, i) => (
+        <circle key={i} cx={d.x} cy={d.y} r="2.2" fill={color} opacity="0.7"/>
+      ))}
+      {/* Inner ring */}
+      <circle cx={cx} cy={cy} r={R2} fill={color} fillOpacity="0.07" stroke={color} strokeWidth="1" opacity="0.45"/>
+      {/* Arc text paths */}
+      <defs>
+        <path id={`seal-top-${size}`} d={`M ${cx - R*0.88},${cy} A ${R*0.88},${R*0.88} 0 0,1 ${cx + R*0.88},${cy}`}/>
+        <path id={`seal-bot-${size}`} d={`M ${cx - R*0.82},${cy+4} A ${R*0.82},${R*0.82} 0 0,0 ${cx + R*0.82},${cy+4}`}/>
+      </defs>
+      <text fontFamily="'Courier New', monospace" fontSize={size*0.085} fill={color} fontWeight="700" letterSpacing="1.8" opacity="0.8">
+        <textPath href={`#seal-top-${size}`} startOffset="50%" textAnchor="middle">PROMPTEN · CERTIFIED ·</textPath>
+      </text>
+      <text fontFamily="'Courier New', monospace" fontSize={size*0.085} fill={color} fontWeight="700" letterSpacing="1.8" opacity="0.65">
+        <textPath href={`#seal-bot-${size}`} startOffset="50%" textAnchor="middle">PROMPT ENGINEERING · 2026</textPath>
+      </text>
+      {/* Central P */}
+      <text x={cx} y={cy + size*0.11}
+        textAnchor="middle"
+        fontFamily="Georgia, 'Times New Roman', serif"
+        fontStyle="italic" fontWeight="bold"
+        fontSize={size * 0.32}
+        fill={color} opacity="0.88"
+      >P</text>
+      {/* Thin rule under P */}
+      <line x1={cx - size*0.14} y1={cy + size*0.16} x2={cx + size*0.14} y2={cy + size*0.16}
+        stroke={color} strokeWidth="0.6" opacity="0.35"/>
+    </svg>
+  );
+}
+
+/* ── Grade + score badges ─────────────────────────────────── */
+function GradeRow({ grade, pct }) {
+  const GOLD = '#f59e0b';
+  return (
+    <div className="cert-grade-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 22 }}>
+      {/* Grade */}
+      <div className="cert-grade-badge" style={{
+        display: 'inline-flex', flexDirection: 'column', alignItems: 'center',
+        background: 'rgba(251,159,9,0.10)', border: `1.5px solid rgba(251,159,9,0.35)`,
+        borderRadius: 10, padding: '6px 18px', minWidth: 64,
+      }}>
+        <span className="cert-grade-letter" style={{
+          fontFamily: 'Georgia, serif', fontWeight: 'bold', fontSize: 26,
+          color: GOLD, lineHeight: 1, letterSpacing: '-0.02em',
+        }}>{grade.letter}</span>
+        <span className="cert-grade-label" style={{
+          fontFamily: 'var(--font-mono, monospace)', fontSize: 8,
+          color: 'rgba(245,158,11,0.65)', letterSpacing: '0.14em', marginTop: 2,
+        }}>GRADE</span>
+      </div>
+      {/* Score */}
+      <div className="cert-score-badge" style={{
+        display: 'inline-flex', flexDirection: 'column', alignItems: 'center',
+        background: 'rgba(129,140,248,0.09)', border: `1.5px solid rgba(129,140,248,0.28)`,
+        borderRadius: 10, padding: '6px 18px', minWidth: 64,
+      }}>
+        <span className="cert-score-value" style={{
+          fontFamily: 'Georgia, serif', fontWeight: 'bold', fontSize: 26,
+          color: '#a5b4fc', lineHeight: 1, letterSpacing: '-0.02em',
+        }}>{pct}%</span>
+        <span className="cert-score-label" style={{
+          fontFamily: 'var(--font-mono, monospace)', fontSize: 8,
+          color: 'rgba(129,140,248,0.60)', letterSpacing: '0.14em', marginTop: 2,
+        }}>SCORE</span>
+      </div>
     </div>
   );
 }
 
-/* ── Main page ───────────────────────────────────────────────────────── */
+/* ── Approval pill ────────────────────────────────────────── */
+function ApprovalPill({ label, bg, border, textColor, icon }) {
+  return (
+    <div className="cert-pill" style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      background: bg, border: `1px solid ${border}`,
+      borderRadius: 20, padding: '5px 12px',
+    }}>
+      {icon}
+      <span className="cert-pill-text" style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: 8, color: textColor, fontWeight: 700, letterSpacing: '0.1em' }}>{label}</span>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════ */
+/*  MAIN PAGE                                                 */
+/* ══════════════════════════════════════════════════════════ */
 export default function CertificatePage({ user, userId, quizScores, onBack, updateProfile }) {
   const [cert, setCert]     = useState(null);
   const [copied, setCopied] = useState(false);
 
-  /* Gate: if the user's display name is just their email prefix, ask them
-     to set a real name BEFORE we issue the cert — it would look bad to
-     engrave "john.doe42" on a certificate. Once they save a proper name
-     we flip nameConfirmed and the cert-issuance effect fires. */
   const [nameConfirmed, setNameConfirmed] = useState(!user?.nameIsDefault);
   const [nameInput,     setNameInput]     = useState('');
   const [nameSaving,    setNameSaving]    = useState(false);
@@ -117,7 +237,6 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
   const nameRef = useRef(null);
   useEffect(() => { if (!nameConfirmed && nameRef.current) nameRef.current.focus(); }, [nameConfirmed]);
 
-  /* Keep score calc only for issueCertificate metadata — not displayed */
   const totalCorrect  = Object.values(quizScores).reduce((a, v) => a + v.score, 0);
   const totalPossible = Object.values(quizScores).reduce((a, v) => a + v.total, 0);
   const pct   = totalPossible > 0 ? Math.round(totalCorrect / totalPossible * 100) : 0;
@@ -132,7 +251,6 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
     return { tag: m.tag, title: m.title, color: m.color || MOD_COLORS[mi], pct: t > 0 ? Math.round(c / t * 100) : null };
   });
 
-  // Issue (or fetch existing) cert — only once the name has been confirmed
   useEffect(() => {
     if (!userId || !nameConfirmed) return;
     async function fetchOrIssueCert() {
@@ -154,18 +272,13 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
     fetchOrIssueCert();
   }, [userId, nameConfirmed]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* Save a proper display name before issuing the cert */
   async function handleNameSave() {
     const trimmed = nameInput.trim();
     if (!trimmed) { setNameError('Please enter your full name.'); return; }
     if (trimmed.length < 2) { setNameError('Name must be at least 2 characters.'); return; }
-    setNameSaving(true);
-    setNameError('');
+    setNameSaving(true); setNameError('');
     try {
-      if (updateProfile) {
-        await updateProfile({ name: trimmed, bio: user.bio || '', avatarUrl: user.avatarUrl || '' });
-      }
-      // Optimistically update user object — cert will use this name
+      if (updateProfile) await updateProfile({ name: trimmed, bio: user.bio || '', avatarUrl: user.avatarUrl || '' });
       user.name = trimmed;
       setNameConfirmed(true);
     } catch {
@@ -182,20 +295,15 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
     });
   }
 
-  /* Clean verify URL — cert is stored in Supabase so anyone can look it up
-     by ID without any embedded data. The VerifyClient still has a ?d= fallback
-     for pre-migration legacy certs, but new certs don't need it. */
-  const verifyUrl   = cert ? `/verify/${cert.certId}` : null;
-  // Keep issuedDate null until cert loads — avoids showing today's date
-  // as the issue date before the real cert is fetched from Supabase.
-  const issuedDate  = cert
+  const verifyUrl  = cert ? `/verify/${cert.certId}` : null;
+  const issuedDate = cert
     ? new Date(cert.issuedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : null;
 
-  /* Accent colour for the certificate — a rich indigo/violet */
   const ACCENT = '#818cf8';
+  const ACCENT2 = '#a5b4fc';
 
-  /* ── Name gate — shown when user has no real name set ─────────────── */
+  /* ── Name gate ─────────────────────────────────────────── */
   if (!nameConfirmed) return (
     <div style={{
       minHeight: '100vh', background: T.bg,
@@ -209,7 +317,6 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
         background: T.bg2, border: `1px solid ${T.border2}`,
         borderRadius: 16, padding: 'clamp(28px,5vw,40px)',
       }}>
-        {/* Trophy icon */}
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -218,31 +325,22 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
             fontSize: 26,
           }}>🏆</div>
         </div>
-        <h2 style={{
-          fontFamily: T.display, fontWeight: 800, fontSize: 22,
-          color: T.text, margin: '0 0 8px', letterSpacing: '-0.03em', textAlign: 'center',
-        }}>You&apos;ve earned your certificate!</h2>
-        <p style={{
-          fontFamily: T.font, fontSize: 14, color: T.muted, lineHeight: 1.7,
-          margin: '0 0 24px', textAlign: 'center',
-        }}>
+        <h2 style={{ fontFamily: T.display, fontWeight: 800, fontSize: 22, color: T.text, margin: '0 0 8px', letterSpacing: '-0.03em', textAlign: 'center' }}>
+          You&apos;ve earned your certificate!
+        </h2>
+        <p style={{ fontFamily: T.font, fontSize: 14, color: T.muted, lineHeight: 1.7, margin: '0 0 24px', textAlign: 'center' }}>
           Before we engrave your name on the certificate, please enter your
           full name below so it looks great on LinkedIn and beyond.
         </p>
-
-        {/* Name input */}
         <div style={{ marginBottom: 14 }}>
           <div style={{ fontFamily: T.mono, fontSize: 10, color: T.dim, letterSpacing: '0.09em', marginBottom: 7, textTransform: 'uppercase' }}>
             Your Full Name
           </div>
           <input
-            ref={nameRef}
-            type="text"
-            value={nameInput}
+            ref={nameRef} type="text" value={nameInput}
             onChange={e => { setNameInput(e.target.value); setNameError(''); }}
             onKeyDown={e => { if (e.key === 'Enter') handleNameSave(); }}
-            placeholder="e.g. Alex Johnson"
-            maxLength={80}
+            placeholder="e.g. Alex Johnson" maxLength={80}
             style={{
               width: '100%', boxSizing: 'border-box',
               background: T.bg, border: `1.5px solid ${nameError ? T.error + '60' : T.border}`,
@@ -253,27 +351,17 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
             onFocus={e => { e.target.style.borderColor = T.accent; e.target.style.boxShadow = `0 0 0 3px rgba(129,140,248,0.12)`; }}
             onBlur={e => { e.target.style.borderColor = nameError ? T.error + '60' : T.border; e.target.style.boxShadow = 'none'; }}
           />
-          {nameError && (
-            <p style={{ fontFamily: T.font, fontSize: 12, color: T.error, margin: '6px 0 0' }}>{nameError}</p>
-          )}
+          {nameError && <p style={{ fontFamily: T.font, fontSize: 12, color: T.error, margin: '6px 0 0' }}>{nameError}</p>}
         </div>
-
-        {/* Save button */}
-        <button
-          onClick={handleNameSave}
-          disabled={nameSaving}
-          style={{
-            width: '100%', padding: '13px 0',
-            background: nameSaving ? T.bg3 : T.accent, border: 'none',
-            borderRadius: 10, color: '#fff', fontFamily: T.font,
-            fontWeight: 700, fontSize: 14, cursor: nameSaving ? 'default' : 'pointer',
-            transition: 'all 0.15s',
-          }}
-        >
+        <button onClick={handleNameSave} disabled={nameSaving} style={{
+          width: '100%', padding: '13px 0',
+          background: nameSaving ? T.bg3 : T.accent, border: 'none',
+          borderRadius: 10, color: '#fff', fontFamily: T.font,
+          fontWeight: 700, fontSize: 14, cursor: nameSaving ? 'default' : 'pointer',
+          transition: 'all 0.15s',
+        }}>
           {nameSaving ? 'Saving…' : 'Continue to Certificate →'}
         </button>
-
-        {/* Back link */}
         <button onClick={onBack} style={{
           display: 'block', width: '100%', marginTop: 12, padding: '8px 0',
           background: 'none', border: 'none', fontFamily: T.font, fontSize: 13,
@@ -286,22 +374,29 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
     </div>
   );
 
+  /* ── Certificate page ──────────────────────────────────── */
   return (
     <div style={{ minHeight: '100vh', background: T.bg, padding: 'clamp(24px,5vw,48px) clamp(16px,5vw,24px)' }}>
 
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&display=swap');
+
         @keyframes certReveal {
-          from { opacity: 0; transform: translateY(20px) scale(0.97); }
+          from { opacity: 0; transform: translateY(24px) scale(0.97); }
           to   { opacity: 1; transform: translateY(0)    scale(1);    }
         }
-        @keyframes floatName {
-          0%, 100% { transform: translateY(0); }
-          50%       { transform: translateY(-3px); }
+        @keyframes shimmerName {
+          0%   { background-position: 0% 50%; }
+          50%  { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes floatSeal {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50%       { transform: translateY(-2px) rotate(0.5deg); }
         }
 
-        /* ── Print / Save as PDF ─────────────────────────────────────── */
+        /* ────────────────── PRINT / SAVE AS PDF ────────────────── */
         @media print {
-          /* Zero page margins — we control all spacing ourselves */
           @page { size: A4 landscape; margin: 0; }
 
           html, body {
@@ -313,7 +408,6 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
 
           .no-print { display: none !important; }
 
-          /* Wrapper fills the whole page, centres the card */
           .cert-wrapper {
             background: #fff !important;
             min-height: 100vh !important;
@@ -323,55 +417,86 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
             justify-content: center !important;
           }
 
-          /* Card: scale down to guarantee single-page fit,
-             reduce padding so content breathes without overflowing */
+          /* ── Card shell ── */
           .cert-card {
-            background: #fff !important;
-            border: 2pt solid #c7d2fe !important;
-            box-shadow: none !important;
-            animation: none !important;
-            border-radius: 10px !important;
-            padding: 20px 36px !important;
-            width: 920px !important;
-            max-width: 920px !important;
+            background: #ffffff !important;
+            border: 2pt solid #4f46e5 !important;
+            /* Double-rule frame effect */
+            box-shadow:
+              inset 0 0 0 4px #ffffff,
+              inset 0 0 0 7px #c7d2fe !important;
+            border-radius: 8px !important;
+            padding: 26px 44px 20px !important;
+            width: 940px !important;
+            max-width: 940px !important;
             zoom: 0.73 !important;
             page-break-inside: avoid !important;
+            animation: none !important;
           }
 
+          /* Rainbow bar stays */
           .cert-top-bar {
             background: linear-gradient(90deg,#818cf8,#6366f1,#a855f7,#ec4899,#f59e0b,#10b981,#3b82f6) !important;
             -webkit-print-color-adjust: exact; print-color-adjust: exact;
           }
-
-          .cert-glow, .cert-blob { display: none !important; }
+          /* Decorative blobs & glow — screen only */
+          .cert-blob, .cert-glow { display: none !important; }
+          /* Corner ornaments in light indigo for print */
           .cert-corner { border-color: #a5b4fc !important; }
 
-          /* Collapse vertical gaps for print */
-          .cert-card .cert-divider       { margin-top: 14px !important; margin-bottom: 14px !important; }
-          .cert-card .cert-divider-grad  { margin-top: 12px !important; margin-bottom: 12px !important; }
-          .cert-card .cert-approval-row  { margin-bottom: 14px !important; }
+          /* ── Typography overrides — dark text on white ── */
+          .cert-presented-by   { color: #6b7280 !important; }
+          .cert-issuer-name    { color: #4338ca !important; -webkit-text-fill-color: #4338ca !important; background: none !important; }
+          .cert-section-label  { color: #6366f1 !important; }
+          .cert-course-title   { color: #1e1b4b !important; -webkit-text-fill-color: #1e1b4b !important; background: none !important; }
+          .cert-course-sub     { color: #6b7280 !important; }
+          .cert-certifies-text { color: #9ca3af !important; }
+          .cert-name           { color: #1e1b4b !important; -webkit-text-fill-color: #1e1b4b !important;
+                                  background: none !important; background-size: unset !important; animation: none !important; }
 
-          /* Text colours for white background */
-          .cert-heading-label { color: #6366f1 !important; }
-          .cert-title         { color: #1e1b4b !important; -webkit-text-fill-color: #1e1b4b !important; }
-          .cert-subtitle      { color: #4b5563 !important; }
-          .cert-certifies     { color: #6b7280 !important; }
-          .cert-name          { color: #1e1b4b !important; -webkit-text-fill-color: #1e1b4b !important; animation: none !important; }
-          .cert-body-text     { color: #374151 !important; }
-          .cert-divider       { background: #e5e7eb !important; }
-          .cert-divider-grad  { background: linear-gradient(90deg,transparent,#a5b4fc,transparent) !important; }
-          .cert-footer-label  { color: #9ca3af !important; }
-          .cert-footer-value  { color: #374151 !important; }
-          .cert-footer-rule   { border-color: #e5e7eb !important; }
-          .cert-issuer-badge  { background: #f5f3ff !important; border-color: #c4b5fd !important; }
-          .cert-issuer-text   { color: #6b7280 !important; }
-          .cert-issuer-name   { color: #4f46e5 !important; -webkit-text-fill-color: #4f46e5 !important; }
+          /* Grade/score badges */
+          .cert-grade-row      { margin-bottom: 16px !important; }
+          .cert-grade-badge    { background: #fffbeb !important; border-color: #fbbf24 !important; }
+          .cert-grade-letter   { color: #92400e !important; }
+          .cert-grade-label    { color: #b45309 !important; }
+          .cert-score-badge    { background: #eef2ff !important; border-color: #818cf8 !important; }
+          .cert-score-value    { color: #3730a3 !important; }
+          .cert-score-label    { color: #4f46e5 !important; }
+
+          .cert-body-text      { color: #374151 !important; }
+          .cert-divider        { background: #e5e7eb !important; }
+          .cert-ornament-line  { stroke: #a5b4fc !important; }
+
+          /* Approval pills */
+          .cert-approval-label { color: #9ca3af !important; }
+          .cert-pill           { border-color: rgba(0,0,0,0.1) !important; }
+          .cert-pill-text      { color: inherit !important; }
+
+          /* Signature row */
+          .cert-sig-name       { color: #4338ca !important; border-bottom-color: #c7d2fe !important; }
+          .cert-sig-sub        { color: #9ca3af !important; }
+          .cert-date-value     { color: #374151 !important; border-bottom-color: #e5e7eb !important; }
+          .cert-date-label     { color: #9ca3af !important; }
+
+          /* Footer */
+          .cert-footer-rule    { border-top-color: #e5e7eb !important; }
+          .cert-footer-label   { color: #9ca3af !important; }
+          .cert-footer-value   { color: #374151 !important; }
+          .cert-footer-verify  { color: #4f46e5 !important; }
+
+          /* Tighten spacing for print */
+          .cert-crest-wrap     { margin-bottom: 12px !important; }
+          .cert-issuer-pill    { margin-bottom: 14px !important; }
+          .cert-divider-wrap   { margin: 10px 0 !important; }
+          .cert-name-wrap      { margin-bottom: 6px !important; }
+          .cert-approval-row   { margin-bottom: 12px !important; }
+          .cert-sig-row        { margin-bottom: 8px !important; }
         }
       `}</style>
 
-      <div className="cert-wrapper" style={{ maxWidth: 780, margin: '0 auto' }}>
+      <div className="cert-wrapper" style={{ maxWidth: 820, margin: '0 auto' }}>
 
-        {/* ── Back button ── */}
+        {/* Back */}
         <button onClick={onBack} className="no-print" style={{
           display: 'flex', alignItems: 'center', gap: 6,
           background: 'none', border: 'none', color: T.muted,
@@ -382,294 +507,304 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
           onMouseLeave={e => e.currentTarget.style.color = T.muted}
         >← Back to Course</button>
 
-        {/* ══════════════ CERTIFICATE CARD ══════════════ */}
+        {/* ══════════════════ CERTIFICATE CARD ══════════════════ */}
         <div className="cert-card" style={{
-          background: 'linear-gradient(160deg, #0f0f16 0%, #0b0b11 55%, #100d1a 100%)',
-          border: `1.5px solid ${ACCENT}35`,
-          borderRadius: 20,
-          padding: 'clamp(36px,6vw,60px) clamp(28px,6vw,56px)',
-          boxShadow: `0 0 0 1px rgba(255,255,255,0.04), 0 40px 80px rgba(0,0,0,0.55), 0 0 100px ${ACCENT}0f`,
-          animation: 'certReveal 0.8s cubic-bezier(0.22,1,0.36,1) both',
           position: 'relative', overflow: 'hidden',
+          background: 'linear-gradient(145deg, #09090f 0%, #0b0913 45%, #0d0a18 100%)',
+          border: `1.5px solid rgba(129,140,248,0.28)`,
+          borderRadius: 18,
+          padding: 'clamp(40px,6vw,60px) clamp(32px,6vw,60px) clamp(32px,5vw,48px)',
+          boxShadow: [
+            '0 0 0 1px rgba(255,255,255,0.03)',
+            '0 40px 90px rgba(0,0,0,0.65)',
+            `0 0 120px rgba(129,140,248,0.08)`,
+            `inset 0 1px 0 rgba(255,255,255,0.06)`,
+          ].join(','),
+          animation: 'certReveal 0.85s cubic-bezier(0.22,1,0.36,1) both',
         }}>
 
-          {/* Rainbow top bar */}
+          {/* Rainbow spectrum top bar */}
           <div className="cert-top-bar" style={{
             position: 'absolute', top: 0, left: 0, right: 0, height: 4,
             background: `linear-gradient(90deg, ${MOD_COLORS[0]}, ${MOD_COLORS[1]}, ${MOD_COLORS[2]}, ${MOD_COLORS[3]}, ${MOD_COLORS[4]}, ${MOD_COLORS[5]}, ${MOD_COLORS[6]})`,
-          }} />
+          }}/>
+          {/* Thin double-rule below bar */}
+          <div style={{
+            position: 'absolute', top: 6, left: 0, right: 0, height: '1px',
+            background: `rgba(129,140,248,0.15)`,
+          }}/>
 
           {/* Ambient glow blobs */}
           <div className="cert-blob" style={{
-            position: 'absolute', top: -80, right: -80, width: 320, height: 320, borderRadius: '50%',
-            background: `radial-gradient(circle, ${ACCENT}0e 0%, transparent 70%)`, pointerEvents: 'none',
-          }} />
+            position: 'absolute', top: -100, right: -100, width: 400, height: 400, borderRadius: '50%',
+            background: `radial-gradient(circle, rgba(129,140,248,0.07) 0%, transparent 70%)`, pointerEvents: 'none',
+          }}/>
           <div className="cert-blob" style={{
-            position: 'absolute', bottom: -80, left: -60, width: 280, height: 280, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(168,85,247,0.06) 0%, transparent 70%)', pointerEvents: 'none',
-          }} />
+            position: 'absolute', bottom: -80, left: -80, width: 360, height: 360, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(168,85,247,0.05) 0%, transparent 70%)', pointerEvents: 'none',
+          }}/>
+          <div className="cert-blob" style={{
+            position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%,-50%)',
+            width: 500, height: 300, borderRadius: '50%',
+            background: 'radial-gradient(ellipse, rgba(99,102,241,0.04) 0%, transparent 70%)', pointerEvents: 'none',
+          }}/>
 
-          {/* Corner ornaments */}
-          {[{ top:18,left:18 },{ top:18,right:18 },{ bottom:18,left:18 },{ bottom:18,right:18 }].map((pos,i) => (
+          {/* Corner ornaments — more elaborate */}
+          {[
+            { top: 20, left: 20 },
+            { top: 20, right: 20 },
+            { bottom: 20, left: 20 },
+            { bottom: 20, right: 20 },
+          ].map((pos, i) => (
             <div key={i} className="cert-corner" style={{
-              position: 'absolute', ...pos, width: 26, height: 26,
-              borderTop:    i < 2  ? `1.5px solid ${ACCENT}40` : undefined,
-              borderBottom: i >= 2 ? `1.5px solid ${ACCENT}40` : undefined,
-              borderLeft:   i % 2 === 0 ? `1.5px solid ${ACCENT}40` : undefined,
-              borderRight:  i % 2 === 1 ? `1.5px solid ${ACCENT}40` : undefined,
-            }} />
+              position: 'absolute', ...pos, width: 32, height: 32,
+              borderTop:    i < 2  ? `2px solid rgba(129,140,248,0.35)` : undefined,
+              borderBottom: i >= 2 ? `2px solid rgba(129,140,248,0.35)` : undefined,
+              borderLeft:   i % 2 === 0 ? `2px solid rgba(129,140,248,0.35)` : undefined,
+              borderRight:  i % 2 === 1 ? `2px solid rgba(129,140,248,0.35)` : undefined,
+              borderRadius: i === 0 ? '4px 0 0 0' : i === 1 ? '0 4px 0 0' : i === 2 ? '0 0 0 4px' : '0 0 4px 0',
+            }}/>
+          ))}
+          {/* Extra inner corner accents */}
+          {[
+            { top: 26, left: 26 },
+            { top: 26, right: 26 },
+            { bottom: 26, left: 26 },
+            { bottom: 26, right: 26 },
+          ].map((pos, i) => (
+            <div key={`inner-${i}`} style={{
+              position: 'absolute', ...pos, width: 8, height: 8,
+              borderTop:    i < 2  ? `1px solid rgba(129,140,248,0.20)` : undefined,
+              borderBottom: i >= 2 ? `1px solid rgba(129,140,248,0.20)` : undefined,
+              borderLeft:   i % 2 === 0 ? `1px solid rgba(129,140,248,0.20)` : undefined,
+              borderRight:  i % 2 === 1 ? `1px solid rgba(129,140,248,0.20)` : undefined,
+            }}/>
           ))}
 
+          {/* ════════ CERTIFICATE CONTENT ════════ */}
           <div style={{ textAlign: 'center', position: 'relative' }}>
 
-            {/* ── Crest ── */}
-            <div style={{ marginBottom: 20 }}>
-              <Crest color={ACCENT} />
+            {/* ── Crest emblem ── */}
+            <div className="cert-crest-wrap" style={{ marginBottom: 16 }}>
+              <PremiumCrest color={ACCENT} size={108}/>
             </div>
 
-            {/* ── Issued by badge ── */}
-            <div className="cert-issuer-badge" style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: 'rgba(129,140,248,0.08)', border: `1px solid ${ACCENT}30`,
-              borderRadius: 20, padding: '6px 18px', marginBottom: 20,
+            {/* ── Issued by pill ── */}
+            <div className="cert-issuer-pill" style={{
+              display: 'inline-flex', alignItems: 'center', gap: 10,
+              background: 'rgba(129,140,248,0.07)',
+              border: `1px solid rgba(129,140,248,0.22)`,
+              borderRadius: 24, padding: '6px 20px', marginBottom: 18,
             }}>
-              <span className="cert-issuer-text" style={{ fontFamily: T.mono, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.15em' }}>
-                PRESENTED BY
-              </span>
+              <span className="cert-presented-by" style={{
+                fontFamily: T.mono, fontSize: 8,
+                color: 'rgba(255,255,255,0.28)', letterSpacing: '0.2em',
+              }}>PRESENTED BY</span>
               <span className="cert-issuer-name" style={{
-                fontFamily: T.display, fontSize: 14, fontWeight: 900, letterSpacing: '0.05em',
-                background: `linear-gradient(135deg, #c7d2fe 0%, ${ACCENT} 100%)`,
+                fontFamily: '"Playfair Display", Georgia, serif',
+                fontSize: 15, fontWeight: 700, letterSpacing: '0.06em',
+                background: `linear-gradient(135deg, #e0e7ff 0%, ${ACCENT} 60%, #c4b5fd 100%)`,
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              }}>
-                Prompten
-              </span>
+              }}>Prompten</span>
             </div>
 
-            {/* ── Certificate of Completion ── */}
-            <div className="cert-heading-label" style={{
-              fontFamily: T.mono, fontSize: 10, color: `${ACCENT}80`,
-              letterSpacing: '0.3em', marginBottom: 8,
+            {/* ── Certificate of Completion label ── */}
+            <div className="cert-section-label" style={{
+              fontFamily: T.mono, fontSize: 9,
+              color: `${ACCENT}75`, letterSpacing: '0.32em', marginBottom: 10,
             }}>
               CERTIFICATE OF COMPLETION
             </div>
 
-            <div className="cert-title" style={{
-              fontFamily: T.display, fontWeight: 900,
-              fontSize: 'clamp(24px,4.5vw,36px)',
-              letterSpacing: '-0.03em', marginBottom: 6, lineHeight: 1.1,
-              background: `linear-gradient(135deg, #fff 20%, ${ACCENT} 100%)`,
+            {/* ── Course title ── */}
+            <div className="cert-course-title" style={{
+              fontFamily: '"Playfair Display", Georgia, serif',
+              fontWeight: 900, fontSize: 'clamp(28px,4.5vw,40px)',
+              letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 8,
+              background: `linear-gradient(135deg, #ffffff 0%, ${ACCENT2} 55%, #c4b5fd 100%)`,
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             }}>
               Prompt Engineering Mastery
             </div>
 
-            <div className="cert-subtitle" style={{
+            <div className="cert-course-sub" style={{
               fontFamily: T.font, fontStyle: 'italic',
-              fontSize: 14, color: 'rgba(255,255,255,0.38)', marginBottom: 28,
+              fontSize: 13, color: 'rgba(255,255,255,0.32)', marginBottom: 18,
+              letterSpacing: '0.02em',
             }}>
-              Zero to Mastery · Full Course · {TOTAL_LESSONS} Lessons · {MODULES.length} Modules
+              Zero to Mastery &nbsp;·&nbsp; {TOTAL_LESSONS} Lessons &nbsp;·&nbsp; {MODULES.length} Modules &nbsp;·&nbsp; Full Programme
             </div>
 
-            {/* ── Thin gradient divider ── */}
-            <div className="cert-divider-grad" style={{
-              width: 60, height: 1, margin: '0 auto 28px',
-              background: `linear-gradient(90deg, transparent, ${ACCENT}70, transparent)`,
-            }} />
+            {/* ── Ornament divider ── */}
+            <div className="cert-divider-wrap" style={{ margin: '12px 0 18px' }}>
+              <OrnamentDivider color={ACCENT} width={340}/>
+            </div>
 
-            {/* ── Certifies that ── */}
-            <div className="cert-certifies" style={{
-              fontFamily: T.mono, fontSize: 9, color: 'rgba(255,255,255,0.28)',
-              letterSpacing: '0.25em', marginBottom: 10,
+            {/* ── This certifies that ── */}
+            <div className="cert-certifies-text" style={{
+              fontFamily: T.mono, fontSize: 8,
+              color: 'rgba(255,255,255,0.22)', letterSpacing: '0.28em', marginBottom: 10,
             }}>
               THIS CERTIFIES THAT
             </div>
 
             {/* ── Recipient name ── */}
-            <div className="cert-name" style={{
-              fontFamily: T.display, fontStyle: 'italic',
-              fontSize: 'clamp(30px,6vw,54px)',
-              letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 22,
-              animation: 'floatName 6s ease-in-out infinite',
-              background: `linear-gradient(135deg, #fff 0%, ${ACCENT} 100%)`,
-              backgroundSize: '200% auto',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-            }}>
-              {user.name}
+            <div className="cert-name-wrap" style={{ marginBottom: 12 }}>
+              <div className="cert-name" style={{
+                fontFamily: '"Playfair Display", Georgia, serif',
+                fontStyle: 'italic', fontWeight: 700,
+                fontSize: 'clamp(34px,6vw,58px)',
+                letterSpacing: '-0.01em', lineHeight: 1.1,
+                background: `linear-gradient(120deg, #ffffff 0%, ${ACCENT2} 40%, #e0e7ff 70%, ${ACCENT} 100%)`,
+                backgroundSize: '200% auto',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                animation: 'shimmerName 8s ease-in-out infinite',
+              }}>
+                {user.name}
+              </div>
             </div>
 
-            {/* ── Body text ── */}
+            {/* ── Grade + Score badges ── */}
+            <GradeRow grade={grade} pct={pct}/>
+
+            {/* ── Body description ── */}
             <p className="cert-body-text" style={{
-              fontFamily: T.font, fontSize: 'clamp(12px,1.8vw,14px)',
-              color: 'rgba(255,255,255,0.42)', lineHeight: 1.8,
-              margin: '0 auto 32px', maxWidth: 500,
+              fontFamily: T.font,
+              fontSize: 'clamp(12px,1.7vw,13.5px)',
+              color: 'rgba(255,255,255,0.38)',
+              lineHeight: 1.85, margin: '0 auto 22px',
+              maxWidth: 560,
             }}>
-              has successfully completed the comprehensive <em>Prompt Engineering Mastery</em> programme,
-              demonstrating proficiency in the design, evaluation, and deployment of effective prompts
-              across leading AI language models, in accordance with best practices established by the
-              AI industry's foremost research organisations.
+              has successfully completed the comprehensive{' '}
+              <em style={{ color: 'rgba(255,255,255,0.55)' }}>Prompt Engineering Mastery</em>{' '}
+              programme, demonstrating expert proficiency in the design, evaluation,
+              and deployment of effective prompts across leading AI language models,
+              in accordance with best practices established by the AI industry&apos;s
+              foremost research organisations.
             </p>
 
-            {/* ── Wide divider ── */}
+            {/* ── Full-width divider ── */}
             <div className="cert-divider" style={{
-              height: 1, background: 'rgba(255,255,255,0.07)', marginBottom: 28,
-            }} />
+              height: 1, background: 'rgba(255,255,255,0.06)', marginBottom: 18,
+            }}/>
 
             {/* ── Approval badges ── */}
             <div className="cert-approval-row" style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexWrap: 'wrap', gap: 8, marginBottom: 28,
+              flexWrap: 'wrap', gap: 8, marginBottom: 24,
             }}>
-              <span style={{ fontFamily: T.mono, fontSize: 8, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.16em' }}>
-                CURRICULUM APPROVED BY
-              </span>
-              {/* Anthropic official A-mark */}
-              <ApprovalPill label="Anthropic" bg="rgba(217,119,6,0.10)" border="rgba(217,119,6,0.30)" textColor="#D97706"
-                icon={
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="#D97706">
-                    <path d="M7 3L11.5 3L4.5 21L0 21Z"/>
-                    <path d="M12.5 3L17 3L24 21L19.5 21Z"/>
-                  </svg>
-                }
+              <span className="cert-approval-label" style={{
+                fontFamily: T.mono, fontSize: 8,
+                color: 'rgba(255,255,255,0.20)', letterSpacing: '0.18em',
+              }}>CURRICULUM APPROVED BY</span>
+
+              <ApprovalPill label="Anthropic" bg="rgba(217,119,6,0.10)" border="rgba(217,119,6,0.32)" textColor="#D97706"
+                icon={<svg viewBox="0 0 24 24" width="12" height="12" fill="#D97706"><path d="M7 3L11.5 3L4.5 21L0 21Z"/><path d="M12.5 3L17 3L24 21L19.5 21Z"/></svg>}
               />
-              {/* OpenAI official swirl */}
-              <ApprovalPill label="OpenAI" bg="rgba(255,255,255,0.05)" border="rgba(255,255,255,0.18)" textColor="rgba(255,255,255,0.80)"
-                icon={
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="rgba(255,255,255,0.85)">
-                    <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9 6.065 6.065 0 0 0-4.512-2.01 6.046 6.046 0 0 0-5.975 5.13 5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .511 4.91 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.77.77 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.77.77 0 0 0 .388.677l5.815 3.354-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.896zm16.597 3.855l-5.833-3.387L15.12 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.104v-5.678a.79.79 0 0 0-.407-.666zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.41 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135l-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.376-3.454l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365l2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/>
-                  </svg>
-                }
+              <ApprovalPill label="OpenAI" bg="rgba(255,255,255,0.04)" border="rgba(255,255,255,0.16)" textColor="rgba(255,255,255,0.75)"
+                icon={<svg viewBox="0 0 24 24" width="12" height="12" fill="rgba(255,255,255,0.80)"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9 6.065 6.065 0 0 0-4.512-2.01 6.046 6.046 0 0 0-5.975 5.13 5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .511 4.91 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.77.77 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.77.77 0 0 0 .388.677l5.815 3.354-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.896zm16.597 3.855l-5.833-3.387L15.12 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.104v-5.678a.79.79 0 0 0-.407-.666zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.41 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135l-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.376-3.454l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365l2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/></svg>}
               />
-              {/* ChatGPT — OpenAI swirl in brand green */}
               <ApprovalPill label="ChatGPT" bg="rgba(16,163,127,0.10)" border="rgba(16,163,127,0.30)" textColor="#10a37f"
-                icon={
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="#10a37f">
-                    <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9 6.065 6.065 0 0 0-4.512-2.01 6.046 6.046 0 0 0-5.975 5.13 5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .511 4.91 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.77.77 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.77.77 0 0 0 .388.677l5.815 3.354-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.896zm16.597 3.855l-5.833-3.387L15.12 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.104v-5.678a.79.79 0 0 0-.407-.666zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.41 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135l-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.376-3.454l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365l2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/>
-                  </svg>
-                }
+                icon={<svg viewBox="0 0 24 24" width="12" height="12" fill="#10a37f"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9 6.065 6.065 0 0 0-4.512-2.01 6.046 6.046 0 0 0-5.975 5.13 5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .511 4.91 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.77.77 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.77.77 0 0 0 .388.677l5.815 3.354-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.896zm16.597 3.855l-5.833-3.387L15.12 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.104v-5.678a.79.79 0 0 0-.407-.666zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.41 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135l-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.376-3.454l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365l2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/></svg>}
               />
-              {/* Google official G mark */}
               <ApprovalPill label="Google" bg="rgba(66,133,244,0.10)" border="rgba(66,133,244,0.28)" textColor="#4285F4"
-                icon={
-                  <svg viewBox="0 0 24 24" width="13" height="13">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                  </svg>
-                }
+                icon={<svg viewBox="0 0 24 24" width="12" height="12"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>}
               />
             </div>
 
-            {/* ── Signature + seal row ── */}
-            <div style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
-              flexWrap: 'wrap', gap: 20, marginBottom: 20,
+            {/* ── Thin ornament line before signature ── */}
+            <div className="cert-divider-wrap" style={{ margin: '0 0 20px' }}>
+              <OrnamentDivider color={ACCENT} width={280} light/>
+            </div>
+
+            {/* ── Signature · Seal · Date row ── */}
+            <div className="cert-sig-row" style={{
+              display: 'flex', justifyContent: 'space-between',
+              alignItems: 'flex-end', flexWrap: 'wrap', gap: 16, marginBottom: 20,
             }}>
-              {/* Signature left */}
-              <div style={{ textAlign: 'left', minWidth: 140 }}>
-                <div style={{
-                  fontFamily: "'Georgia', serif", fontStyle: 'italic',
-                  fontSize: 22, color: `${ACCENT}cc`, letterSpacing: '0.02em',
-                  borderBottom: `1px solid rgba(255,255,255,0.12)`,
-                  paddingBottom: 6, marginBottom: 6,
-                }}>
-                  Prompten
-                </div>
-                <div style={{ fontFamily: T.mono, fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.14em' }}>
-                  AUTHORISED SIGNATURE
-                </div>
+              {/* Signature — left */}
+              <div style={{ textAlign: 'left', minWidth: 150 }}>
+                <div className="cert-sig-name" style={{
+                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontStyle: 'italic', fontSize: 24,
+                  color: ACCENT2, letterSpacing: '0.03em',
+                  borderBottom: `1px solid rgba(129,140,248,0.20)`,
+                  paddingBottom: 7, marginBottom: 6,
+                }}>Prompten</div>
+                <div className="cert-sig-sub" style={{
+                  fontFamily: T.mono, fontSize: 7.5,
+                  color: 'rgba(255,255,255,0.22)', letterSpacing: '0.16em',
+                }}>AUTHORISED SIGNATURE</div>
               </div>
 
-              {/* Official Prompten stamp */}
-              <div style={{ textAlign: 'center' }}>
-                <svg width="86" height="86" viewBox="0 0 86 86">
-                  {/* Outer ring */}
-                  <circle cx="43" cy="43" r="40" fill="none" stroke={`${ACCENT}50`} strokeWidth="1.5"/>
-                  {/* Inner ring */}
-                  <circle cx="43" cy="43" r="33" fill={`${ACCENT}07`} stroke={`${ACCENT}35`} strokeWidth="1"/>
-                  {/* "PROMPTEN · CERTIFIED ·" text on arc */}
-                  <defs>
-                    <path id="topArc" d="M 7,43 A 36,36 0 0,1 79,43"/>
-                    <path id="botArc" d="M 10,49 A 36,36 0 0,0 76,49"/>
-                  </defs>
-                  <text fontFamily="'Courier New', monospace" fontSize="7" fill={`${ACCENT}90`} fontWeight="700" letterSpacing="2.2">
-                    <textPath href="#topArc" startOffset="50%" textAnchor="middle">PROMPTEN · CERTIFIED ·</textPath>
-                  </text>
-                  <text fontFamily="'Courier New', monospace" fontSize="7" fill={`${ACCENT}70`} fontWeight="700" letterSpacing="2.2">
-                    <textPath href="#botArc" startOffset="50%" textAnchor="middle">PROMPT ENGINEERING · 2026</textPath>
-                  </text>
-                  {/* Decorative star dots at 3, 6, 9, 12 o'clock on outer ring */}
-                  {[0, 90, 180, 270].map((deg, i) => {
-                    const r = (deg - 90) * Math.PI / 180;
-                    return <circle key={i} cx={43 + 40 * Math.cos(r)} cy={43 + 40 * Math.sin(r)} r="2" fill={`${ACCENT}80`}/>;
-                  })}
-                  {/* Central P lettermark */}
-                  <text x="43" y="50" textAnchor="middle"
-                    fontFamily="Georgia, 'Times New Roman', serif"
-                    fontWeight="bold" fontSize="26" fill={`${ACCENT}cc`} letterSpacing="-0.5"
-                  >P</text>
-                  {/* Thin horizontal rule under P */}
-                  <line x1="32" y1="54" x2="54" y2="54" stroke={`${ACCENT}40`} strokeWidth="0.8"/>
-                </svg>
+              {/* Official seal — centre, with subtle float animation */}
+              <div style={{ textAlign: 'center', animation: 'floatSeal 7s ease-in-out infinite' }}>
+                <OfficialSeal color={ACCENT} size={92}/>
               </div>
 
-              {/* Date right — only render once cert is loaded */}
-              <div style={{ textAlign: 'right', minWidth: 140 }}>
-                <div style={{
-                  fontFamily: T.font, fontSize: 14, color: 'rgba(255,255,255,0.70)',
-                  fontWeight: 600,
-                  borderBottom: `1px solid rgba(255,255,255,0.12)`,
-                  paddingBottom: 6, marginBottom: 6,
-                }}>
-                  {issuedDate || '—'}
-                </div>
-                <div style={{ fontFamily: T.mono, fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.14em' }}>
-                  DATE OF ISSUE
-                </div>
+              {/* Issue date — right */}
+              <div style={{ textAlign: 'right', minWidth: 150 }}>
+                <div className="cert-date-value" style={{
+                  fontFamily: T.font, fontSize: 14, fontWeight: 600,
+                  color: 'rgba(255,255,255,0.65)',
+                  borderBottom: `1px solid rgba(255,255,255,0.10)`,
+                  paddingBottom: 7, marginBottom: 6,
+                }}>{issuedDate || '—'}</div>
+                <div className="cert-date-label" style={{
+                  fontFamily: T.mono, fontSize: 7.5,
+                  color: 'rgba(255,255,255,0.22)', letterSpacing: '0.16em',
+                }}>DATE OF ISSUE</div>
               </div>
             </div>
 
-            {/* ── Footer: cert ID + verify URL ── */}
+            {/* ── Footer: credential ID + verify URL ── */}
             <div className="cert-footer-rule" style={{
-              borderTop: '1px solid rgba(255,255,255,0.06)',
-              paddingTop: 16,
+              borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 14,
               display: 'flex', justifyContent: 'space-between',
               alignItems: 'center', flexWrap: 'wrap', gap: 8,
             }}>
               {cert && (
                 <div style={{ textAlign: 'left' }}>
-                  <div className="cert-footer-label" style={{ fontFamily: T.mono, fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.15em', marginBottom: 3 }}>CREDENTIAL ID</div>
-                  <div className="cert-footer-value" style={{ fontFamily: T.mono, fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 700 }}>{cert.certId}</div>
+                  <div className="cert-footer-label" style={{ fontFamily: T.mono, fontSize: 7.5, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.16em', marginBottom: 3 }}>
+                    CREDENTIAL ID
+                  </div>
+                  <div className="cert-footer-value" style={{ fontFamily: T.mono, fontSize: 10.5, color: 'rgba(255,255,255,0.45)', fontWeight: 700 }}>
+                    {cert.certId}
+                  </div>
                 </div>
               )}
               {verifyUrl && (
                 <div style={{ textAlign: 'center' }}>
-                  <div className="cert-footer-label" style={{ fontFamily: T.mono, fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.14em', marginBottom: 3 }}>VERIFY AT</div>
-                  <div className="cert-footer-value" style={{ fontFamily: T.mono, fontSize: 10, color: `${ACCENT}80` }}>
+                  <div className="cert-footer-label" style={{ fontFamily: T.mono, fontSize: 7.5, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.14em', marginBottom: 3 }}>
+                    VERIFY AT
+                  </div>
+                  <div className="cert-footer-verify" style={{ fontFamily: T.mono, fontSize: 9.5, color: `${ACCENT}75` }}>
                     {displayUrl(verifyUrl)}
                   </div>
                 </div>
               )}
               {issuedDate && (
                 <div style={{ textAlign: 'right' }}>
-                  <div className="cert-footer-label" style={{ fontFamily: T.mono, fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.15em', marginBottom: 3 }}>ISSUED</div>
-                  <div className="cert-footer-value" style={{ fontFamily: T.mono, fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{issuedDate.toUpperCase()}</div>
+                  <div className="cert-footer-label" style={{ fontFamily: T.mono, fontSize: 7.5, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.16em', marginBottom: 3 }}>
+                    ISSUED
+                  </div>
+                  <div className="cert-footer-value" style={{ fontFamily: T.mono, fontSize: 10.5, color: 'rgba(255,255,255,0.45)' }}>
+                    {issuedDate.toUpperCase()}
+                  </div>
                 </div>
               )}
             </div>
 
-          </div>{/* /textAlign center */}
+          </div>{/* /centre */}
         </div>{/* /cert-card */}
 
-        {/* ══════════ ACTION BUTTONS (hidden on print) ══════════ */}
+        {/* ══════════ ACTION BUTTONS ══════════ */}
         <div className="no-print" style={{
           display: 'flex', gap: 10, marginTop: 24,
           flexWrap: 'wrap', justifyContent: 'center',
         }}>
-          {/* LinkedIn */}
-          <LinkedInBtn cert={cert} verifyUrl={verifyUrl} />
+          <LinkedInBtn cert={cert} verifyUrl={verifyUrl}/>
 
-          {/* Save as PDF */}
           <button onClick={() => window.print()} style={{
             display: 'inline-flex', alignItems: 'center', gap: 7,
             background: T.bg1, border: `1px solid ${T.border2}`,
@@ -685,7 +820,6 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
             Save as PDF
           </button>
 
-          {/* Copy verify link */}
           {cert && (
             <button onClick={copyVerifyLink} style={{
               display: 'inline-flex', alignItems: 'center', gap: 7,
@@ -699,7 +833,6 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
             </button>
           )}
 
-          {/* Verify online */}
           {cert && (
             <a href={verifyUrl} target="_blank" rel="noreferrer" style={{
               display: 'inline-flex', alignItems: 'center', gap: 7,
@@ -728,7 +861,7 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
           </p>
         )}
 
-        <div className="no-print" style={{ height: 40 }} />
+        <div className="no-print" style={{ height: 40 }}/>
       </div>
     </div>
   );
