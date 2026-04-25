@@ -334,7 +334,7 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
             padding: 20px 36px !important;
             width: 920px !important;
             max-width: 920px !important;
-            zoom: 0.76 !important;
+            zoom: 0.73 !important;
             page-break-inside: avoid !important;
           }
 
@@ -728,7 +728,7 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
           </p>
         )}
 
-        <div style={{ height: 40 }} />
+        <div className="no-print" style={{ height: 40 }} />
       </div>
     </div>
   );
