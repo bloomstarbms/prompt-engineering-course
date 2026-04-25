@@ -126,10 +126,27 @@ function SplashScreen() {
   );
 }
 
+const VALID_PAGES = new Set(['landing', 'auth', 'course', 'quiz', 'cert', 'profile']);
+
 export default function CourseApp() {
   const { user, userId, progress, ready, login, register, logout, updateProgress, updateProfile, updatePassword } = useAuth();
 
-  const [page,        setPage]        = useState('landing');
+  // Restore page from sessionStorage so a browser refresh keeps the user
+  // on the same page (profile, course, cert, etc.) instead of always going
+  // back to the landing screen.  We validate the value so a stale/corrupt
+  // entry never puts the app in an unknown state.
+  const [page, setPageRaw] = useState(() => {
+    if (typeof window === 'undefined') return 'landing';
+    const saved = sessionStorage.getItem('pe_page');
+    return saved && VALID_PAGES.has(saved) ? saved : 'landing';
+  });
+
+  // Keep sessionStorage in sync whenever page changes.
+  const setPage = useCallback((p) => {
+    setPageRaw(p);
+    sessionStorage.setItem('pe_page', p);
+  }, []);
+
   const [activeM,     setActiveM]     = useState(0);
   const [activeL,     setActiveL]     = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -143,6 +160,15 @@ export default function CourseApp() {
     const t = setTimeout(() => setSplashDone(true), 1300);
     return () => clearTimeout(t);
   }, []);
+
+  /* Auto-redirect: once auth resolves, a logged-in user sitting on the
+     landing or auth page should be taken straight into the course so they
+     never have to click "Continue" just to get back to where they were. */
+  useEffect(() => {
+    if (ready && user && (page === 'landing' || page === 'auth')) {
+      setPage('course');
+    }
+  }, [ready, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* responsive */
   useEffect(() => {

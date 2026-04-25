@@ -71,6 +71,27 @@ async function migrateLegacyUser(supabaseUserId, legacyUser) {
   }
 }
 
+/* Maps Supabase raw error codes / messages → friendly user-facing strings */
+function friendlyAuthError(error) {
+  const msg  = (error?.message || '').toLowerCase();
+  const code = (error?.code    || '').toLowerCase();
+
+  if (code === 'over_email_send_rate_limit' || msg.includes('rate limit') || msg.includes('email rate'))
+    return 'Too many sign-up attempts. Please wait a few minutes and try again.';
+  if (code === 'email_not_confirmed' || msg.includes('not confirmed') || msg.includes('confirm'))
+    return 'Please confirm your email address before logging in. Check your inbox for the confirmation link.';
+  if (code === 'invalid_credentials' || msg.includes('invalid login') || msg.includes('invalid credentials'))
+    return 'Incorrect email or password.';
+  if (code === 'user_already_exists' || msg.includes('already registered') || msg.includes('already been registered'))
+    return 'An account with this email already exists. Try logging in instead.';
+  if (code === 'weak_password' || msg.includes('weak password') || msg.includes('password should be'))
+    return 'Password is too short. Please use at least 6 characters.';
+  if (msg.includes('network') || msg.includes('fetch'))
+    return 'Network error. Please check your connection and try again.';
+  // Fall back to Supabase's own message rather than swallowing it silently
+  return error?.message || 'Something went wrong. Please try again.';
+}
+
 export function useAuth() {
   const [user,     setUser]     = useState(null);   // { email, name, bio, avatarUrl }
   const [userId,   setUserId]   = useState(null);   // Supabase auth UUID
@@ -193,8 +214,8 @@ export function useAuth() {
     //    who hasn't been migrated yet (same device/browser they registered on)
     const legacyUser = getLegacyUser(email, password);
     if (!legacyUser) {
-      // Not a legacy user either — return the original Supabase error
-      return { ok: false, error: 'Incorrect email or password.' };
+      // Not a legacy user either — return a friendly version of the Supabase error
+      return { ok: false, error: friendlyAuthError(error) };
     }
 
     // 3. Legacy user found and password verified — create their Supabase account
@@ -228,7 +249,7 @@ export function useAuth() {
       password,
       options: { data: { name: name.trim() } },
     });
-    if (error) return { ok: false, error: error.message };
+    if (error) return { ok: false, error: friendlyAuthError(error) };
 
     // Create profile row immediately after signup
     if (data.user) {
@@ -302,7 +323,7 @@ export function useAuth() {
     });
     if (verifyErr) return { ok: false, error: 'Current password is incorrect.' };
     const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) return { ok: false, error: error.message };
+    if (error) return { ok: false, error: friendlyAuthError(error) };
     return { ok: true };
   }, [user]);
 
