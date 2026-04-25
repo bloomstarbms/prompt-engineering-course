@@ -10,19 +10,15 @@ export async function POST(req) {
 
     const normalEmail = email.toLowerCase().trim();
 
-    /* Deduplicate — don't record the same event twice for the same user */
-    const { data: existing } = await supabase
-      .from('course_events')
-      .select('id')
-      .eq('email', normalEmail)
-      .eq('event', event)
-      .maybeSingle();
-
-    if (existing) return Response.json({ ok: true, duplicate: true });
-
+    /* Upsert with onConflict — idempotent by design.
+       The unique index on (email, event) means duplicate calls are silently
+       ignored instead of racing: no SELECT → INSERT TOCTOU window. */
     const { error } = await supabase
       .from('course_events')
-      .insert({ event, email: normalEmail, name: name || '' });
+      .upsert(
+        { event, email: normalEmail, name: name || '' },
+        { onConflict: 'email,event', ignoreDuplicates: true }
+      );
 
     if (error) throw error;
     return Response.json({ ok: true });

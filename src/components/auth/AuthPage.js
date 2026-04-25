@@ -77,9 +77,10 @@ export default function AuthPage({ onAuth }) {
           Zero to Mastery
         </h1>
         <p style={{ fontFamily: T.font, fontSize: 14, color: T.muted, lineHeight: 1.6 }}>
-          {mode === 'login'
-            ? 'Welcome back. Continue where you left off.'
-            : 'Create your account to track progress and earn a certificate.'}
+          {mode === 'login'    ? 'Welcome back. Continue where you left off.'
+         : mode === 'register' ? 'Create your account to track progress and earn a certificate.'
+         : mode === 'forgot'   ? 'Enter your email to receive a password reset link.'
+         : /* confirm */         'Almost there — check your inbox to activate your account.'}
         </p>
       </div>
 
