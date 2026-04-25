@@ -320,7 +320,7 @@ export function useAuth() {
     if (!userId) return { ok: false, error: 'Not logged in.' };
     try {
       await upsertProfile(userId, { name, bio: bio ?? '', avatarUrl: avatarUrl ?? '' });
-      setUser(prev => ({ ...prev, name, bio: bio ?? '', avatarUrl: avatarUrl ?? '' }));
+      setUser(prev => ({ ...prev, name, bio: bio ?? '', avatarUrl: avatarUrl ?? '', nameIsDefault: false }));
       return { ok: true };
     } catch (e) {
       return { ok: false, error: e.message };
