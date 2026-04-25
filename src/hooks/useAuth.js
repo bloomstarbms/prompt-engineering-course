@@ -78,7 +78,7 @@ function friendlyAuthError(error) {
 
   if (code === 'over_email_send_rate_limit' || msg.includes('rate limit') || msg.includes('email rate'))
     return 'Too many sign-up attempts. Please wait a few minutes and try again.';
-  if (code === 'email_not_confirmed' || msg.includes('not confirmed') || msg.includes('confirm'))
+  if (code === 'email_not_confirmed' || msg.includes('email not confirmed') || msg.includes('not confirmed'))
     return 'Please confirm your email address before logging in. Check your inbox for the confirmation link.';
   if (code === 'invalid_credentials' || msg.includes('invalid login') || msg.includes('invalid credentials'))
     return 'Incorrect email or password.';
