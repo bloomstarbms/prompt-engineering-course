@@ -1,7 +1,75 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { getProfile, upsertProfile, loadProgress, saveProgress } from '@/lib/db';
+import { getProfile, upsertProfile, loadProgress, saveProgress, issueCertificate } from '@/lib/db';
+
+// ── Legacy localStorage helpers (migration only — read but never write) ───
+const LS_USERS    = 'pe_users';
+const LS_CERTS    = 'pe_certs';
+const lsGet = (key) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch { return null; } };
+const lsProgressKey = (email) => `pe_progress_${email}`;
+
+function legacyHashPassword(password) {
+  let hash = 0;
+  const str = password + 'pe_salt_2025';
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+/* Returns the old localStorage user IF the password matches, else null */
+function getLegacyUser(email, password) {
+  if (typeof window === 'undefined') return null;
+  const users = lsGet(LS_USERS) || {};
+  const key = email.toLowerCase().trim();
+  const user = users[key];
+  if (!user) return null;
+  if (user.passwordHash !== legacyHashPassword(password)) return null;
+  return user;
+}
+
+/* Migrate old localStorage data to Supabase — runs once, silently */
+async function migrateLegacyUser(supabaseUserId, legacyUser) {
+  try {
+    // 1. Profile
+    await upsertProfile(supabaseUserId, {
+      name:      legacyUser.name      || '',
+      bio:       legacyUser.bio       || '',
+      avatarUrl: legacyUser.avatarUrl || '',
+    });
+
+    // 2. Progress
+    const legacyProgress = lsGet(lsProgressKey(legacyUser.email));
+    if (legacyProgress) {
+      await saveProgress(supabaseUserId, {
+        completed:  legacyProgress.completed  || {},
+        quizScores: legacyProgress.quizScores || {},
+        lastLesson: legacyProgress.lastLesson || { m: 0, l: 0 },
+      });
+    }
+
+    // 3. Certificate (preserve the original certId so old verify links keep working)
+    const allCerts = lsGet(LS_CERTS) || {};
+    const legacyCert = Object.values(allCerts).find(c => c.email === legacyUser.email.toLowerCase());
+    if (legacyCert) {
+      await issueCertificate(supabaseUserId, {
+        name:          legacyCert.name,
+        email:         legacyCert.email,
+        pct:           legacyCert.pct           || 0,
+        grade:         legacyCert.grade         || 'F',
+        moduleScores:  legacyCert.moduleScores  || [],
+        totalCorrect:  legacyCert.totalCorrect  || 0,
+        totalPossible: legacyCert.totalPossible || 0,
+        existingCertId: legacyCert.certId,  // preserve so old verify links still work
+      });
+    }
+  } catch (e) {
+    console.warn('[migration] partial failure — some data may not have migrated', e);
+  }
+}
 
 export function useAuth() {
   const [user,     setUser]     = useState(null);   // { email, name, bio, avatarUrl }
@@ -52,8 +120,36 @@ export function useAuth() {
 
   // ── LOGIN ────────────────────────────────────────────────────────────
   const handleLogin = useCallback(async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { ok: false, error: error.message };
+    // 1. Try Supabase auth first (normal path for all new accounts)
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) return { ok: true };
+
+    // 2. Supabase login failed — check if this is an old localStorage user
+    //    who hasn't been migrated yet (same device/browser they registered on)
+    const legacyUser = getLegacyUser(email, password);
+    if (!legacyUser) {
+      // Not a legacy user either — return the original Supabase error
+      return { ok: false, error: 'Incorrect email or password.' };
+    }
+
+    // 3. Legacy user found and password verified — create their Supabase account
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
+    if (signUpError) {
+      // If signup fails (e.g. email already in Supabase but different password),
+      // fall back to the original error
+      return { ok: false, error: 'Incorrect email or password.' };
+    }
+
+    // 4. Migrate their data to Supabase in the background
+    if (signUpData.user) {
+      await migrateLegacyUser(signUpData.user.id, legacyUser);
+    }
+
+    // 5. If email confirmation is required, the session won't exist yet
+    if (!signUpData.session) {
+      return { ok: true, needsConfirm: true };
+    }
+
     return { ok: true };
   }, []);
 

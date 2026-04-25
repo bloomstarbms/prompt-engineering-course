@@ -81,12 +81,13 @@ export async function saveProgress(userId, progress) {
 
 // ── CERTIFICATES ──────────────────────────────────────────────────────────
 
-export async function issueCertificate(userId, { name, email, pct, grade, moduleScores, totalCorrect, totalPossible }) {
+export async function issueCertificate(userId, { name, email, pct, grade, moduleScores, totalCorrect, totalPossible, existingCertId }) {
   // Return existing cert if already issued
   const existing = await getUserCert(userId);
   if (existing) return existing;
 
-  const certId = generateCertId(email);
+  // Use the preserved cert ID (migration) or generate a new one
+  const certId = existingCertId || generateCertId(email);
   const { data, error } = await supabase
     .from('certificates')
     .insert({
