@@ -144,7 +144,34 @@ export function useAuth() {
       //
       // Sequential calls share the same lock window and avoid this race.
       const profile = await getProfile(authUser.id);
-      const prog    = await loadProgress(authUser.id);
+      let   prog    = await loadProgress(authUser.id);
+
+      // ── Auto-migrate localStorage → Supabase (one-time, silent) ─────────────
+      // Users who completed the course before Supabase was introduced have their
+      // progress + cert stored only in localStorage on their original device.
+      // When they log in on *any* device, if Supabase has no progress yet but
+      // localStorage has data (on this device), push it up now so every device
+      // sees the correct state going forward.  The migration is idempotent —
+      // issueCertificate() is a no-op if a cert already exists.
+      const hasSupabaseProgress = Object.keys(prog.completed || {}).length > 0;
+      if (!hasSupabaseProgress && typeof window !== 'undefined') {
+        const legacyProgress = lsGet(lsProgressKey(authUser.email));
+        const allCerts       = lsGet(LS_CERTS) || {};
+        const legacyCert     = Object.values(allCerts).find(
+          c => c.email === authUser.email.toLowerCase()
+        );
+        if (legacyProgress || legacyCert) {
+          const legacyUser = {
+            email:     authUser.email,
+            name:      profile?.name      || authUser.user_metadata?.name || '',
+            bio:       profile?.bio       || '',
+            avatarUrl: profile?.avatar_url || '',
+          };
+          await migrateLegacyUser(authUser.id, legacyUser);
+          // Reload from Supabase so state reflects the newly migrated data
+          prog = await loadProgress(authUser.id);
+        }
+      }
 
       // Name priority: saved profile → auth metadata (set at signup) → email prefix.
       // The metadata fallback handles the case where the profiles insert failed
