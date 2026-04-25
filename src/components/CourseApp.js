@@ -13,7 +13,7 @@ import QuizView        from '@/components/quiz/QuizView';
 import CertificatePage from '@/components/cert/CertificatePage';
 import ProfilePage     from '@/components/profile/ProfilePage';
 import { getUserCert } from '@/lib/db';
-import { LessonBody, ModPill, AccentBtn } from '@/components/ui';
+import { LessonBody, ModPill } from '@/components/ui';
 
 
 /* ─── Pendulum Splash Screen ──────────────────────────────────────────── */
@@ -343,14 +343,21 @@ export default function CourseApp() {
     />
   );
 
-  if (page === 'cert') return (
-    <CertificatePage
-      user={user}
-      userId={userId}
-      quizScores={quizScores}
-      onBack={() => { setHasCert(true); router.push('/course'); }}
-    />
-  );
+  // Guard: only let users who have earned the cert access /cert.
+  // Without this, anyone could navigate to /cert directly and issue themselves
+  // a certificate with partial/zero quiz scores.
+  if (page === 'cert') {
+    if (!canSeeCert) { router.replace('/course'); return null; }
+    return (
+      <CertificatePage
+        user={user}
+        userId={userId}
+        quizScores={quizScores}
+        updateProfile={updateProfile}
+        onBack={() => { setHasCert(true); router.push('/course'); }}
+      />
+    );
+  }
 
   if (page === 'profile') return (
     <ProfilePage

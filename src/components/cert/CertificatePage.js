@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { T, MOD_COLORS, getGrade } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS } from '@/data/courseData';
 import { issueCertificate, getUserCert } from '@/lib/db';
@@ -102,9 +102,20 @@ function ApprovalPill({ label, bg, border, textColor, icon }) {
 }
 
 /* ── Main page ───────────────────────────────────────────────────────── */
-export default function CertificatePage({ user, userId, quizScores, onBack }) {
+export default function CertificatePage({ user, userId, quizScores, onBack, updateProfile }) {
   const [cert, setCert]     = useState(null);
   const [copied, setCopied] = useState(false);
+
+  /* Gate: if the user's display name is just their email prefix, ask them
+     to set a real name BEFORE we issue the cert — it would look bad to
+     engrave "john.doe42" on a certificate. Once they save a proper name
+     we flip nameConfirmed and the cert-issuance effect fires. */
+  const [nameConfirmed, setNameConfirmed] = useState(!user?.nameIsDefault);
+  const [nameInput,     setNameInput]     = useState('');
+  const [nameSaving,    setNameSaving]    = useState(false);
+  const [nameError,     setNameError]     = useState('');
+  const nameRef = useRef(null);
+  useEffect(() => { if (!nameConfirmed && nameRef.current) nameRef.current.focus(); }, [nameConfirmed]);
 
   /* Keep score calc only for issueCertificate metadata — not displayed */
   const totalCorrect  = Object.values(quizScores).reduce((a, v) => a + v.score, 0);
@@ -121,8 +132,9 @@ export default function CertificatePage({ user, userId, quizScores, onBack }) {
     return { tag: m.tag, title: m.title, color: m.color || MOD_COLORS[mi], pct: t > 0 ? Math.round(c / t * 100) : null };
   });
 
+  // Issue (or fetch existing) cert — only once the name has been confirmed
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !nameConfirmed) return;
     async function fetchOrIssueCert() {
       try {
         const existing = await getUserCert(userId);
@@ -140,7 +152,27 @@ export default function CertificatePage({ user, userId, quizScores, onBack }) {
       }
     }
     fetchOrIssueCert();
-  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userId, nameConfirmed]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* Save a proper display name before issuing the cert */
+  async function handleNameSave() {
+    const trimmed = nameInput.trim();
+    if (!trimmed) { setNameError('Please enter your full name.'); return; }
+    if (trimmed.length < 2) { setNameError('Name must be at least 2 characters.'); return; }
+    setNameSaving(true);
+    setNameError('');
+    try {
+      if (updateProfile) {
+        await updateProfile({ name: trimmed, bio: user.bio || '', avatarUrl: user.avatarUrl || '' });
+      }
+      // Optimistically update user object — cert will use this name
+      user.name = trimmed;
+      setNameConfirmed(true);
+    } catch {
+      setNameError('Could not save name. Please try again.');
+    }
+    setNameSaving(false);
+  }
 
   function copyVerifyLink() {
     if (!cert) return;
@@ -153,13 +185,106 @@ export default function CertificatePage({ user, userId, quizScores, onBack }) {
   /* Clean verify URL — cert is stored in Supabase so anyone can look it up
      by ID without any embedded data. The VerifyClient still has a ?d= fallback
      for pre-migration legacy certs, but new certs don't need it. */
-  const verifyUrl = cert ? `/verify/${cert.certId}` : '';
-  const issuedDate = cert
+  const verifyUrl   = cert ? `/verify/${cert.certId}` : null;
+  // Keep issuedDate null until cert loads — avoids showing today's date
+  // as the issue date before the real cert is fetched from Supabase.
+  const issuedDate  = cert
     ? new Date(cert.issuedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    : null;
 
   /* Accent colour for the certificate — a rich indigo/violet */
   const ACCENT = '#818cf8';
+
+  /* ── Name gate — shown when user has no real name set ─────────────── */
+  if (!nameConfirmed) return (
+    <div style={{
+      minHeight: '100vh', background: T.bg,
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      padding: 'clamp(24px,5vw,48px) clamp(16px,5vw,24px)',
+      fontFamily: T.font,
+    }}>
+      <div style={{
+        width: '100%', maxWidth: 480,
+        background: T.bg2, border: `1px solid ${T.border2}`,
+        borderRadius: 16, padding: 'clamp(28px,5vw,40px)',
+      }}>
+        {/* Trophy icon */}
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: 56, height: 56, borderRadius: 14,
+            background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.30)',
+            fontSize: 26,
+          }}>🏆</div>
+        </div>
+        <h2 style={{
+          fontFamily: T.display, fontWeight: 800, fontSize: 22,
+          color: T.text, margin: '0 0 8px', letterSpacing: '-0.03em', textAlign: 'center',
+        }}>You&apos;ve earned your certificate!</h2>
+        <p style={{
+          fontFamily: T.font, fontSize: 14, color: T.muted, lineHeight: 1.7,
+          margin: '0 0 24px', textAlign: 'center',
+        }}>
+          Before we engrave your name on the certificate, please enter your
+          full name below so it looks great on LinkedIn and beyond.
+        </p>
+
+        {/* Name input */}
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontFamily: T.mono, fontSize: 10, color: T.dim, letterSpacing: '0.09em', marginBottom: 7, textTransform: 'uppercase' }}>
+            Your Full Name
+          </div>
+          <input
+            ref={nameRef}
+            type="text"
+            value={nameInput}
+            onChange={e => { setNameInput(e.target.value); setNameError(''); }}
+            onKeyDown={e => { if (e.key === 'Enter') handleNameSave(); }}
+            placeholder="e.g. Alex Johnson"
+            maxLength={80}
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              background: T.bg, border: `1.5px solid ${nameError ? T.error + '60' : T.border}`,
+              borderRadius: 10, padding: '12px 14px',
+              fontFamily: T.font, fontSize: 14, color: T.text,
+              outline: 'none', transition: 'border-color 0.15s',
+            }}
+            onFocus={e => { e.target.style.borderColor = T.accent; e.target.style.boxShadow = `0 0 0 3px rgba(129,140,248,0.12)`; }}
+            onBlur={e => { e.target.style.borderColor = nameError ? T.error + '60' : T.border; e.target.style.boxShadow = 'none'; }}
+          />
+          {nameError && (
+            <p style={{ fontFamily: T.font, fontSize: 12, color: T.error, margin: '6px 0 0' }}>{nameError}</p>
+          )}
+        </div>
+
+        {/* Save button */}
+        <button
+          onClick={handleNameSave}
+          disabled={nameSaving}
+          style={{
+            width: '100%', padding: '13px 0',
+            background: nameSaving ? T.bg3 : T.accent, border: 'none',
+            borderRadius: 10, color: '#fff', fontFamily: T.font,
+            fontWeight: 700, fontSize: 14, cursor: nameSaving ? 'default' : 'pointer',
+            transition: 'all 0.15s',
+          }}
+        >
+          {nameSaving ? 'Saving…' : 'Continue to Certificate →'}
+        </button>
+
+        {/* Back link */}
+        <button onClick={onBack} style={{
+          display: 'block', width: '100%', marginTop: 12, padding: '8px 0',
+          background: 'none', border: 'none', fontFamily: T.font, fontSize: 13,
+          color: T.dim, cursor: 'pointer', transition: 'color 0.15s', textAlign: 'center',
+        }}
+          onMouseEnter={e => e.currentTarget.style.color = T.muted}
+          onMouseLeave={e => e.currentTarget.style.color = T.dim}
+        >← Back to course</button>
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg, padding: 'clamp(24px,5vw,48px) clamp(16px,5vw,24px)' }}>
@@ -488,7 +613,7 @@ export default function CertificatePage({ user, userId, quizScores, onBack }) {
                 </svg>
               </div>
 
-              {/* Date right */}
+              {/* Date right — only render once cert is loaded */}
               <div style={{ textAlign: 'right', minWidth: 140 }}>
                 <div style={{
                   fontFamily: T.font, fontSize: 14, color: 'rgba(255,255,255,0.70)',
@@ -496,7 +621,7 @@ export default function CertificatePage({ user, userId, quizScores, onBack }) {
                   borderBottom: `1px solid rgba(255,255,255,0.12)`,
                   paddingBottom: 6, marginBottom: 6,
                 }}>
-                  {issuedDate}
+                  {issuedDate || '—'}
                 </div>
                 <div style={{ fontFamily: T.mono, fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.14em' }}>
                   DATE OF ISSUE
@@ -517,16 +642,20 @@ export default function CertificatePage({ user, userId, quizScores, onBack }) {
                   <div className="cert-footer-value" style={{ fontFamily: T.mono, fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 700 }}>{cert.certId}</div>
                 </div>
               )}
-              <div style={{ textAlign: 'center' }}>
-                <div className="cert-footer-label" style={{ fontFamily: T.mono, fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.14em', marginBottom: 3 }}>VERIFY AT</div>
-                <div className="cert-footer-value" style={{ fontFamily: T.mono, fontSize: 10, color: `${ACCENT}80` }}>
-                  {displayUrl(verifyUrl)}
+              {verifyUrl && (
+                <div style={{ textAlign: 'center' }}>
+                  <div className="cert-footer-label" style={{ fontFamily: T.mono, fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.14em', marginBottom: 3 }}>VERIFY AT</div>
+                  <div className="cert-footer-value" style={{ fontFamily: T.mono, fontSize: 10, color: `${ACCENT}80` }}>
+                    {displayUrl(verifyUrl)}
+                  </div>
                 </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div className="cert-footer-label" style={{ fontFamily: T.mono, fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.15em', marginBottom: 3 }}>ISSUED</div>
-                <div className="cert-footer-value" style={{ fontFamily: T.mono, fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{issuedDate.toUpperCase()}</div>
-              </div>
+              )}
+              {issuedDate && (
+                <div style={{ textAlign: 'right' }}>
+                  <div className="cert-footer-label" style={{ fontFamily: T.mono, fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.15em', marginBottom: 3 }}>ISSUED</div>
+                  <div className="cert-footer-value" style={{ fontFamily: T.mono, fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{issuedDate.toUpperCase()}</div>
+                </div>
+              )}
             </div>
 
           </div>{/* /textAlign center */}
