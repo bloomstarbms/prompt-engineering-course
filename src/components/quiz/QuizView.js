@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { T, getGrade } from '@/lib/theme';
 import { QUIZZES, PASS_THRESHOLD } from '@/data/courseData';
-import { AccentBtn } from '@/components/ui';
 
 /* ─── Letter badge A / B / C / D ───────────────────────────────────────────── */
 function LetterBadge({ letter, selected, correct, incorrect, color }) {

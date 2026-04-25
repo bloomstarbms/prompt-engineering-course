@@ -442,8 +442,8 @@ function ErrorBox({ children }) {
     <div style={{
       background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.22)',
       borderRadius: 9, padding: '10px 14px',
-      fontFamily: 'var(--font, sans-serif)', fontSize: 13,
-      color: '#f87171', lineHeight: 1.5,
+      fontFamily: T.font, fontSize: 13,
+      color: T.error, lineHeight: 1.5,
     }}>{children}</div>
   );
 }
@@ -452,12 +452,12 @@ function SubmitBtn({ loading, children }) {
   return (
     <button type="submit" disabled={loading} style={{
       marginTop: 4,
-      background: loading ? '#18181c' : '#818cf8',
+      background: loading ? T.bg2 : T.accent,
       border: 'none',
-      color: loading ? '#52525b' : '#fff',
+      color: loading ? T.dim : '#fff',
       padding: '13px', borderRadius: 10,
       cursor: loading ? 'default' : 'pointer',
-      fontFamily: 'var(--font, sans-serif)', fontWeight: 700, fontSize: 15,
+      fontFamily: T.font, fontWeight: 700, fontSize: 15,
       letterSpacing: '-0.01em', transition: 'all 0.15s',
       boxShadow: loading ? 'none' : '0 4px 14px rgba(99,102,241,0.40)',
       width: '100%',
