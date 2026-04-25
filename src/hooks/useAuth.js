@@ -132,14 +132,19 @@ export function useAuth() {
 
   async function _hydrateUserOnce(authUser) {
     try {
-      // Fetch profile and progress in parallel — faster and ensures React 18
-      // automatic batching applies to all three state setters below, so
-      // CourseApp's position-restore effect sees the loaded progress in the
-      // same render cycle that it sees the new user value.
-      const [profile, prog] = await Promise.all([
-        getProfile(authUser.id),
-        loadProgress(authUser.id),
-      ]);
+      // Fetch profile and progress SEQUENTIALLY — not in parallel.
+      //
+      // Why: both calls internally invoke getSession() to attach the JWT to the
+      // request.  Running them concurrently means two simultaneous getSession()
+      // calls compete for Supabase's Web Locks API auth-token mutex.  When one
+      // "steals" the lock, the other's promise hangs indefinitely (no error,
+      // no resolution), so `await hydrateUser(...)` never completes and
+      // `setReady(true)` in the outer finally block never fires — the splash
+      // screen stays up permanently on any normal page reload.
+      //
+      // Sequential calls share the same lock window and avoid this race.
+      const profile = await getProfile(authUser.id);
+      const prog    = await loadProgress(authUser.id);
 
       // Name priority: saved profile → auth metadata (set at signup) → email prefix.
       // The metadata fallback handles the case where the profiles insert failed

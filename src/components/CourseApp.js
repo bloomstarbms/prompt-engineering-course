@@ -165,6 +165,23 @@ export default function CourseApp() {
     if (ready && !splashDone) setSplashDone(true);
   }, [ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Failsafe: force splash off after 10 s ────────────────────────────
+  // If auth hydration hangs (e.g. a Supabase network error or a Web Locks
+  // edge case that isn't caught), `ready` may never become true.  Without
+  // this timeout the user is permanently stuck on the loading screen.
+  // After 10 s we set forceReady=true which bypasses the ready guard, letting
+  // the app render — the !user branch redirects to /auth so the user can log
+  // in again and always make progress.
+  const [forceReady, setForceReady] = useState(false);
+  useEffect(() => {
+    if (ready) return; // already resolved — no need for the failsafe
+    const t = setTimeout(() => {
+      setSplashDone(true);
+      setForceReady(true);
+    }, 10000);
+    return () => clearTimeout(t);
+  }, [ready]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Course position ──────────────────────────────────────────────────
   // Initialise directly from progress so navigating back to /course after
   // visiting /profile shows the correct lesson without an extra render.
@@ -314,7 +331,7 @@ export default function CourseApp() {
   /* ── Splash ─────────────────────────────────────────────────────────
      Show until auth resolves AND the 1.3s minimum has elapsed.
      On client-side navigation splashDone starts as true so this is skipped. */
-  if (!ready || !splashDone) return <SplashScreen />;
+  if ((!ready && !forceReady) || !splashDone) return <SplashScreen />;
 
   /* ── URL-driven routing ─────────────────────────────────────────────
      Each section has its own path; the auto-redirect effect above handles
