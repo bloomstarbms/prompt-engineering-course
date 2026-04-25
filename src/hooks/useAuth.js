@@ -240,36 +240,39 @@ export function useAuth() {
   }, []);
 
   // ── REGISTER ─────────────────────────────────────────────────────────
+  // Uses a server-side API route that calls Supabase Admin API with
+  // email_confirm:true — so no confirmation email is sent and the user
+  // can sign in immediately after registration.
   const handleRegister = useCallback(async (name, email, password) => {
     if (!supabase) return { ok: false, error: 'Service unavailable. Please try again later.' };
-    // Store name in auth user metadata so it survives even when the profiles
-    // table insert fails before email confirmation (no session = RLS blocks it).
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name: name.trim() } },
-    });
-    if (error) return { ok: false, error: friendlyAuthError(error) };
 
-    // Create profile row immediately after signup
-    if (data.user) {
-      try {
-        await upsertProfile(data.user.id, { name, bio: '', avatarUrl: '' });
-      } catch { /* profile will be created on next login if this fails */ }
-
-      // Track enrollment (fire-and-forget)
-      fetch('/api/track', {
-        method: 'POST',
+    // 1. Create the user via our admin API route (no email confirmation needed)
+    let res, json;
+    try {
+      res  = await fetch('/api/auth/register', {
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event: 'enroll', email, name }),
-      }).catch(() => {});
+        body:    JSON.stringify({ name, email, password }),
+      });
+      json = await res.json();
+    } catch {
+      return { ok: false, error: 'Network error. Please check your connection and try again.' };
     }
 
-    // Supabase may require email confirmation — if so, session won't exist yet
-    if (!data.session) {
-      return { ok: true, needsConfirm: true };
-    }
-    return { ok: true };
+    if (!res.ok) return { ok: false, error: json.error || 'Registration failed. Please try again.' };
+
+    // 2. Sign in immediately — the account is already confirmed
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError) return { ok: false, error: friendlyAuthError(signInError) };
+
+    // 3. Track enrollment (fire-and-forget)
+    fetch('/api/track', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ event: 'enroll', email, name }),
+    }).catch(() => {});
+
+    return { ok: true }; // no needsConfirm — user is logged in right away
   }, []);
 
   // ── LOGOUT ───────────────────────────────────────────────────────────
