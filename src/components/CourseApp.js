@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { useAuthCtx } from '@/providers/AuthProvider';
 import { T, getGrade } from '@/lib/theme';
 import { MODULES, QUIZZES, TOTAL_LESSONS, PASS_THRESHOLD } from '@/data/courseData';
 import { isLessonUnlocked } from '@/lib/lessonUnlock';
@@ -126,49 +127,65 @@ function SplashScreen() {
   );
 }
 
-const VALID_PAGES = new Set(['landing', 'auth', 'course', 'quiz', 'cert', 'profile']);
-
 export default function CourseApp() {
-  const { user, userId, progress, ready, login, register, logout, updateProgress, updateProfile, updatePassword } = useAuth();
+  // ── Auth state comes from the shared context (lives in layout.js).
+  // On client-side navigation, ready/user/progress are already populated
+  // because the context never unmounts — no re-auth, no splash on nav.
+  const { user, userId, progress, ready, login, register, logout, updateProgress, updateProfile, updatePassword } = useAuthCtx();
 
-  // Restore page from sessionStorage so a browser refresh keeps the user
-  // on the same page (profile, course, cert, etc.) instead of always going
-  // back to the landing screen.  We validate the value so a stale/corrupt
-  // entry never puts the app in an unknown state.
-  const [page, setPageRaw] = useState(() => {
-    if (typeof window === 'undefined') return 'landing';
-    const saved = sessionStorage.getItem('pe_page');
-    return saved && VALID_PAGES.has(saved) ? saved : 'landing';
-  });
+  // ── URL-based routing — each section has its own path ──────────────
+  const router   = useRouter();
+  const pathname = usePathname();
 
-  // Keep sessionStorage in sync whenever page changes.
+  const page = useMemo(() => {
+    const map = { '/course': 'course', '/profile': 'profile', '/cert': 'cert', '/auth': 'auth', '/quiz': 'quiz' };
+    return map[pathname] || 'landing';
+  }, [pathname]);
+
+  // Navigate by updating the URL (adds to browser history — back button works).
+  // Use router.replace for auth redirects so they don't pollute history.
   const setPage = useCallback((p) => {
-    setPageRaw(p);
-    sessionStorage.setItem('pe_page', p);
-  }, []);
+    router.push(p === 'landing' ? '/' : `/${p}`);
+  }, [router]);
 
-  const [activeM,     setActiveM]     = useState(0);
-  const [activeL,     setActiveL]     = useState(0);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobile,    setIsMobile]    = useState(false);
-  const [splashDone,  setSplashDone]  = useState(false);
-  const contentRef        = useRef(null);
-  const progressRestored  = useRef(false); // prevents double-restore on re-renders
+  // ── Splash screen ────────────────────────────────────────────────────
+  // On the very first page load, auth hasn't resolved yet → show the
+  // pendulum for at least 1.3 s.  On client-side navigation, ready is
+  // already true (auth context persists) → skip the splash entirely.
+  const [splashDone, setSplashDone] = useState(ready); // instant if pre-loaded
 
-  /* minimum splash display — 1.3 s so the pendulum is always visible */
   useEffect(() => {
+    if (splashDone) return; // already done — client-side navigation case
     const t = setTimeout(() => setSplashDone(true), 1300);
     return () => clearTimeout(t);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* Auto-redirect: once auth resolves, a logged-in user sitting on the
-     landing or auth page should be taken straight into the course so they
-     never have to click "Continue" just to get back to where they were. */
+  // Also clear splash immediately if auth resolves before the timer fires
   useEffect(() => {
-    if (ready && user && (page === 'landing' || page === 'auth')) {
-      setPage('course');
+    if (ready && !splashDone) setSplashDone(true);
+  }, [ready]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Course position ──────────────────────────────────────────────────
+  // Initialise directly from progress so navigating back to /course after
+  // visiting /profile shows the correct lesson without an extra render.
+  const [activeM, setActiveM] = useState(() => progress?.lastLesson?.m ?? 0);
+  const [activeL, setActiveL] = useState(() => progress?.lastLesson?.l ?? 0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile,    setIsMobile]    = useState(false);
+  const contentRef       = useRef(null);
+  const progressRestored = useRef(false);
+
+  /* Auto-redirect ─────────────────────────────────────────────────────
+     Logged-in user on landing/auth → push to /course.
+     Logged-out user on a protected page → push to /auth.           */
+  useEffect(() => {
+    if (!ready) return;
+    if (user && (page === 'landing' || page === 'auth')) {
+      router.replace('/course');
+    } else if (!user && !['landing', 'auth'].includes(page)) {
+      router.replace('/auth');
     }
-  }, [ready, user]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ready, user, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* responsive */
   useEffect(() => {
@@ -180,10 +197,10 @@ export default function CourseApp() {
 
   useEffect(() => { if (!isMobile) setSidebarOpen(true); }, [isMobile]);
 
-  /* restore last position on login — runs once per session
-     Depends on BOTH user and progress so it fires after hydrateUser's
-     parallel load resolves (progress and user are set in the same React
-     batch, so the effect sees the correct lastLesson on first run). */
+  /* restore last position after login (first-load path) or if the user
+     lands directly on /course after a fresh page load.  The effect re-runs
+     whenever user or progress changes so it catches the post-hydration batch
+     where both become available at the same time. */
   useEffect(() => {
     if (!user) { progressRestored.current = false; return; }
     if (progressRestored.current) return;
@@ -294,21 +311,25 @@ export default function CourseApp() {
     return mode === 'register' ? register(name, email, password) : login(email, password);
   }
 
-  /* loading — show splash until auth resolves AND minimum time has elapsed */
+  /* ── Splash ─────────────────────────────────────────────────────────
+     Show until auth resolves AND the 1.3s minimum has elapsed.
+     On client-side navigation splashDone starts as true so this is skipped. */
   if (!ready || !splashDone) return <SplashScreen />;
 
-  /* routing */
+  /* ── URL-driven routing ─────────────────────────────────────────────
+     Each section has its own path; the auto-redirect effect above handles
+     auth guards so we never reach a protected branch with user === null. */
   if (page === 'landing') return (
     <Landing
-      onStart={() => setPage(user ? 'course' : 'auth')}
-      onLogin={() => setPage(user ? 'course' : 'auth')}
+      onStart={() => router.push(user ? '/course' : '/auth')}
+      onLogin={() => router.push(user ? '/course' : '/auth')}
     />
   );
 
   if (page === 'auth' || !user) return (
     <AuthPage onAuth={async (mode, name, email, password) => {
       const result = await handleAuth(mode, name, email, password);
-      if (result.ok && !result.needsConfirm) setPage('course');
+      if (result.ok && !result.needsConfirm) router.push('/course');
       return result;
     }} />
   );
@@ -318,7 +339,7 @@ export default function CourseApp() {
       mod={mod} lKey={lKey}
       prevScore={quizScores[lKey]}
       onDone={onQuizDone}
-      onBack={() => setPage('course')}
+      onBack={() => router.push('/course')}
     />
   );
 
@@ -327,7 +348,7 @@ export default function CourseApp() {
       user={user}
       userId={userId}
       quizScores={quizScores}
-      onBack={() => { setHasCert(true); setPage('course'); }}
+      onBack={() => { setHasCert(true); router.push('/course'); }}
     />
   );
 
@@ -339,9 +360,9 @@ export default function CourseApp() {
       canSeeCert={canSeeCert}
       updateProfile={updateProfile}
       updatePassword={updatePassword}
-      onBack={() => setPage('course')}
-      onLogout={() => { logout(); setPage('landing'); }}
-      onCert={() => setPage('cert')}
+      onBack={() => router.push('/course')}
+      onLogout={() => { logout(); router.replace('/'); }}
+      onCert={() => router.push('/cert')}
     />
   );
 
@@ -377,9 +398,9 @@ export default function CourseApp() {
             if (isLessonUnlocked(mi, li, completed, quizScores)) navigate(mi, li);
           }}
           canSeeCert={canSeeCert}
-          onCert={() => setPage('cert')}
-          onProfile={() => setPage('profile')}
-          onLogout={() => { logout(); setPage('landing'); }}
+          onCert={() => router.push('/cert')}
+          onProfile={() => router.push('/profile')}
+          onLogout={() => { logout(); router.replace('/'); }}
           isMobile={isMobile}
           completed={completed}
         />
@@ -410,7 +431,7 @@ export default function CourseApp() {
           {/* breadcrumb */}
           <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
             <button
-              onClick={() => setPage('landing')}
+              onClick={() => router.push('/')}
               style={{
                 background: 'none', border: 'none', fontFamily: T.mono,
                 fontSize: 9, color: T.dim, cursor: 'pointer', padding: 0,
@@ -434,7 +455,7 @@ export default function CourseApp() {
           <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
             {canSeeCert && !isMobile && (
               <button
-                onClick={() => setPage('cert')}
+                onClick={() => router.push('/cert')}
                 style={{
                   background: T.accentLight, border: `1px solid ${T.accentBorder}`,
                   color: T.accent, cursor: 'pointer', padding: '6px 12px',

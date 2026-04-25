@@ -1,4 +1,5 @@
 import './globals.css';
+import { AuthProvider } from '@/providers/AuthProvider';
 
 export const metadata = {
   title: 'Prompt Engineering — Zero to Mastery',
@@ -20,7 +21,11 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {/* AuthProvider lives at root so auth state is loaded once and
+            shared across all routes — no re-auth, no splash on navigation */}
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }
