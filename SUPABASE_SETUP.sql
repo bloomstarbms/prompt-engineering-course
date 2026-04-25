@@ -58,3 +58,29 @@ alter table public.certificates enable row level security;
 create policy "certificates: read all"       on public.certificates for select using (true);
 -- Only the owner can create their own certificate
 create policy "certificates: insert own"     on public.certificates for insert with check (auth.uid() = user_id);
+
+
+-- 4. COURSE_EVENTS  (enrollment + completion analytics)
+-- ──────────────────────────────────────────────────────
+create table if not exists public.course_events (
+  id         uuid        default gen_random_uuid() primary key,
+  event      text        not null,           -- 'enroll' | 'complete'
+  email      text        not null,
+  name       text        default '',
+  created_at timestamptz default now()
+);
+
+-- One event type per email (no duplicate enroll/complete rows)
+create unique index if not exists course_events_email_event_idx
+  on public.course_events (email, event);
+
+alter table public.course_events enable row level security;
+
+-- Server API routes insert via the anon key — allow all inserts
+create policy "course_events: insert" on public.course_events
+  for insert with check (true);
+
+-- Only the service-role key (admin stats route) can read
+-- Regular users and the anon key cannot query this table
+create policy "course_events: read service" on public.course_events
+  for select using (false);

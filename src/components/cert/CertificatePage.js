@@ -150,26 +150,10 @@ export default function CertificatePage({ user, userId, quizScores, onBack }) {
     });
   }
 
-  /* Encode cert data into the URL so the verify page works for anyone,
-     not just the device that issued the cert (localStorage limitation). */
-  const verifyUrl = cert
-    ? (() => {
-        try {
-          const payload = btoa(JSON.stringify({
-            name:         cert.name,
-            email:        cert.email,
-            certId:       cert.certId,
-            issuedAt:     cert.issuedAt,
-            grade:        cert.grade,
-            pct:          cert.pct,
-            moduleScores: cert.moduleScores || [],
-          }));
-          return `/verify/${cert.certId}?d=${payload}`;
-        } catch {
-          return `/verify/${cert.certId}`;
-        }
-      })()
-    : '';
+  /* Clean verify URL — cert is stored in Supabase so anyone can look it up
+     by ID without any embedded data. The VerifyClient still has a ?d= fallback
+     for pre-migration legacy certs, but new certs don't need it. */
+  const verifyUrl = cert ? `/verify/${cert.certId}` : '';
   const issuedDate = cert
     ? new Date(cert.issuedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
