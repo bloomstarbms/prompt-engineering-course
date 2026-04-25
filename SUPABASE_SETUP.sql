@@ -84,3 +84,28 @@ create policy "course_events: insert" on public.course_events
 -- Regular users and the anon key cannot query this table
 create policy "course_events: read service" on public.course_events
   for select using (false);
+
+
+-- ═══════════════════════════════════════════════════════════════════
+--  TABLE-LEVEL GRANTS
+--  RLS policies control *which rows* each role can see, but PostgreSQL
+--  also requires the role to have the basic table privilege before
+--  it even evaluates the RLS policy.  Without these grants, the anon
+--  role gets silent "permission denied" errors on public-facing pages
+--  (e.g. the verify page) even though the RLS policy says using(true).
+-- ═══════════════════════════════════════════════════════════════════
+
+-- certificates: anon can read (for the public /verify page);
+--               authenticated users can read + insert their own
+grant select           on public.certificates  to anon;
+grant select, insert   on public.certificates  to authenticated;
+
+-- profiles: only authenticated users read/write their own row
+grant select, insert, update on public.profiles  to authenticated;
+
+-- progress: only authenticated users read/write their own row
+grant select, insert, update on public.progress  to authenticated;
+
+-- course_events: server API (anon key) inserts; service role reads
+grant insert on public.course_events to anon;
+grant select on public.course_events to authenticated;

@@ -33,11 +33,12 @@ function normalizeCert(row) {
 // ── PROFILE ───────────────────────────────────────────────────────────────
 
 export async function getProfile(userId) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('profiles')
     .select('name, bio, avatar_url')
     .eq('id', userId)
     .maybeSingle();
+  if (error) console.error('[db] getProfile error:', error.message);
   return data || null;
 }
 
@@ -54,11 +55,12 @@ export async function upsertProfile(userId, { name, bio = '', avatarUrl = '' }) 
 // ── PROGRESS ──────────────────────────────────────────────────────────────
 
 export async function loadProgress(userId) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('progress')
     .select('completed, quiz_scores, last_lesson')
     .eq('user_id', userId)
     .maybeSingle();
+  if (error) console.error('[db] loadProgress error:', error.message);
   if (!data) return { completed: {}, quizScores: {}, lastLesson: { m: 0, l: 0 } };
   return {
     completed:  data.completed   || {},
@@ -68,7 +70,7 @@ export async function loadProgress(userId) {
 }
 
 export async function saveProgress(userId, progress) {
-  await supabase
+  const { error } = await supabase
     .from('progress')
     .upsert({
       user_id:     userId,
@@ -77,6 +79,7 @@ export async function saveProgress(userId, progress) {
       last_lesson: progress.lastLesson,
       updated_at:  new Date().toISOString(),
     }, { onConflict: 'user_id' });
+  if (error) console.error('[db] saveProgress error:', error.message);
 }
 
 // ── CERTIFICATES ──────────────────────────────────────────────────────────
@@ -108,19 +111,21 @@ export async function issueCertificate(userId, { name, email, pct, grade, module
 }
 
 export async function getUserCert(userId) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('certificates')
     .select('*')
     .eq('user_id', userId)
     .maybeSingle();
+  if (error) console.error('[db] getUserCert error:', error.message);
   return data ? normalizeCert(data) : null;
 }
 
 export async function getCertificateById(certId) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('certificates')
     .select('*')
     .eq('cert_id', certId)
     .maybeSingle();
+  if (error) console.error('[db] getCertificateById error:', error.message, '| certId:', certId);
   return data ? normalizeCert(data) : null;
 }
