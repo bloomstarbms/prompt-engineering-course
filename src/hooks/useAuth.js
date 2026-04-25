@@ -97,12 +97,40 @@ export function useAuth() {
   const [userId,   setUserId]   = useState(null);   // Supabase auth UUID
   const [progress, setProgress] = useState({ completed: {}, quizScores: {}, lastLesson: { m: 0, l: 0 } });
   const [ready,    setReady]    = useState(false);
-  const saveTimer    = useRef(null);
-  const userIdRef    = useRef(null);   // mirrors userId for use inside event listeners/cleanup
-  const progressRef  = useRef(null);  // tracks latest unsaved progress state
+  const saveTimer      = useRef(null);
+  const userIdRef      = useRef(null);   // mirrors userId for use inside event listeners/cleanup
+  const progressRef    = useRef(null);   // tracks latest unsaved progress state
+  const hydratingRef   = useRef(false);  // mutex — prevents concurrent hydrateUser calls
+  const pendingAuthRef = useRef(null);   // queues the latest authUser if one arrives during hydration
 
   // ── Hydrate user + progress from Supabase ────────────────────────────
+  // Serialised via hydratingRef so concurrent onAuthStateChange events (e.g.
+  // INITIAL_SESSION followed immediately by SIGNED_IN during login) never
+  // issue two parallel getProfile/loadProgress calls — those parallel calls
+  // compete for Supabase's internal auth-token lock and produce the error:
+  // "Lock was released because another request stole it."
   async function hydrateUser(authUser) {
+    // If another hydration is already in-flight, queue this one and bail.
+    // The in-flight hydration will process the queued authUser when it finishes.
+    if (hydratingRef.current) {
+      pendingAuthRef.current = authUser;
+      return;
+    }
+    hydratingRef.current = true;
+    try {
+      await _hydrateUserOnce(authUser);
+      // Drain any hydration that arrived while we were busy
+      while (pendingAuthRef.current) {
+        const next = pendingAuthRef.current;
+        pendingAuthRef.current = null;
+        await _hydrateUserOnce(next);
+      }
+    } finally {
+      hydratingRef.current = false;
+    }
+  }
+
+  async function _hydrateUserOnce(authUser) {
     try {
       // Fetch profile and progress in parallel — faster and ensures React 18
       // automatic batching applies to all three state setters below, so
@@ -156,23 +184,22 @@ export function useAuth() {
 
   // ── Session listener ─────────────────────────────────────────────────
   useEffect(() => {
-    // Guard: Supabase not configured (missing env vars) — mark ready so the
-    // app doesn't hang on the splash screen forever.
+    // Guard: Supabase not configured (missing env vars) — mark ready immediately.
     if (!supabase) { setReady(true); return; }
 
-    // Restore any existing session on mount.
-    // The try/finally ensures setReady(true) fires even if hydrateUser throws
-    // (e.g. Supabase unreachable, DB permission error, network timeout).
-    supabase.auth.getSession()
-      .then(async ({ data: { session } }) => {
-        try {
-          if (session) await hydrateUser(session.user);
-        } catch { /* hydrateUser error is logged internally */ }
-        setReady(true);
-      })
-      .catch(() => setReady(true)); // auth itself threw — still unblock the app
-
-    // Keep in sync with Supabase auth state changes (login / logout / token refresh)
+    // Use onAuthStateChange exclusively (no separate getSession() call).
+    //
+    // Why: calling getSession() AND subscribing to onAuthStateChange both
+    // trigger hydrateUser on mount, firing two sets of concurrent Supabase
+    // DB queries.  Those parallel queries all call getSession() internally to
+    // attach the JWT — and the very first token-refresh attempt "steals" the
+    // Web Locks API lock from the other, producing the error:
+    //   "Lock was released because another request stole it."
+    //
+    // onAuthStateChange fires synchronously with the stored session on
+    // subscribe (event = 'INITIAL_SESSION'), so it replaces getSession()
+    // entirely.  The hydrateUser mutex above serialises any subsequent
+    // rapid-fire events (SIGNED_IN → USER_UPDATED during password change).
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       try {
         if (session) {
@@ -189,6 +216,10 @@ export function useAuth() {
         }
       } catch (e) {
         console.error('[useAuth] onAuthStateChange handler error', e);
+      } finally {
+        // setReady(true) must fire after the INITIAL_SESSION event so the app
+        // unblocks even when there is no session (user not logged in).
+        if (event === 'INITIAL_SESSION') setReady(true);
       }
     });
 
@@ -330,11 +361,24 @@ export function useAuth() {
   // ── UPDATE PASSWORD ──────────────────────────────────────────────────
   const handleUpdatePassword = useCallback(async (currentPassword, newPassword) => {
     if (!user) return { ok: false, error: 'Not logged in.' };
-    // Verify current password by attempting re-auth
-    const { error: verifyErr } = await supabase.auth.signInWithPassword({
-      email: user.email, password: currentPassword,
-    });
-    if (verifyErr) return { ok: false, error: 'Current password is incorrect.' };
+    // Verify the current password via a server-side re-auth check so we
+    // never call signInWithPassword() from the browser client.  That call
+    // uses Web Locks API with steal:true, which forcibly releases any lock
+    // already held by a concurrent DB query (e.g. an in-flight upsertProfile)
+    // and causes the "Lock was released because another request stole it" error.
+    let verifyRes, verifyJson;
+    try {
+      verifyRes  = await fetch('/api/auth/verify-password', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email: user.email, password: currentPassword }),
+      });
+      verifyJson = await verifyRes.json();
+    } catch {
+      return { ok: false, error: 'Network error. Please check your connection.' };
+    }
+    if (!verifyRes.ok) return { ok: false, error: verifyJson.error || 'Current password is incorrect.' };
+
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) return { ok: false, error: friendlyAuthError(error) };
     return { ok: true };
