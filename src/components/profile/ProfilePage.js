@@ -188,7 +188,10 @@ export default function ProfilePage({ user, progress, onBack, onLogout, updatePr
   const totalPossible = Object.values(quizScores).reduce((a, v) => a + v.total, 0);
   const avgPct        = totalPossible > 0 ? Math.round(totalCorrect / totalPossible * 100) : null;
   const avgGrade      = avgPct !== null ? getGrade(avgPct) : null;
-  const quizzesCount  = Object.keys(quizScores).length;
+  // Only count quizzes where the score reached the pass threshold
+  const quizzesCount  = Object.values(quizScores).filter(
+    s => s.total > 0 && Math.round(s.score / s.total * 100) >= PASS_THRESHOLD
+  ).length;
 
   /* edit state */
   const [name,      setName]      = useState(user.name      || '');
@@ -363,7 +366,7 @@ export default function ProfilePage({ user, progress, onBack, onLogout, updatePr
             sub={avgGrade ? avgGrade.label : 'no quizzes yet'}
             color={avgGrade ? avgGrade.color : T.dim}
           />
-          <StatCard label="Quizzes Passed" value={quizzesCount} sub="completed" color={T.success} />
+          <StatCard label="Quizzes Passed" value={quizzesCount} sub={`of ${Object.keys(quizScores).length} taken`} color={T.success} />
         </div>
 
         {/* ── Edit Profile ── */}

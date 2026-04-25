@@ -1,16 +1,25 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { getCertificateById } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import { getGrade, MOD_COLORS, T } from '@/lib/theme';
 import { TOTAL_LESSONS } from '@/data/courseData';
 import Link from 'next/link';
 
 export default function VerifyClient({ certId }) {
-  const [cert, setCert]   = useState(null);
-  const [ready, setReady] = useState(false);
+  const [cert,          setCert]          = useState(null);
+  const [ready,         setReady]         = useState(false);
+  const [unavailable,   setUnavailable]   = useState(false);
 
   useEffect(() => {
     async function fetchCert() {
+      /* Supabase not configured — show a clear "service unavailable" state
+         instead of silently falling through to "Certificate Not Found".     */
+      if (!supabase) {
+        setUnavailable(true);
+        setReady(true);
+        return;
+      }
       try {
         /* 1. Try Supabase first (works for everyone, any device) */
         let found = await getCertificateById(certId);
@@ -42,6 +51,29 @@ export default function VerifyClient({ certId }) {
     return (
       <div style={{ minHeight: '100vh', background: T.bg1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ fontFamily: T.mono, fontSize: 12, color: T.dim }}>Verifying…</div>
+      </div>
+    );
+  }
+
+  if (unavailable) {
+    return (
+      <div style={{
+        minHeight: '100vh', background: T.bg1,
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'center', padding: 'clamp(24px,5vw,48px) clamp(16px,5vw,24px)',
+        fontFamily: T.font,
+      }}>
+        <div style={{ width: '100%', maxWidth: 560, textAlign: 'center' }}>
+          <div style={{ fontFamily: T.font, fontWeight: 700, fontSize: 16, color: T.muted, marginBottom: 8 }}>
+            Verification Unavailable
+          </div>
+          <p style={{ fontFamily: T.font, fontSize: 13, color: T.dim, lineHeight: 1.6 }}>
+            The certificate verification service is temporarily unavailable. Please try again later.
+          </p>
+          <Link href="/" style={{ fontFamily: T.font, fontSize: 13, color: T.accent, textDecoration: 'none', fontWeight: 600, marginTop: 24, display: 'inline-block' }}>
+            ← Back to PromptMastery
+          </Link>
+        </div>
       </div>
     );
   }

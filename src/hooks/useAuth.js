@@ -98,20 +98,34 @@ export function useAuth() {
 
   // ── Session listener ─────────────────────────────────────────────────
   useEffect(() => {
-    // Restore any existing session on mount
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session) await hydrateUser(session.user);
-      setReady(true);
-    });
+    // Guard: Supabase not configured (missing env vars) — mark ready so the
+    // app doesn't hang on the splash screen forever.
+    if (!supabase) { setReady(true); return; }
+
+    // Restore any existing session on mount.
+    // The try/finally ensures setReady(true) fires even if hydrateUser throws
+    // (e.g. Supabase unreachable, DB permission error, network timeout).
+    supabase.auth.getSession()
+      .then(async ({ data: { session } }) => {
+        try {
+          if (session) await hydrateUser(session.user);
+        } catch { /* hydrateUser error is logged internally */ }
+        setReady(true);
+      })
+      .catch(() => setReady(true)); // auth itself threw — still unblock the app
 
     // Keep in sync with Supabase auth state changes (login / logout / token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
-        await hydrateUser(session.user);
-      } else {
-        setUser(null);
-        setUserId(null);
-        setProgress({ completed: {}, quizScores: {}, lastLesson: { m: 0, l: 0 } });
+      try {
+        if (session) {
+          await hydrateUser(session.user);
+        } else {
+          setUser(null);
+          setUserId(null);
+          setProgress({ completed: {}, quizScores: {}, lastLesson: { m: 0, l: 0 } });
+        }
+      } catch (e) {
+        console.error('[useAuth] onAuthStateChange handler error', e);
       }
     });
 
@@ -120,6 +134,7 @@ export function useAuth() {
 
   // ── LOGIN ────────────────────────────────────────────────────────────
   const handleLogin = useCallback(async (email, password) => {
+    if (!supabase) return { ok: false, error: 'Service unavailable. Please try again later.' };
     // 1. Try Supabase auth first (normal path for all new accounts)
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error) return { ok: true };
@@ -155,6 +170,7 @@ export function useAuth() {
 
   // ── REGISTER ─────────────────────────────────────────────────────────
   const handleRegister = useCallback(async (name, email, password) => {
+    if (!supabase) return { ok: false, error: 'Service unavailable. Please try again later.' };
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) return { ok: false, error: error.message };
 
