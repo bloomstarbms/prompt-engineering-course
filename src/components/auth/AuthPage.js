@@ -259,7 +259,7 @@ export default function AuthPage({ onAuth }) {
             <p style={{ fontFamily: T.font, fontSize: 13, color: T.muted, lineHeight: 1.6, margin: 0 }}>
               {mode === 'login'    ? 'Continue where you left off.'
                : mode === 'register' ? 'Track progress and earn a certificate. Free forever.'
-               : mode === 'forgot'   ? 'Enter your email and we'll send a reset link.'
+               : mode === 'forgot'   ? "Enter your email and we'll send a reset link."
                : 'A confirmation link is on its way to your inbox.'}
             </p>
           </div>
