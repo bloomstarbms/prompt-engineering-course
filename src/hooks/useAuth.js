@@ -117,14 +117,23 @@ export function useAuth() {
       // The metadata fallback handles the case where the profiles insert failed
       // during signup because email confirmation was required (no session = RLS
       // blocked the insert). Now that we have an active session we can create it.
-      const metaName = authUser.user_metadata?.name || '';
-      const displayName = profile?.name?.trim() || metaName || authUser.email.split('@')[0];
+      const metaName   = authUser.user_metadata?.name || '';
+      const profileName = profile?.name?.trim() || '';
+      const displayName = profileName || metaName || authUser.email.split('@')[0];
+      // Flag so the UI can prompt the user to set a real name
+      const nameIsDefault = !profileName && !metaName;
 
-      // If no profile row exists but we have a name from metadata, create the row
-      // now while we have an active session (so RLS allows the insert).
-      if (!profile && metaName) {
+      // Write a real name into the profile if we have one but the row is
+      // either missing or has an empty name field.
+      // Previously this only ran when the row didn't exist (!profile), which
+      // silently skipped rows that existed but had an empty name column.
+      if (!profileName && metaName) {
         try {
-          await upsertProfile(authUser.id, { name: metaName, bio: '', avatarUrl: '' });
+          await upsertProfile(authUser.id, {
+            name:      metaName,
+            bio:       profile?.bio       || '',
+            avatarUrl: profile?.avatar_url || '',
+          });
         } catch { /* non-fatal — will retry on next hydration */ }
       }
 
@@ -134,10 +143,11 @@ export function useAuth() {
       setUserId(authUser.id);
       userIdRef.current = authUser.id;
       setUser({
-        email:     authUser.email,
-        name:      displayName,
-        bio:       profile?.bio        ?? '',
-        avatarUrl: profile?.avatar_url ?? '',
+        email:       authUser.email,
+        name:        displayName,
+        bio:         profile?.bio        ?? '',
+        avatarUrl:   profile?.avatar_url ?? '',
+        nameIsDefault,   // true when falling back to email prefix — UI shows a "set your name" prompt
       });
     } catch (e) {
       console.error('[useAuth] hydrateUser error', e);
