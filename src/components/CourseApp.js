@@ -135,7 +135,8 @@ export default function CourseApp() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile,    setIsMobile]    = useState(false);
   const [splashDone,  setSplashDone]  = useState(false);
-  const contentRef = useRef(null);
+  const contentRef        = useRef(null);
+  const progressRestored  = useRef(false); // prevents double-restore on re-renders
 
   /* minimum splash display — 1.3 s so the pendulum is always visible */
   useEffect(() => {
@@ -153,13 +154,17 @@ export default function CourseApp() {
 
   useEffect(() => { if (!isMobile) setSidebarOpen(true); }, [isMobile]);
 
-  /* restore last position on login */
+  /* restore last position on login — runs once per session
+     Depends on BOTH user and progress so it fires after hydrateUser's
+     parallel load resolves (progress and user are set in the same React
+     batch, so the effect sees the correct lastLesson on first run). */
   useEffect(() => {
-    if (user && progress.lastLesson) {
-      setActiveM(progress.lastLesson.m ?? 0);
-      setActiveL(progress.lastLesson.l ?? 0);
-    }
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!user) { progressRestored.current = false; return; }
+    if (progressRestored.current) return;
+    progressRestored.current = true;
+    setActiveM(progress.lastLesson?.m ?? 0);
+    setActiveL(progress.lastLesson?.l ?? 0);
+  }, [user, progress]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const mod    = MODULES[activeM];
   const lesson = mod.lessons[activeL];
@@ -213,10 +218,12 @@ export default function CourseApp() {
   }, [isMobile, updateProgress]);
 
   function markComplete() {
+    // immediate=true: lesson completion is critical — don't risk losing it
+    // if the user closes the tab before the 800ms debounce fires.
     updateProgress(prev => ({
       ...prev,
       completed: { ...prev.completed, [lKey]: true },
-    }));
+    }), true);
   }
 
   function goNext() {
@@ -246,13 +253,14 @@ export default function CourseApp() {
 
   function onQuizDone(result) {
     /* Only mark lesson complete when quiz is PASSED; never un-complete a prior pass */
+    // immediate=true: quiz scores are critical data — save right away.
     updateProgress(prev => ({
       ...prev,
       quizScores: { ...prev.quizScores, [lKey]: result },
       completed:  (result.passed || prev.completed[lKey])
         ? { ...prev.completed, [lKey]: true }
         : prev.completed,
-    }));
+    }), true);
     setPage('course');
   }
 
@@ -300,11 +308,14 @@ export default function CourseApp() {
   if (page === 'profile') return (
     <ProfilePage
       user={user}
+      userId={userId}
       progress={progress}
+      canSeeCert={canSeeCert}
       updateProfile={updateProfile}
       updatePassword={updatePassword}
       onBack={() => setPage('course')}
       onLogout={() => { logout(); setPage('landing'); }}
+      onCert={() => setPage('cert')}
     />
   );
 

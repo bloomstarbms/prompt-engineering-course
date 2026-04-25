@@ -76,12 +76,21 @@ export function useAuth() {
   const [userId,   setUserId]   = useState(null);   // Supabase auth UUID
   const [progress, setProgress] = useState({ completed: {}, quizScores: {}, lastLesson: { m: 0, l: 0 } });
   const [ready,    setReady]    = useState(false);
-  const saveTimer = useRef(null);
+  const saveTimer    = useRef(null);
+  const userIdRef    = useRef(null);   // mirrors userId for use inside event listeners/cleanup
+  const progressRef  = useRef(null);  // tracks latest unsaved progress state
 
   // ── Hydrate user + progress from Supabase ────────────────────────────
   async function hydrateUser(authUser) {
     try {
-      const profile = await getProfile(authUser.id);
+      // Fetch profile and progress in parallel — faster and ensures React 18
+      // automatic batching applies to all three state setters below, so
+      // CourseApp's position-restore effect sees the loaded progress in the
+      // same render cycle that it sees the new user value.
+      const [profile, prog] = await Promise.all([
+        getProfile(authUser.id),
+        loadProgress(authUser.id),
+      ]);
 
       // Name priority: saved profile → auth metadata (set at signup) → email prefix.
       // The metadata fallback handles the case where the profiles insert failed
@@ -98,15 +107,17 @@ export function useAuth() {
         } catch { /* non-fatal — will retry on next hydration */ }
       }
 
+      // Set progress BEFORE user so that when CourseApp's useEffect fires on
+      // the user change it already sees the loaded progress data.
+      setProgress(prog);
       setUserId(authUser.id);
+      userIdRef.current = authUser.id;
       setUser({
         email:     authUser.email,
         name:      displayName,
         bio:       profile?.bio        ?? '',
         avatarUrl: profile?.avatar_url ?? '',
       });
-      const prog = await loadProgress(authUser.id);
-      setProgress(prog);
     } catch (e) {
       console.error('[useAuth] hydrateUser error', e);
     }
@@ -136,6 +147,11 @@ export function useAuth() {
         if (session) {
           await hydrateUser(session.user);
         } else {
+          // Clear both state and refs so the beforeunload handler doesn't
+          // attempt to save stale progress after sign-out.
+          clearTimeout(saveTimer.current);
+          progressRef.current = null;
+          userIdRef.current   = null;
           setUser(null);
           setUserId(null);
           setProgress({ completed: {}, quizScores: {}, lastLesson: { m: 0, l: 0 } });
@@ -147,6 +163,24 @@ export function useAuth() {
 
     return () => subscription.unsubscribe();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Flush pending debounced saves on page close or hook unmount ──────
+  // Uses refs so the callbacks are stable across re-renders without needing
+  // deps — progressRef.current always has the latest unsaved state.
+  useEffect(() => {
+    const flush = () => {
+      if (userIdRef.current && progressRef.current) {
+        saveProgress(userIdRef.current, progressRef.current).catch(() => {});
+        progressRef.current = null;
+      }
+    };
+    window.addEventListener('beforeunload', flush);
+    return () => {
+      window.removeEventListener('beforeunload', flush);
+      clearTimeout(saveTimer.current);
+      flush(); // also flush when the hook unmounts
+    };
+  }, []); // empty deps — intentional, we rely on refs
 
   // ── LOGIN ────────────────────────────────────────────────────────────
   const handleLogin = useCallback(async (email, password) => {
@@ -224,13 +258,25 @@ export function useAuth() {
   }, []);
 
   // ── PROGRESS ─────────────────────────────────────────────────────────
-  // Debounce saves to avoid hitting Supabase on every click
-  const updateProgress = useCallback((updater) => {
+  // Pass immediate=true for critical events (lesson completion, quiz done)
+  // so the save isn't lost if the user closes the tab within 800ms.
+  // Position-only updates (lastLesson) stay debounced to avoid excessive writes.
+  const updateProgress = useCallback((updater, immediate = false) => {
     if (!userId) return;
     setProgress(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
-      clearTimeout(saveTimer.current);
-      saveTimer.current = setTimeout(() => saveProgress(userId, next), 800);
+      progressRef.current = next; // always keep ref in sync with latest state
+      if (immediate) {
+        clearTimeout(saveTimer.current);
+        saveProgress(userId, next).catch(() => {});
+        progressRef.current = null;
+      } else {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = setTimeout(() => {
+          saveProgress(userId, next).catch(() => {});
+          progressRef.current = null;
+        }, 800);
+      }
       return next;
     });
   }, [userId]);
