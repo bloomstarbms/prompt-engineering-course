@@ -10,7 +10,22 @@ export default function VerifyClient({ certId }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const found = getCertificate(certId);
+    /* 1. Try localStorage first (works on the student's own device) */
+    let found = getCertificate(certId);
+
+    /* 2. Fall back to URL-embedded data (works for anyone with the link) */
+    if (!found && typeof window !== 'undefined') {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const raw = params.get('d');
+        if (raw) {
+          const decoded = JSON.parse(atob(raw));
+          /* Only trust it if the certId in the payload matches the URL segment */
+          if (decoded.certId === certId) found = decoded;
+        }
+      } catch { /* malformed data — treat as not found */ }
+    }
+
     setCert(found);
     setReady(true);
   }, [certId]);
