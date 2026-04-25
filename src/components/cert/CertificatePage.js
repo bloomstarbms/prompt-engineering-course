@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { T, MOD_COLORS, getGrade } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS } from '@/data/courseData';
-import { issueCertificate, getUserCert } from '@/lib/auth';
+import { issueCertificate, getUserCert } from '@/lib/db';
 
 /* ── Site origin — set NEXT_PUBLIC_SITE_URL in Vercel env settings
       to your custom domain (e.g. https://prompten.com).
@@ -102,7 +102,7 @@ function ApprovalPill({ label, bg, border, textColor, icon }) {
 }
 
 /* ── Main page ───────────────────────────────────────────────────────── */
-export default function CertificatePage({ user, quizScores, onBack }) {
+export default function CertificatePage({ user, userId, quizScores, onBack }) {
   const [cert, setCert]     = useState(null);
   const [copied, setCopied] = useState(false);
 
@@ -122,17 +122,25 @@ export default function CertificatePage({ user, quizScores, onBack }) {
   });
 
   useEffect(() => {
-    const existing = getUserCert(user.email);
-    if (existing) {
-      setCert(existing);
-    } else {
-      const newCert = issueCertificate({
-        name: user.name, email: user.email, pct, grade: grade.letter,
-        moduleScores, totalCorrect, totalPossible,
-      });
-      setCert(newCert);
+    if (!userId) return;
+    async function fetchOrIssueCert() {
+      try {
+        const existing = await getUserCert(userId);
+        if (existing) {
+          setCert(existing);
+        } else {
+          const newCert = await issueCertificate(userId, {
+            name: user.name, email: user.email, pct, grade: grade.letter,
+            moduleScores, totalCorrect, totalPossible,
+          });
+          setCert(newCert);
+        }
+      } catch (e) {
+        console.error('[CertificatePage] cert error', e);
+      }
     }
-  }, [user.email]); // eslint-disable-line react-hooks/exhaustive-deps
+    fetchOrIssueCert();
+  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function copyVerifyLink() {
     if (!cert) return;

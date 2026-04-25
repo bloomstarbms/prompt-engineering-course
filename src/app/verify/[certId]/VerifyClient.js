@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { getCertificate } from '@/lib/auth';
+import { getCertificateById } from '@/lib/db';
 import { getGrade, MOD_COLORS, T } from '@/lib/theme';
 import { TOTAL_LESSONS } from '@/data/courseData';
 import Link from 'next/link';
@@ -10,24 +10,32 @@ export default function VerifyClient({ certId }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    /* 1. Try localStorage first (works on the student's own device) */
-    let found = getCertificate(certId);
-
-    /* 2. Fall back to URL-embedded data (works for anyone with the link) */
-    if (!found && typeof window !== 'undefined') {
+    async function fetchCert() {
       try {
-        const params = new URLSearchParams(window.location.search);
-        const raw = params.get('d');
-        if (raw) {
-          const decoded = JSON.parse(atob(raw));
-          /* Only trust it if the certId in the payload matches the URL segment */
-          if (decoded.certId === certId) found = decoded;
-        }
-      } catch { /* malformed data — treat as not found */ }
-    }
+        /* 1. Try Supabase first (works for everyone, any device) */
+        let found = await getCertificateById(certId);
 
-    setCert(found);
-    setReady(true);
+        /* 2. Fall back to URL-embedded data for older certificates
+              issued before the Supabase migration */
+        if (!found && typeof window !== 'undefined') {
+          try {
+            const params = new URLSearchParams(window.location.search);
+            const raw = params.get('d');
+            if (raw) {
+              const decoded = JSON.parse(atob(raw));
+              if (decoded.certId === certId) found = decoded;
+            }
+          } catch { /* malformed URL data */ }
+        }
+
+        setCert(found);
+      } catch (e) {
+        console.error('[VerifyClient]', e);
+        setCert(null);
+      }
+      setReady(true);
+    }
+    fetchCert();
   }, [certId]);
 
   if (!ready) {

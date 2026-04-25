@@ -1,104 +1,134 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import {
-  getSession, getUser, login, register, logout,
-  loadProgress, saveProgress,
-  updateProfile as authUpdateProfile,
-  updatePassword as authUpdatePassword,
-} from '@/lib/auth';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { supabase } from '@/lib/supabase';
+import { getProfile, upsertProfile, loadProgress, saveProgress } from '@/lib/db';
 
 export function useAuth() {
-  const [user, setUser]         = useState(null);   // { email, name, bio, avatarUrl }
+  const [user,     setUser]     = useState(null);   // { email, name, bio, avatarUrl }
+  const [userId,   setUserId]   = useState(null);   // Supabase auth UUID
   const [progress, setProgress] = useState({ completed: {}, quizScores: {}, lastLesson: { m: 0, l: 0 } });
-  const [ready, setReady]       = useState(false);  // false until localStorage read
+  const [ready,    setReady]    = useState(false);
+  const saveTimer = useRef(null);
 
-  // Hydrate from localStorage on mount
+  // ── Hydrate user + progress from Supabase ────────────────────────────
+  async function hydrateUser(authUser) {
+    try {
+      const profile = await getProfile(authUser.id);
+      setUserId(authUser.id);
+      setUser({
+        email:     authUser.email,
+        name:      profile?.name       ?? authUser.email.split('@')[0],
+        bio:       profile?.bio        ?? '',
+        avatarUrl: profile?.avatar_url ?? '',
+      });
+      const prog = await loadProgress(authUser.id);
+      setProgress(prog);
+    } catch (e) {
+      console.error('[useAuth] hydrateUser error', e);
+    }
+  }
+
+  // ── Session listener ─────────────────────────────────────────────────
   useEffect(() => {
-    const session = getSession();
-    if (session) {
-      // Merge session with full user record (bio/avatarUrl may have been updated)
-      const full = getUser(session.email);
-      setUser({
-        email:     session.email,
-        name:      full?.name      ?? session.name,
-        bio:       full?.bio       ?? session.bio       ?? '',
-        avatarUrl: full?.avatarUrl ?? session.avatarUrl ?? '',
-      });
-      setProgress(loadProgress(session.email));
-    }
-    setReady(true);
+    // Restore any existing session on mount
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) await hydrateUser(session.user);
+      setReady(true);
+    });
+
+    // Keep in sync with Supabase auth state changes (login / logout / token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        await hydrateUser(session.user);
+      } else {
+        setUser(null);
+        setUserId(null);
+        setProgress({ completed: {}, quizScores: {}, lastLesson: { m: 0, l: 0 } });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── LOGIN ────────────────────────────────────────────────────────────
+  const handleLogin = useCallback(async (email, password) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
   }, []);
 
-  const handleLogin = useCallback((email, password) => {
-    const result = login(email, password);
-    if (result.ok) {
-      setUser({
-        email:     result.user.email,
-        name:      result.user.name,
-        bio:       result.user.bio       ?? '',
-        avatarUrl: result.user.avatarUrl ?? '',
-      });
-      setProgress(loadProgress(result.user.email));
-    }
-    return result;
-  }, []);
+  // ── REGISTER ─────────────────────────────────────────────────────────
+  const handleRegister = useCallback(async (name, email, password) => {
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) return { ok: false, error: error.message };
 
-  const handleRegister = useCallback((name, email, password) => {
-    const result = register(name, email, password);
-    if (result.ok) {
-      setUser({
-        email:     result.user.email,
-        name:      result.user.name,
-        bio:       result.user.bio       ?? '',
-        avatarUrl: result.user.avatarUrl ?? '',
-      });
-      setProgress(loadProgress(result.user.email));
-      /* Fire-and-forget enrollment tracking */
+    // Create profile row immediately after signup
+    if (data.user) {
+      try {
+        await upsertProfile(data.user.id, { name, bio: '', avatarUrl: '' });
+      } catch { /* profile will be created on next login if this fails */ }
+
+      // Track enrollment (fire-and-forget)
       fetch('/api/track', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event: 'enroll', email: result.user.email, name: result.user.name }),
+        body: JSON.stringify({ event: 'enroll', email, name }),
       }).catch(() => {});
     }
-    return result;
+
+    // Supabase may require email confirmation — if so, session won't exist yet
+    if (!data.session) {
+      return { ok: true, needsConfirm: true };
+    }
+    return { ok: true };
   }, []);
 
-  const handleLogout = useCallback(() => {
-    logout();
-    setUser(null);
-    setProgress({ completed: {}, quizScores: {}, lastLesson: { m: 0, l: 0 } });
+  // ── LOGOUT ───────────────────────────────────────────────────────────
+  const handleLogout = useCallback(async () => {
+    clearTimeout(saveTimer.current);
+    await supabase.auth.signOut();
   }, []);
 
+  // ── PROGRESS ─────────────────────────────────────────────────────────
+  // Debounce saves to avoid hitting Supabase on every click
   const updateProgress = useCallback((updater) => {
-    if (!user) return;
+    if (!userId) return;
     setProgress(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
-      saveProgress(user.email, next);
+      clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => saveProgress(userId, next), 800);
       return next;
     });
-  }, [user]);
+  }, [userId]);
 
-  const handleUpdateProfile = useCallback(({ name, bio, avatarUrl }) => {
-    if (!user) return { ok: false, error: 'Not logged in.' };
-    const result = authUpdateProfile(user.email, { name, bio, avatarUrl });
-    if (result.ok) {
-      setUser(prev => ({
-        ...prev,
-        name:      result.user.name,
-        bio:       result.user.bio       ?? '',
-        avatarUrl: result.user.avatarUrl ?? '',
-      }));
+  // ── UPDATE PROFILE ───────────────────────────────────────────────────
+  const handleUpdateProfile = useCallback(async ({ name, bio, avatarUrl }) => {
+    if (!userId) return { ok: false, error: 'Not logged in.' };
+    try {
+      await upsertProfile(userId, { name, bio: bio ?? '', avatarUrl: avatarUrl ?? '' });
+      setUser(prev => ({ ...prev, name, bio: bio ?? '', avatarUrl: avatarUrl ?? '' }));
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message };
     }
-    return result;
-  }, [user]);
+  }, [userId]);
 
-  const handleUpdatePassword = useCallback((currentPassword, newPassword) => {
+  // ── UPDATE PASSWORD ──────────────────────────────────────────────────
+  const handleUpdatePassword = useCallback(async (currentPassword, newPassword) => {
     if (!user) return { ok: false, error: 'Not logged in.' };
-    return authUpdatePassword(user.email, currentPassword, newPassword);
+    // Verify current password by attempting re-auth
+    const { error: verifyErr } = await supabase.auth.signInWithPassword({
+      email: user.email, password: currentPassword,
+    });
+    if (verifyErr) return { ok: false, error: 'Current password is incorrect.' };
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
   }, [user]);
 
   return {
     user,
+    userId,
     progress,
     ready,
     login:          handleLogin,

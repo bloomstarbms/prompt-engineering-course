@@ -11,7 +11,7 @@ import Sidebar         from '@/components/course/Sidebar';
 import QuizView        from '@/components/quiz/QuizView';
 import CertificatePage from '@/components/cert/CertificatePage';
 import ProfilePage     from '@/components/profile/ProfilePage';
-import { getUserCert } from '@/lib/auth';
+import { getUserCert } from '@/lib/db';
 import { LessonBody, ModPill, AccentBtn } from '@/components/ui';
 
 
@@ -127,7 +127,7 @@ function SplashScreen() {
 }
 
 export default function CourseApp() {
-  const { user, progress, ready, login, register, logout, updateProgress, updateProfile, updatePassword } = useAuth();
+  const { user, userId, progress, ready, login, register, logout, updateProgress, updateProfile, updatePassword } = useAuth();
 
   const [page,        setPage]        = useState('landing');
   const [activeM,     setActiveM]     = useState(0);
@@ -175,8 +175,10 @@ export default function CourseApp() {
      edge-case where completedCount doesn't equal TOTAL_LESSONS exactly) */
   const [hasCert, setHasCert] = useState(false);
   useEffect(() => {
-    if (user) setHasCert(!!getUserCert(user.email));
-  }, [user]);
+    if (userId) {
+      getUserCert(userId).then(cert => setHasCert(!!cert)).catch(() => {});
+    }
+  }, [userId]);
 
   const canSeeCert = allDone || hasCert;
 
@@ -254,7 +256,7 @@ export default function CourseApp() {
     setPage('course');
   }
 
-  function handleAuth(mode, name, email, password) {
+  async function handleAuth(mode, name, email, password) {
     return mode === 'register' ? register(name, email, password) : login(email, password);
   }
 
@@ -270,9 +272,9 @@ export default function CourseApp() {
   );
 
   if (page === 'auth' || !user) return (
-    <AuthPage onAuth={(mode, name, email, password) => {
-      const result = handleAuth(mode, name, email, password);
-      if (result.ok) setPage('course');
+    <AuthPage onAuth={async (mode, name, email, password) => {
+      const result = await handleAuth(mode, name, email, password);
+      if (result.ok && !result.needsConfirm) setPage('course');
       return result;
     }} />
   );
@@ -289,6 +291,7 @@ export default function CourseApp() {
   if (page === 'cert') return (
     <CertificatePage
       user={user}
+      userId={userId}
       quizScores={quizScores}
       onBack={() => { setHasCert(true); setPage('course'); }}
     />

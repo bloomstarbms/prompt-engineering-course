@@ -268,7 +268,7 @@ export default function ProfilePage({ user, progress, onBack, onLogout, updatePr
       return;
     }
     setSaving(true);
-    const result = updateProfile({ name, bio, avatarUrl });
+    const result = await updateProfile({ name, bio, avatarUrl });
     setSaving(false);
     if (result.ok) {
       setDirty(false);
@@ -292,7 +292,7 @@ export default function ProfilePage({ user, progress, onBack, onLogout, updatePr
     if (newPw.length < 6) { setPwMsg({ ok: false, text: 'New password must be at least 6 characters.' }); return; }
     if (newPw !== confPw) { setPwMsg({ ok: false, text: 'New passwords do not match.' }); return; }
     setPwLoading(true);
-    const result = updatePassword(curPw, newPw);
+    const result = await updatePassword(curPw, newPw);
     setPwLoading(false);
     if (result.ok) {
       setPwMsg({ ok: true, text: '✓ Password updated successfully.' });

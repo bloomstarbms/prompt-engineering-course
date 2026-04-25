@@ -1,61 +1,53 @@
 'use client';
 import { useState } from 'react';
 import { T } from '@/lib/theme';
-import { getUser, resetPasswordByEmail } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 
 export default function AuthPage({ onAuth }) {
-  const [mode, setMode]       = useState('login'); // 'login' | 'register' | 'forgot'
-  const [name, setName]       = useState('');
-  const [email, setEmail]     = useState('');
+  const [mode, setMode]         = useState('login'); // 'login' | 'register' | 'forgot' | 'confirm'
+  const [name, setName]         = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError]     = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
 
   /* ── Forgot-password state ── */
-  const [forgotStep,   setForgotStep]   = useState('email');  // 'email' | 'reset' | 'done'
-  const [forgotEmail,  setForgotEmail]  = useState('');
-  const [forgotNewPw,  setForgotNewPw]  = useState('');
-  const [forgotConfPw, setForgotConfPw] = useState('');
-  const [forgotError,  setForgotError]  = useState('');
+  const [forgotEmail,   setForgotEmail]   = useState('');
+  const [forgotError,   setForgotError]   = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSent,    setForgotSent]    = useState(false);
 
   function enterForgot() {
     setMode('forgot');
-    setForgotStep('email');
     setForgotEmail('');
-    setForgotNewPw('');
-    setForgotConfPw('');
     setForgotError('');
+    setForgotSent(false);
   }
 
-  function handleForgotLookup(e) {
+  async function handleForgotSubmit(e) {
     e.preventDefault();
     setForgotError('');
-    const found = getUser(forgotEmail.trim());
-    if (!found) {
-      setForgotError('No account found with this email on this device. Passwords are stored in your browser — you must use the same device and browser where you registered.');
-      return;
-    }
-    setForgotStep('reset');
-  }
-
-  function handleForgotReset(e) {
-    e.preventDefault();
-    setForgotError('');
-    if (forgotNewPw.length < 6)  { setForgotError('Password must be at least 6 characters.'); return; }
-    if (forgotNewPw !== forgotConfPw) { setForgotError('Passwords do not match.'); return; }
-    const result = resetPasswordByEmail(forgotEmail.trim(), forgotNewPw);
-    if (result.ok) { setForgotStep('done'); }
-    else           { setForgotError(result.error); }
+    if (!forgotEmail.trim()) { setForgotError('Please enter your email address.'); return; }
+    setForgotLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setForgotLoading(false);
+    if (error) { setForgotError(error.message); return; }
+    setForgotSent(true);
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
     setLoading(true);
-    // Small delay for UX feel
     await new Promise(r => setTimeout(r, 300));
-    const result = onAuth(mode, name, email, password);
-    if (!result.ok) setError(result.error);
+    const result = await onAuth(mode, name, email, password);
+    if (result.needsConfirm) {
+      setMode('confirm');
+    } else if (!result.ok) {
+      setError(result.error);
+    }
     setLoading(false);
   }
 
@@ -99,18 +91,40 @@ export default function AuthPage({ onAuth }) {
         boxShadow: T.shadowLg,
       }}>
 
-        {/* ── Forgot-password panel ── */}
-        {mode === 'forgot' ? (
+        {/* ── Email confirmation screen (after register with unverified email) ── */}
+        {mode === 'confirm' ? (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              width: 52, height: 52, borderRadius: '50%', margin: '0 auto 16px',
+              background: 'rgba(129,140,248,0.1)', border: `1.5px solid ${T.accentBorder}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 24,
+            }}>📧</div>
+            <div style={{ fontFamily: T.font, fontWeight: 700, fontSize: 16, color: T.text, marginBottom: 8 }}>
+              Check your email
+            </div>
+            <p style={{ fontFamily: T.font, fontSize: 13, color: T.muted, lineHeight: 1.6, marginBottom: 20 }}>
+              We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account, then come back here to log in.
+            </p>
+            <button onClick={() => { setMode('login'); setError(''); }} style={{
+              width: '100%', background: T.accent, border: 'none', color: '#fff',
+              borderRadius: 10, padding: '12px', cursor: 'pointer',
+              fontFamily: T.font, fontWeight: 700, fontSize: 14,
+            }}>
+              Go to Log In →
+            </button>
+          </div>
+
+        ) : mode === 'forgot' ? (
+          /* ── Forgot-password panel ── */
           <div>
-            {/* Back link */}
             <button onClick={() => { setMode('login'); setError(''); }} style={{
               background: 'none', border: 'none', color: T.dim, cursor: 'pointer',
               fontFamily: T.font, fontSize: 13, padding: 0, marginBottom: 20,
               display: 'flex', alignItems: 'center', gap: 5,
             }}>← Back to Log In</button>
 
-            {forgotStep === 'done' ? (
-              /* Success */
+            {forgotSent ? (
               <div style={{ textAlign: 'center' }}>
                 <div style={{
                   width: 52, height: 52, borderRadius: '50%', margin: '0 auto 16px',
@@ -119,33 +133,32 @@ export default function AuthPage({ onAuth }) {
                   fontSize: 22, color: T.success,
                 }}>✓</div>
                 <div style={{ fontFamily: T.font, fontWeight: 700, fontSize: 16, color: T.text, marginBottom: 8 }}>
-                  Password reset!
+                  Reset email sent!
                 </div>
-                <p style={{ fontFamily: T.font, fontSize: 13, color: T.muted, marginBottom: 20 }}>
-                  Your password has been updated. You can now log in with your new password.
+                <p style={{ fontFamily: T.font, fontSize: 13, color: T.muted, marginBottom: 20, lineHeight: 1.6 }}>
+                  Check your inbox for a password reset link. It expires in 1 hour.
                 </p>
                 <button onClick={() => { setMode('login'); setError(''); }} style={{
                   width: '100%', background: T.accent, border: 'none', color: '#fff',
                   borderRadius: 10, padding: '12px', cursor: 'pointer',
                   fontFamily: T.font, fontWeight: 700, fontSize: 14,
                 }}>
-                  Go to Log In →
+                  Back to Log In →
                 </button>
               </div>
-            ) : forgotStep === 'email' ? (
-              /* Step 1 — find account */
+            ) : (
               <div>
                 <div style={{ marginBottom: 20 }}>
                   <div style={{ fontFamily: T.font, fontWeight: 700, fontSize: 17, color: T.text, marginBottom: 6 }}>
                     Reset your password
                   </div>
                   <p style={{ fontFamily: T.font, fontSize: 13, color: T.muted, lineHeight: 1.6 }}>
-                    Enter the email you registered with. Because your account is stored in this browser, you must be on the same device and browser you used to sign up.
+                    Enter your email and we'll send you a reset link.
                   </p>
                 </div>
-                <form onSubmit={handleForgotLookup} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <form onSubmit={handleForgotSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <Field
-                    label="Registered Email"
+                    label="Email Address"
                     type="email" value={forgotEmail}
                     placeholder="you@example.com"
                     onChange={e => { setForgotEmail(e.target.value); setForgotError(''); }}
@@ -157,57 +170,21 @@ export default function AuthPage({ onAuth }) {
                       fontFamily: T.font, fontSize: 13, color: T.error, lineHeight: 1.5,
                     }}>{forgotError}</div>
                   )}
-                  <button type="submit" style={{
-                    background: T.accent, border: 'none', color: '#fff',
-                    padding: '12px', borderRadius: 10, cursor: 'pointer',
+                  <button type="submit" disabled={forgotLoading} style={{
+                    background: forgotLoading ? T.bg3 : T.accent, border: 'none',
+                    color: forgotLoading ? T.dim : '#fff',
+                    padding: '12px', borderRadius: 10,
+                    cursor: forgotLoading ? 'default' : 'pointer',
                     fontFamily: T.font, fontWeight: 700, fontSize: 14, transition: 'all 0.15s',
-                    boxShadow: '0 4px 14px rgba(99,102,241,0.35)',
+                    boxShadow: forgotLoading ? 'none' : '0 4px 14px rgba(99,102,241,0.35)',
                   }}>
-                    Find My Account →
-                  </button>
-                </form>
-              </div>
-            ) : (
-              /* Step 2 — set new password */
-              <div>
-                <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontFamily: T.font, fontWeight: 700, fontSize: 17, color: T.text, marginBottom: 4 }}>
-                    Set a new password
-                  </div>
-                  <div style={{ fontFamily: T.mono, fontSize: 10, color: T.accent }}>{forgotEmail}</div>
-                </div>
-                <form onSubmit={handleForgotReset} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <Field
-                    label="New Password"
-                    type="password" value={forgotNewPw}
-                    placeholder="At least 6 characters"
-                    onChange={e => { setForgotNewPw(e.target.value); setForgotError(''); }}
-                  />
-                  <Field
-                    label="Confirm New Password"
-                    type="password" value={forgotConfPw}
-                    placeholder="Repeat new password"
-                    onChange={e => { setForgotConfPw(e.target.value); setForgotError(''); }}
-                  />
-                  {forgotError && (
-                    <div style={{
-                      background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)',
-                      borderRadius: 8, padding: '10px 14px',
-                      fontFamily: T.font, fontSize: 13, color: T.error, lineHeight: 1.5,
-                    }}>{forgotError}</div>
-                  )}
-                  <button type="submit" style={{
-                    background: T.accent, border: 'none', color: '#fff',
-                    padding: '12px', borderRadius: 10, cursor: 'pointer',
-                    fontFamily: T.font, fontWeight: 700, fontSize: 14, transition: 'all 0.15s',
-                    boxShadow: '0 4px 14px rgba(99,102,241,0.35)',
-                  }}>
-                    Reset Password →
+                    {forgotLoading ? 'Sending…' : 'Send Reset Link →'}
                   </button>
                 </form>
               </div>
             )}
           </div>
+
         ) : (
           /* ── Normal login / register panel ── */
           <>
@@ -332,7 +309,7 @@ export default function AuthPage({ onAuth }) {
         marginTop: 24, fontFamily: T.font, fontSize: 12, color: T.faint,
         textAlign: 'center', maxWidth: 340, lineHeight: 1.6,
       }}>
-        Your progress is saved securely in your browser. Free forever.
+        Your progress is saved securely in the cloud. Access from any device. Free forever.
       </p>
     </div>
   );
