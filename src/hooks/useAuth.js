@@ -82,10 +82,26 @@ export function useAuth() {
   async function hydrateUser(authUser) {
     try {
       const profile = await getProfile(authUser.id);
+
+      // Name priority: saved profile → auth metadata (set at signup) → email prefix.
+      // The metadata fallback handles the case where the profiles insert failed
+      // during signup because email confirmation was required (no session = RLS
+      // blocked the insert). Now that we have an active session we can create it.
+      const metaName = authUser.user_metadata?.name || '';
+      const displayName = profile?.name?.trim() || metaName || authUser.email.split('@')[0];
+
+      // If no profile row exists but we have a name from metadata, create the row
+      // now while we have an active session (so RLS allows the insert).
+      if (!profile && metaName) {
+        try {
+          await upsertProfile(authUser.id, { name: metaName, bio: '', avatarUrl: '' });
+        } catch { /* non-fatal — will retry on next hydration */ }
+      }
+
       setUserId(authUser.id);
       setUser({
         email:     authUser.email,
-        name:      profile?.name       ?? authUser.email.split('@')[0],
+        name:      displayName,
         bio:       profile?.bio        ?? '',
         avatarUrl: profile?.avatar_url ?? '',
       });
@@ -171,7 +187,13 @@ export function useAuth() {
   // ── REGISTER ─────────────────────────────────────────────────────────
   const handleRegister = useCallback(async (name, email, password) => {
     if (!supabase) return { ok: false, error: 'Service unavailable. Please try again later.' };
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    // Store name in auth user metadata so it survives even when the profiles
+    // table insert fails before email confirmation (no session = RLS blocks it).
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name: name.trim() } },
+    });
     if (error) return { ok: false, error: error.message };
 
     // Create profile row immediately after signup
