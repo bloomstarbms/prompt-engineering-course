@@ -230,6 +230,7 @@ export default function CourseApp() {
   const lesson = mod.lessons[activeL];
   const lKey   = `${activeM}-${activeL}`;
   const quiz   = QUIZZES[lKey];
+  const isLastLesson = activeM === MODULES.length - 1 && activeL === mod.lessons.length - 1;
 
   const { completed, quizScores } = progress;
   const completedCount = Object.keys(completed).length;
@@ -284,6 +285,15 @@ export default function CourseApp() {
       ...prev,
       completed: { ...prev.completed, [lKey]: true },
     }), true);
+    // Auto-advance after a brief delay so the save registers.
+    // On the last lesson, go straight to the certificate page.
+    setTimeout(() => {
+      if (activeM === MODULES.length - 1 && activeL === mod.lessons.length - 1) {
+        router.push('/cert');
+      } else {
+        goNext();
+      }
+    }, 250);
   }
 
   function goNext() {
@@ -314,6 +324,7 @@ export default function CourseApp() {
   function onQuizDone(result) {
     /* Only mark lesson complete when quiz is PASSED; never un-complete a prior pass */
     // immediate=true: quiz scores are critical data — save right away.
+    const isNewCompletion = result.passed && !progress.completed[lKey];
     updateProgress(prev => ({
       ...prev,
       quizScores: { ...prev.quizScores, [lKey]: result },
@@ -321,7 +332,12 @@ export default function CourseApp() {
         ? { ...prev.completed, [lKey]: true }
         : prev.completed,
     }), true);
-    setPage('course');
+    // If the user just passed the very last quiz, go straight to the certificate.
+    if (isNewCompletion && activeM === MODULES.length - 1 && activeL === mod.lessons.length - 1) {
+      router.push('/cert');
+    } else {
+      setPage('course');
+    }
   }
 
   async function handleAuth(mode, name, email, password) {
@@ -503,7 +519,7 @@ export default function CourseApp() {
               }}
             >‹</button>
 
-            {/* Quiz button OR Next button */}
+            {/* Quiz button OR Next button OR Certificate button */}
             {!canAdvance ? (
               <button
                 onClick={() => setPage('quiz')}
@@ -516,17 +532,31 @@ export default function CourseApp() {
                 onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
                 onMouseLeave={e => e.currentTarget.style.opacity = '1'}
               >Quiz →</button>
+            ) : isLastLesson && canSeeCert ? (
+              /* Course is done — jump to the certificate */
+              <button
+                onClick={() => router.push('/cert')}
+                style={{
+                  background: T.success, border: 'none', color: '#fff',
+                  cursor: 'pointer', padding: '7px 14px', borderRadius: 6,
+                  fontSize: 12, fontWeight: 700, fontFamily: T.font,
+                  transition: 'all 0.15s', whiteSpace: 'nowrap',
+                  boxShadow: '0 4px 14px rgba(52,211,153,0.40)',
+                }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+              >🎓 Certificate</button>
             ) : (
               <button
                 onClick={goNext}
-                disabled={activeM === MODULES.length - 1 && activeL === mod.lessons.length - 1}
+                disabled={isLastLesson}
                 style={{
                   background: mod.color, border: 'none', color: '#fff',
-                  cursor: (activeM === MODULES.length - 1 && activeL === mod.lessons.length - 1) ? 'default' : 'pointer',
+                  cursor: isLastLesson ? 'default' : 'pointer',
                   padding: '7px 14px', borderRadius: 6,
                   fontSize: 12, fontWeight: 700, fontFamily: T.font,
                   transition: 'all 0.15s', whiteSpace: 'nowrap',
-                  opacity: (activeM === MODULES.length - 1 && activeL === mod.lessons.length - 1) ? 0.4 : 1,
+                  opacity: isLastLesson ? 0.4 : 1,
                 }}
                 onMouseEnter={e => { if (e.currentTarget.style.opacity !== '0.4') e.currentTarget.style.opacity = '0.88'; }}
                 onMouseLeave={e => { if (e.currentTarget.style.opacity !== '0.4') e.currentTarget.style.opacity = '1'; }}
@@ -550,6 +580,9 @@ export default function CourseApp() {
             onQuiz={() => setPage('quiz')}
             onMarkComplete={markComplete}
             goNext={goNext}
+            isLastLesson={isLastLesson}
+            canSeeCert={canSeeCert}
+            onCert={() => router.push('/cert')}
           />
         </main>
       </div>
@@ -558,7 +591,7 @@ export default function CourseApp() {
 }
 
 /* ── Combined Lesson View: video + notes in single scroll ──────────────── */
-function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed, quizPct, activeL, onQuiz, onMarkComplete, goNext }) {
+function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed, quizPct, activeL, onQuiz, onMarkComplete, goNext, isLastLesson, canSeeCert, onCert }) {
   const isComplete = completed[lKey];
   const [mi, li] = lKey.split('-').map(Number);
   const isCourseStart = mi === 0 && li === 0;
@@ -703,7 +736,7 @@ function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed,
         {/* ── Lesson body (notes) ── */}
         <LessonBody text={lesson.body} color={mod.color} />
 
-        {/* ── Quiz card OR Mark Complete ── */}
+        {/* ── Quiz card OR completion / mark-complete actions ── */}
         <div style={{ marginTop: 40, paddingTop: 24, borderTop: `1px solid ${T.border}` }}>
           {quiz ? (
             <QuizCard
@@ -715,24 +748,67 @@ function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed,
               quizPct={quizPct}
             />
           ) : isComplete ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 16, color: T.success }}>✓</span>
-                <span style={{ fontFamily: T.mono, fontSize: 11, color: T.success, letterSpacing: '0.06em' }}>LESSON COMPLETED</span>
+            /* ── Lesson already done ── */
+            isLastLesson && canSeeCert ? (
+              /* Course complete! */
+              <div style={{
+                background: `linear-gradient(135deg, rgba(52,211,153,0.08) 0%, rgba(129,140,248,0.06) 100%)`,
+                border: '1.5px solid rgba(52,211,153,0.30)',
+                borderRadius: 14, padding: '28px 24px', textAlign: 'center',
+              }}>
+                <div style={{ fontSize: 36, marginBottom: 10 }}>🎉</div>
+                <div style={{
+                  fontFamily: T.display, fontWeight: 800,
+                  fontSize: 'clamp(18px,3vw,22px)', color: T.text,
+                  letterSpacing: '-0.03em', marginBottom: 6,
+                }}>
+                  Course Complete!
+                </div>
+                <p style={{
+                  fontFamily: T.font, fontSize: 13, color: T.muted,
+                  lineHeight: 1.7, margin: '0 auto 20px', maxWidth: 400,
+                }}>
+                  You&apos;ve finished every lesson in Prompt Engineering Mastery.
+                  Your certificate is ready to download and share.
+                </p>
+                <button
+                  onClick={onCert}
+                  style={{
+                    background: `linear-gradient(135deg, #059669 0%, #34d399 100%)`,
+                    border: 'none', color: '#fff',
+                    cursor: 'pointer', padding: '13px 28px', borderRadius: 10,
+                    fontSize: 14, fontWeight: 700, fontFamily: T.font,
+                    transition: 'all 0.15s', whiteSpace: 'nowrap',
+                    boxShadow: '0 6px 20px rgba(52,211,153,0.40)',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'none'; }}
+                >
+                  🎓 View Your Certificate →
+                </button>
               </div>
-              <button
-                onClick={goNext}
-                style={{
-                  background: `${mod.color}0e`, border: `1px solid ${mod.color}28`,
-                  color: mod.color, cursor: 'pointer', padding: '10px 20px', borderRadius: 8,
-                  fontSize: 12, fontWeight: 700, fontFamily: T.mono, letterSpacing: '0.06em',
-                  transition: 'all 0.15s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = `${mod.color}1a`}
-                onMouseLeave={e => e.currentTarget.style.background = `${mod.color}0e`}
-              >NEXT LESSON →</button>
-            </div>
+            ) : (
+              /* Mid-course completed lesson */
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 16, color: T.success }}>✓</span>
+                  <span style={{ fontFamily: T.mono, fontSize: 11, color: T.success, letterSpacing: '0.06em' }}>LESSON COMPLETED</span>
+                </div>
+                <button
+                  onClick={goNext}
+                  style={{
+                    background: `${mod.color}0e`, border: `1px solid ${mod.color}28`,
+                    color: mod.color, cursor: 'pointer', padding: '10px 20px', borderRadius: 8,
+                    fontSize: 12, fontWeight: 700, fontFamily: T.mono, letterSpacing: '0.06em',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = `${mod.color}1a`}
+                  onMouseLeave={e => e.currentTarget.style.background = `${mod.color}0e`}
+                >NEXT LESSON →</button>
+              </div>
+            )
           ) : (
+            /* ── Not yet complete (no quiz) ── */
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
               <div>
                 <div style={{ fontFamily: T.mono, fontSize: 10, color: T.dim, letterSpacing: '0.08em', marginBottom: 4 }}>
@@ -753,7 +829,9 @@ function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed,
                 }}
                 onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
                 onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-              >✓ Mark Complete &amp; Continue →</button>
+              >
+                {isLastLesson ? '✓ Complete &amp; Get Certificate →' : '✓ Mark Complete →'}
+              </button>
             </div>
           )}
         </div>

@@ -227,8 +227,9 @@ function ApprovalPill({ label, bg, border, textColor, icon }) {
 /*  MAIN PAGE                                                 */
 /* ══════════════════════════════════════════════════════════ */
 export default function CertificatePage({ user, userId, quizScores, onBack, updateProfile }) {
-  const [cert, setCert]     = useState(null);
-  const [copied, setCopied] = useState(false);
+  const [cert,       setCert]       = useState(null);
+  const [certLoading, setCertLoading] = useState(true); // true until cert fetch completes
+  const [copied,     setCopied]     = useState(false);
 
   const [nameConfirmed, setNameConfirmed] = useState(!user?.nameIsDefault);
   const [nameInput,     setNameInput]     = useState('');
@@ -253,6 +254,7 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
 
   useEffect(() => {
     if (!userId || !nameConfirmed) return;
+    setCertLoading(true);
     async function fetchOrIssueCert() {
       try {
         const existing = await getUserCert(userId);
@@ -267,6 +269,8 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
         }
       } catch (e) {
         console.error('[CertificatePage] cert error', e);
+      } finally {
+        setCertLoading(false);
       }
     }
     fetchOrIssueCert();
@@ -381,6 +385,10 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&display=swap');
 
+        @keyframes pmBlink {
+          0%, 80%, 100% { opacity: 0.45; }
+          40%            { opacity: 1; }
+        }
         @keyframes certReveal {
           from { opacity: 0; transform: translateY(24px) scale(0.97); }
           to   { opacity: 1; transform: translateY(0)    scale(1);    }
@@ -429,9 +437,30 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
             padding: 26px 44px 20px !important;
             width: 940px !important;
             max-width: 940px !important;
+            /* Chrome / Edge / Safari — zoom scales both dimensions cleanly */
             zoom: 0.73 !important;
             page-break-inside: avoid !important;
             animation: none !important;
+          }
+          /* Firefox fallback: zoom is unsupported — use transform instead.
+             We wrap in cert-print-scale so the negative margin collapses
+             the dead space that transform leaves in the layout flow.      */
+          @supports not (zoom: 1) {
+            .cert-print-scale {
+              display: block !important;
+              overflow: hidden !important;
+              /* Approx rendered height = card-height × 0.73.
+                 We set a generous page-height limit so the card fits on one page. */
+              height: 570px !important;
+              width: 100% !important;
+            }
+            .cert-card {
+              zoom: unset !important;
+              transform: scale(0.73) !important;
+              transform-origin: top left !important;
+              /* Shift left to re-centre after origin offset */
+              margin-left: calc(50% - 940px * 0.73 / 2) !important;
+            }
           }
 
           /* Rainbow bar stays */
@@ -507,7 +536,21 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
           onMouseLeave={e => e.currentTarget.style.color = T.muted}
         >← Back to Course</button>
 
+        {/* Loading overlay while cert is being issued/fetched */}
+        {certLoading && (
+          <div style={{
+            textAlign: 'center', padding: '20px 0 8px',
+            fontFamily: T.mono, fontSize: 11, color: T.dim,
+            letterSpacing: '0.1em', animation: 'pmBlink 1.5s ease-in-out infinite',
+          }}>
+            Generating your certificate…
+          </div>
+        )}
+
         {/* ══════════════════ CERTIFICATE CARD ══════════════════ */}
+        {/* cert-print-scale is a no-op on screen; Firefox print uses it to
+            collapse the extra layout space left by transform: scale().     */}
+        <div className="cert-print-scale">
         <div className="cert-card" style={{
           position: 'relative', overflow: 'hidden',
           background: 'linear-gradient(145deg, #09090f 0%, #0b0913 45%, #0d0a18 100%)',
@@ -797,6 +840,7 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
 
           </div>{/* /centre */}
         </div>{/* /cert-card */}
+        </div>{/* /cert-print-scale */}
 
         {/* ══════════ ACTION BUTTONS ══════════ */}
         <div className="no-print" style={{
@@ -805,19 +849,28 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
         }}>
           <LinkedInBtn cert={cert} verifyUrl={verifyUrl}/>
 
-          <button onClick={() => window.print()} style={{
-            display: 'inline-flex', alignItems: 'center', gap: 7,
-            background: T.bg1, border: `1px solid ${T.border2}`,
-            color: T.muted, cursor: 'pointer', padding: '11px 20px', borderRadius: 8,
-            fontSize: 13, fontFamily: T.font, fontWeight: 600, transition: 'all 0.15s',
-          }}
-            onMouseEnter={e => { e.currentTarget.style.color = T.text; e.currentTarget.style.borderColor = T.accent; }}
-            onMouseLeave={e => { e.currentTarget.style.color = T.muted; e.currentTarget.style.borderColor = T.border2; }}
+          {/* Save as PDF — only enabled once the cert is fully loaded so the
+              credential ID and issue date appear on the printed copy.       */}
+          <button
+            onClick={() => cert && window.print()}
+            disabled={!cert}
+            title={cert ? 'Save as PDF — works best in Chrome' : 'Loading certificate…'}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 7,
+              background: T.bg1, border: `1px solid ${T.border2}`,
+              color: cert ? T.muted : T.faint,
+              cursor: cert ? 'pointer' : 'not-allowed',
+              padding: '11px 20px', borderRadius: 8,
+              fontSize: 13, fontFamily: T.font, fontWeight: 600, transition: 'all 0.15s',
+              opacity: cert ? 1 : 0.55,
+            }}
+            onMouseEnter={e => { if (cert) { e.currentTarget.style.color = T.text; e.currentTarget.style.borderColor = T.accent; } }}
+            onMouseLeave={e => { if (cert) { e.currentTarget.style.color = T.muted; e.currentTarget.style.borderColor = T.border2; } }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
             </svg>
-            Save as PDF
+            {cert ? 'Save as PDF' : 'Loading…'}
           </button>
 
           {cert && (
