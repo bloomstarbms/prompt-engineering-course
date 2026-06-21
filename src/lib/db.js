@@ -73,8 +73,9 @@ export async function getProfile(userId, accessToken) {
   return data || null;
 }
 
-export async function upsertProfile(userId, { name, bio = '', avatarUrl = '' }) {
-  const { data, error } = await supabase
+export async function upsertProfile(userId, { name, bio = '', avatarUrl = '' }, accessToken) {
+  const client = accessToken ? makeTokenClient(accessToken) : supabase;
+  const { data, error } = await client
     .from('profiles')
     .upsert({ id: userId, name: name.trim(), bio, avatar_url: avatarUrl }, { onConflict: 'id' })
     .select()
@@ -101,8 +102,9 @@ export async function loadProgress(userId, accessToken) {
   };
 }
 
-export async function saveProgress(userId, progress) {
-  const { error } = await supabase
+export async function saveProgress(userId, progress, accessToken) {
+  const client = accessToken ? makeTokenClient(accessToken) : supabase;
+  const { error } = await client
     .from('progress')
     .upsert({
       user_id:     userId,
@@ -116,14 +118,15 @@ export async function saveProgress(userId, progress) {
 
 // ── CERTIFICATES ──────────────────────────────────────────────────────────
 
-export async function issueCertificate(userId, { name, email, pct, grade, moduleScores, totalCorrect, totalPossible, existingCertId }) {
+export async function issueCertificate(userId, { name, email, pct, grade, moduleScores, totalCorrect, totalPossible, existingCertId }, accessToken) {
   // Return existing cert if already issued
-  const existing = await getUserCert(userId);
+  const existing = await getUserCert(userId, accessToken);
   if (existing) return existing;
 
   // Use the preserved cert ID (migration) or generate a new one
   const certId = existingCertId || generateCertId(email);
-  const { data, error } = await supabase
+  const client = accessToken ? makeTokenClient(accessToken) : supabase;
+  const { data, error } = await client
     .from('certificates')
     .insert({
       user_id:        userId,

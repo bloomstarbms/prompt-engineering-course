@@ -15,6 +15,71 @@ import ProfilePage     from '@/components/profile/ProfilePage';
 import { getUserCert } from '@/lib/db';
 import { LessonBody, ModPill } from '@/components/ui';
 
+/* ── VideoEmbed ─────────────────────────────────────────────────────────────
+ * Detects deleted/private YouTube videos before rendering the iframe.
+ * Strategy: YouTube's thumbnail endpoint always returns 200 OK, but serves a
+ * fixed 120×90 grey "default thumbnail" image when a video doesn't exist or
+ * is private.  We load a 0-byte Image() for the standard thumbnail and compare
+ * natural dimensions — 120×90 = unavailable, anything else = OK.
+ * This avoids showing the native "Video unavailable" error inside the iframe.
+ */
+function VideoEmbed({ vid, title }) {
+  const [unavailable, setUnavailable] = useState(false);
+
+  useEffect(() => {
+    if (!vid) { setUnavailable(true); return; }
+    setUnavailable(false); // reset when lesson changes
+    const img = new Image();
+    img.onload = () => {
+      // 120×90 is YouTube's fixed-size "no thumbnail" placeholder
+      if (img.naturalWidth === 120 && img.naturalHeight === 90) setUnavailable(true);
+    };
+    img.onerror = () => setUnavailable(true);
+    // hqdefault usually exists for all public videos; mqdefault is the fallback
+    img.src = `https://img.youtube.com/vi/${vid}/hqdefault.jpg`;
+  }, [vid]);
+
+  if (unavailable) {
+    return (
+      <div style={{
+        background: '#0f0f0f', position: 'relative', paddingBottom: '56.25%',
+      }}>
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: 12,
+          color: '#9ca3af', fontFamily: T.font,
+        }}>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+          </svg>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontWeight: 600, fontSize: 15, color: '#d1d5db', marginBottom: 4 }}>
+              Video temporarily unavailable
+            </div>
+            <div style={{ fontSize: 13, opacity: 0.7 }}>
+              The lesson notes below cover all the material.
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ background: '#000', position: 'relative', paddingBottom: '56.25%' }}>
+      <iframe
+        src={`https://www.youtube.com/embed/${vid}?rel=0&modestbranding=1`}
+        title={title}
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  );
+}
+
 
 /* ─── Pendulum Splash Screen ──────────────────────────────────────────── */
 function SplashScreen() {
@@ -674,15 +739,11 @@ function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed,
       )}
 
       {/* ── Video embed ── */}
-      <div style={{ background: '#000', position: 'relative', paddingBottom: '56.25%' }}>
-        <iframe
-          src={`https://www.youtube.com/embed/${lesson.vid}?rel=0&modestbranding=1`}
-          title={lesson.title}
-          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      </div>
+      {/* VideoEmbed: uses YouTube thumbnail to detect deleted/private videos before
+          rendering the iframe.  thumbnail.jpg always returns 200 but serves a
+          specific 120×90 grey placeholder when the video is unavailable — we detect
+          that by comparing the natural dimensions of the loaded image. */}
+      <VideoEmbed vid={lesson.vid} title={lesson.title} />
 
       <div style={{ padding: 'clamp(20px,4vw,28px) clamp(16px,4vw,32px)', maxWidth: 860 }}>
 

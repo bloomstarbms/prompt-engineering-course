@@ -31,15 +31,17 @@ function getLegacyUser(email, password) {
   return user;
 }
 
-/* Migrate old localStorage data to Supabase — runs once, silently */
-async function migrateLegacyUser(supabaseUserId, legacyUser) {
+/* Migrate old localStorage data to Supabase — runs once, silently.
+ * accessToken (optional): when provided, DB writes use makeTokenClient() and
+ * bypass getSession() / Web Locks, eliminating any contention risk.          */
+async function migrateLegacyUser(supabaseUserId, legacyUser, accessToken) {
   try {
     // 1. Profile
     await upsertProfile(supabaseUserId, {
       name:      legacyUser.name      || '',
       bio:       legacyUser.bio       || '',
       avatarUrl: legacyUser.avatarUrl || '',
-    });
+    }, accessToken);
 
     // 2. Progress
     const legacyProgress = lsGet(lsProgressKey(legacyUser.email));
@@ -48,7 +50,7 @@ async function migrateLegacyUser(supabaseUserId, legacyUser) {
         completed:  legacyProgress.completed  || {},
         quizScores: legacyProgress.quizScores || {},
         lastLesson: legacyProgress.lastLesson || { m: 0, l: 0 },
-      });
+      }, accessToken);
     }
 
     // 3. Certificate (preserve the original certId so old verify links keep working)
@@ -64,7 +66,7 @@ async function migrateLegacyUser(supabaseUserId, legacyUser) {
         totalCorrect:  legacyCert.totalCorrect  || 0,
         totalPossible: legacyCert.totalPossible || 0,
         existingCertId: legacyCert.certId,  // preserve so old verify links still work
-      });
+      }, accessToken);
     }
   } catch (e) {
     console.warn('[migration] partial failure — some data may not have migrated', e);
@@ -161,7 +163,9 @@ export function useAuth() {
             bio:       profile?.bio       || '',
             avatarUrl: profile?.avatar_url || '',
           };
-          await migrateLegacyUser(authUser.id, legacyUser);
+          // Pass accessToken so migrateLegacyUser's DB writes bypass getSession()
+          // and the Web Locks mutex — same reason we pass it to getProfile/loadProgress.
+          await migrateLegacyUser(authUser.id, legacyUser, accessToken);
           // Reload from Supabase so state reflects the newly migrated data
           prog = await loadProgress(authUser.id, accessToken);
         }
@@ -287,24 +291,35 @@ export function useAuth() {
       return { ok: false, error: friendlyAuthError(error) };
     }
 
-    // 3. Legacy user found and password verified — create their Supabase account
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
-    if (signUpError) {
-      // If signup fails (e.g. email already in Supabase but different password),
-      // fall back to the original error
-      return { ok: false, error: 'Incorrect email or password.' };
+    // 3. Legacy user found — create their Supabase account via the admin API
+    //    (email_confirm:true) so no confirmation email is sent and they can
+    //    sign in immediately, exactly as if they'd just registered normally.
+    //    Using supabase.auth.signUp() here instead would send a confirmation
+    //    email, which is jarring for someone who "already had an account".
+    let registerRes, registerJson;
+    try {
+      registerRes  = await fetch('/api/auth/register', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ name: legacyUser.name || email.split('@')[0], email, password }),
+      });
+      registerJson = await registerRes.json();
+    } catch {
+      return { ok: false, error: 'Network error. Please check your connection and try again.' };
     }
 
-    // 4. Migrate their data to Supabase in the background
-    if (signUpData.user) {
-      await migrateLegacyUser(signUpData.user.id, legacyUser);
+    // 409 = account already exists in Supabase from a previous migration attempt — that's fine.
+    if (!registerRes.ok && registerRes.status !== 409) {
+      return { ok: false, error: registerJson.error || 'Could not create your account. Please try again.' };
     }
 
-    // 5. If email confirmation is required, the session won't exist yet
-    if (!signUpData.session) {
-      return { ok: true, needsConfirm: true };
-    }
+    // 4. Sign in immediately — account is now confirmed (or was already confirmed)
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError) return { ok: false, error: friendlyAuthError(signInError) };
 
+    // 5. Data migration happens automatically: onAuthStateChange(SIGNED_IN) fires →
+    //    _hydrateUserOnce → if no Supabase progress found, migrateLegacyUser() reads
+    //    localStorage and pushes the data to Supabase.  No explicit call needed here.
     return { ok: true };
   }, []);
 
