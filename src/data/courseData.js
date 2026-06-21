@@ -1862,7 +1862,7 @@ You've completed Prompt Engineering: Zero to Mastery. But completing the course 
       {
         title: "Multimodal & Vision Prompting",
         dur: "22 min",
-        vid: "nTPb_u_qCqE",
+        vid: "qMk8jk4NZDA",
         intro: "Most AI users still treat AI as text-only — but today's frontier models like Claude 3, GPT-4o, and Gemini 1.5 can see, analyze, and reason about images, PDFs, charts, and screenshots with remarkable precision. This lesson teaches you exactly how to write effective prompts when visual inputs are involved.",
         body: `Most AI users still interact through text alone. That's leaving enormous capability on the table. Today's frontier models — Claude 3 Opus, GPT-4o, Gemini 1.5 Pro — can process images, diagrams, screenshots, PDFs, and even handwriting. Learning to prompt these visual capabilities is now a core professional skill.
 
@@ -1992,7 +1992,7 @@ Multimodal prompting extends every text-based skill you've built to a new dimens
       {
         title: "Hallucination Detection & Mitigation",
         dur: "25 min",
-        vid: "bfrV7eXnIQA",
+        vid: "1zd8QWxg7CM",
         intro: "Hallucination — AI confidently stating false information — is the single biggest barrier to using AI in production. It's not a bug being fixed; it's a fundamental property of how language models work. In this lesson you'll understand exactly why it happens and build a toolkit of proven techniques to reduce it to near-zero for your use cases.",
         body: `Hallucination — when an AI confidently states incorrect or invented information — is the most dangerous property of language models for production use. Understanding why it happens is the prerequisite for fixing it.
 
@@ -2121,7 +2121,7 @@ Hallucination management separates demo prompt engineering from production promp
       {
         title: "Conversational Design & Memory Management",
         dur: "20 min",
-        vid: "KmUcJp9TSZQ",
+        vid: "W2HVdB4Jbjs",
         intro: "Designing a multi-turn AI interaction is fundamentally different from writing a single prompt. A single prompt is a specification. A conversation is an architecture — with state, persona, memory, and failure modes that span multiple turns. This lesson gives you the framework to build well-designed, coherent AI conversation experiences.",
         body: `A multi-turn conversation is an architecture, not just a prompt. It has state, memory, persona, and failure modes that evolve over time. The most common mistake developers make is treating each conversation turn as a separate single prompt — resulting in AI that forgets context, loses its persona, and confuses users.
 
@@ -2281,7 +2281,7 @@ Conversational AI design is where prompt engineering meets product design. The t
       {
         title: "Meta-Prompting: AI-Assisted Prompt Design",
         dur: "18 min",
-        vid: "VjrvLxVPhIs",
+        vid: "0JZisMktcbA",
         intro: "Meta-prompting is using AI to help you write better prompts — and it's one of the most powerful, most underused skills in the field. In this lesson, you'll build a complete workflow for using AI as your prompting co-pilot: to generate, critique, stress-test, and compress your prompts. This is how professional prompt engineers maintain quality at scale.",
         body: `Meta-prompting is the practice of using AI to generate, critique, refine, and optimize prompts. It closes the feedback loop on the entire prompt engineering workflow. Instead of only using AI to complete end-user tasks, you use it as a collaborator in the prompting process itself.
 
