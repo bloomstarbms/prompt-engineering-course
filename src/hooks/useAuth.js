@@ -106,45 +106,39 @@ export function useAuth() {
   // ── Hydrate user + progress from Supabase ────────────────────────────
   // Serialised via hydratingRef so concurrent onAuthStateChange events (e.g.
   // INITIAL_SESSION followed immediately by SIGNED_IN during login) never
-  // issue two parallel getProfile/loadProgress calls — those parallel calls
-  // compete for Supabase's internal auth-token lock and produce the error:
-  // "Lock was released because another request stole it."
-  async function hydrateUser(authUser) {
+  // issue two parallel getProfile/loadProgress calls.
+  //
+  // accessToken is passed from the onAuthStateChange session object so that
+  // DB queries skip getSession() entirely (no Web Locks contention).
+  // See db.js makeTokenClient() for a full explanation of why this matters.
+  async function hydrateUser(authUser, accessToken) {
     // If another hydration is already in-flight, queue this one and bail.
     // The in-flight hydration will process the queued authUser when it finishes.
     if (hydratingRef.current) {
-      pendingAuthRef.current = authUser;
+      pendingAuthRef.current = { authUser, accessToken };
       return;
     }
     hydratingRef.current = true;
     try {
-      await _hydrateUserOnce(authUser);
+      await _hydrateUserOnce(authUser, accessToken);
       // Drain any hydration that arrived while we were busy
       while (pendingAuthRef.current) {
         const next = pendingAuthRef.current;
         pendingAuthRef.current = null;
-        await _hydrateUserOnce(next);
+        await _hydrateUserOnce(next.authUser, next.accessToken);
       }
     } finally {
       hydratingRef.current = false;
     }
   }
 
-  async function _hydrateUserOnce(authUser) {
+  async function _hydrateUserOnce(authUser, accessToken) {
     try {
-      // Fetch profile and progress SEQUENTIALLY — not in parallel.
-      //
-      // Why: both calls internally invoke getSession() to attach the JWT to the
-      // request.  Running them concurrently means two simultaneous getSession()
-      // calls compete for Supabase's Web Locks API auth-token mutex.  When one
-      // "steals" the lock, the other's promise hangs indefinitely (no error,
-      // no resolution), so `await hydrateUser(...)` never completes and
-      // `setReady(true)` in the outer finally block never fires — the splash
-      // screen stays up permanently on any normal page reload.
-      //
-      // Sequential calls share the same lock window and avoid this race.
-      const profile = await getProfile(authUser.id);
-      let   prog    = await loadProgress(authUser.id);
+      // Pass accessToken to DB helpers so they use makeTokenClient() and bypass
+      // getSession() — this avoids the Web Locks "stolen" error that occurs when
+      // Supabase's own auto-refresh fires concurrently with our hydration reads.
+      const profile = await getProfile(authUser.id, accessToken);
+      let   prog    = await loadProgress(authUser.id, accessToken);
 
       // ── Auto-migrate localStorage → Supabase (one-time, silent) ─────────────
       // Users who completed the course before Supabase was introduced have their
@@ -169,7 +163,7 @@ export function useAuth() {
           };
           await migrateLegacyUser(authUser.id, legacyUser);
           // Reload from Supabase so state reflects the newly migrated data
-          prog = await loadProgress(authUser.id);
+          prog = await loadProgress(authUser.id, accessToken);
         }
       }
 
@@ -235,7 +229,9 @@ export function useAuth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       try {
         if (session) {
-          await hydrateUser(session.user);
+          // Pass access_token so _hydrateUserOnce uses makeTokenClient() for
+          // all DB reads — avoids Web Locks contention with Supabase auto-refresh.
+          await hydrateUser(session.user, session.access_token);
         } else {
           // Clear both state and refs so the beforeunload handler doesn't
           // attempt to save stale progress after sign-out.

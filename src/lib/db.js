@@ -2,7 +2,37 @@
 // Handles profiles, progress, and certificates.
 // Auth (login/signup/logout) lives in supabase.js + useAuth.js.
 
+import { createClient as _createClient } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+
+// ── Pre-authed client factory ─────────────────────────────────────────────
+// Creates a lightweight Supabase client that sends `accessToken` directly in
+// the Authorization header — no getSession() calls, no Web Locks contention.
+//
+// Why this matters: the standard `supabase` client calls getSession() before
+// every query to attach a fresh JWT. getSession() internally acquires the Web
+// Locks API mutex "lock:sb-*-auth-token". If Supabase's own auto-refresh timer
+// fires concurrently (which it always does on page load — it checks immediately
+// whether the cached token needs refreshing) it calls lock() with steal:true,
+// forcibly evicting our getSession() call and throwing:
+//   "Lock was released because another request stole it"
+//
+// Passing the access_token we already received from onAuthStateChange bypasses
+// getSession() entirely, so no lock is acquired and no contention is possible.
+function makeTokenClient(accessToken) {
+  const url  = process.env.NEXT_PUBLIC_SUPABASE_URL   || '';
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  return _createClient(url, anon, {
+    auth: {
+      persistSession:     false,
+      autoRefreshToken:   false,
+      detectSessionInUrl: false,
+    },
+    global: {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  });
+}
 
 // ── Cert ID generator (same algorithm as before) ──────────────────────────
 function generateCertId(email) {
@@ -32,8 +62,9 @@ function normalizeCert(row) {
 
 // ── PROFILE ───────────────────────────────────────────────────────────────
 
-export async function getProfile(userId) {
-  const { data, error } = await supabase
+export async function getProfile(userId, accessToken) {
+  const client = accessToken ? makeTokenClient(accessToken) : supabase;
+  const { data, error } = await client
     .from('profiles')
     .select('name, bio, avatar_url')
     .eq('id', userId)
@@ -54,8 +85,9 @@ export async function upsertProfile(userId, { name, bio = '', avatarUrl = '' }) 
 
 // ── PROGRESS ──────────────────────────────────────────────────────────────
 
-export async function loadProgress(userId) {
-  const { data, error } = await supabase
+export async function loadProgress(userId, accessToken) {
+  const client = accessToken ? makeTokenClient(accessToken) : supabase;
+  const { data, error } = await client
     .from('progress')
     .select('completed, quiz_scores, last_lesson')
     .eq('user_id', userId)
@@ -110,8 +142,9 @@ export async function issueCertificate(userId, { name, email, pct, grade, module
   return normalizeCert(data);
 }
 
-export async function getUserCert(userId) {
-  const { data, error } = await supabase
+export async function getUserCert(userId, accessToken) {
+  const client = accessToken ? makeTokenClient(accessToken) : supabase;
+  const { data, error } = await client
     .from('certificates')
     .select('*')
     .eq('user_id', userId)
