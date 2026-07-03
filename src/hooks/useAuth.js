@@ -362,7 +362,7 @@ export function useAuth() {
   // ── LOGOUT ───────────────────────────────────────────────────────────
   const handleLogout = useCallback(async () => {
     clearTimeout(saveTimer.current);
-    await supabase.auth.signOut();
+    if (supabase) await supabase.auth.signOut();
   }, []);
 
   // ── PROGRESS ─────────────────────────────────────────────────────────

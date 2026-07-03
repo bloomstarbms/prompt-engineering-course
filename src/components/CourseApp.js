@@ -69,6 +69,14 @@ function VideoEmbed({ vid, title }) {
 
   return (
     <div style={{ background: '#000', position: 'relative', paddingBottom: '56.25%' }}>
+      {/* Loading hint — sits behind the iframe, visible only until it paints */}
+      <div aria-hidden="true" style={{
+        position: 'absolute', inset: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: '#3f3f46', fontFamily: T.mono, fontSize: 11, letterSpacing: '0.12em',
+      }}>
+        LOADING VIDEO…
+      </div>
       <iframe
         src={`https://www.youtube.com/embed/${vid}?rel=0&modestbranding=1`}
         title={title}
@@ -279,6 +287,14 @@ export default function CourseApp() {
 
   useEffect(() => { if (!isMobile) setSidebarOpen(true); }, [isMobile]);
 
+  /* Escape closes the mobile sidebar overlay */
+  useEffect(() => {
+    if (!isMobile || !sidebarOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') setSidebarOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isMobile, sidebarOpen]);
+
   /* restore last position after login (first-load path) or if the user
      lands directly on /course after a fresh page load.  The effect re-runs
      whenever user or progress changes so it catches the post-hydration batch
@@ -304,14 +320,21 @@ export default function CourseApp() {
   /* Also unlock cert access for students who already have an issued cert
      (covers: course updated with new lessons after they graduated, or any
      edge-case where completedCount doesn't equal TOTAL_LESSONS exactly) */
-  const [hasCert, setHasCert] = useState(false);
+  const [hasCert, setHasCert] = useState(null);
   useEffect(() => {
     if (userId) {
-      getUserCert(userId).then(cert => setHasCert(!!cert)).catch(() => {});
+      getUserCert(userId).then(cert => setHasCert(!!cert)).catch(() => setHasCert(false));
     }
   }, [userId]);
 
-  const canSeeCert = allDone || hasCert;
+  const canSeeCert    = allDone || hasCert === true;
+  const certResolved  = allDone || hasCert !== null;
+
+  useEffect(() => {
+    if (page === 'cert' && ready && user && certResolved && !canSeeCert) {
+      router.replace('/course');
+    }
+  }, [page, ready, user, certResolved, canSeeCert]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Track course completion once — fire-and-forget */
   const trackedComplete = useRef(false);
@@ -445,7 +468,8 @@ export default function CourseApp() {
   // Without this, anyone could navigate to /cert directly and issue themselves
   // a certificate with partial/zero quiz scores.
   if (page === 'cert') {
-    if (!canSeeCert) { router.replace('/course'); return null; }
+    if (!certResolved) return <SplashScreen />;
+    if (!canSeeCert) return null;
     return (
       <CertificatePage
         user={user}
@@ -523,6 +547,8 @@ export default function CourseApp() {
         }}>
           <button
             onClick={() => setSidebarOpen(s => !s)}
+            aria-label={sidebarOpen ? 'Hide course menu' : 'Show course menu'}
+            aria-expanded={sidebarOpen}
             style={{
               background: 'none', border: `1px solid ${T.border}`,
               color: T.muted, cursor: 'pointer', padding: '6px 9px',
@@ -574,6 +600,7 @@ export default function CourseApp() {
             <button
               onClick={goPrev}
               disabled={activeM === 0 && activeL === 0}
+              aria-label="Previous lesson"
               style={{
                 background: T.bg2, border: 'none', color: T.muted,
                 cursor: (activeM === 0 && activeL === 0) ? 'default' : 'pointer',
@@ -670,7 +697,7 @@ function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed,
           borderBottom: `1px solid ${mod.color}20`,
           padding: 'clamp(20px,4vw,32px) clamp(16px,4vw,32px) clamp(16px,3vw,24px)',
         }}>
-          <div style={{ maxWidth: 860 }}>
+          <div style={{ maxWidth: 860, margin: '0 auto' }}>
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               background: `${mod.color}18`, border: `1px solid ${mod.color}30`,
@@ -721,7 +748,7 @@ function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed,
           borderBottom: `1px solid ${T.border}`,
           background: T.bg1,
         }}>
-          <div style={{ maxWidth: 860, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <div style={{ maxWidth: 860, margin: '0 auto', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
             <div style={{
               width: 32, height: 32, borderRadius: 8, flexShrink: 0, marginTop: 1,
               background: `${mod.color}14`, border: `1px solid ${mod.color}28`,
@@ -743,9 +770,13 @@ function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed,
           rendering the iframe.  thumbnail.jpg always returns 200 but serves a
           specific 120×90 grey placeholder when the video is unavailable — we detect
           that by comparing the natural dimensions of the loaded image. */}
-      <VideoEmbed vid={lesson.vid} title={lesson.title} />
+      <div style={{ background: '#000', borderBottom: `1px solid ${T.border}` }}>
+        <div style={{ maxWidth: 1080, margin: '0 auto' }}>
+          <VideoEmbed vid={lesson.vid} title={lesson.title} />
+        </div>
+      </div>
 
-      <div style={{ padding: 'clamp(20px,4vw,28px) clamp(16px,4vw,32px)', maxWidth: 860 }}>
+      <div style={{ padding: 'clamp(20px,4vw,28px) clamp(16px,4vw,32px)', maxWidth: 924, margin: '0 auto' }}>
 
         {/* ── Lesson header ── */}
         <ModPill icon={mod.icon} title={mod.title} color={mod.color} />
@@ -891,7 +922,7 @@ function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed,
                 onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
                 onMouseLeave={e => e.currentTarget.style.opacity = '1'}
               >
-                {isLastLesson ? '✓ Complete &amp; Get Certificate →' : '✓ Mark Complete →'}
+                {isLastLesson ? '✓ Complete & Get Certificate →' : '✓ Mark Complete →'}
               </button>
             </div>
           )}

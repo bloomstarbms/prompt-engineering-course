@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { T, getGrade } from '@/lib/theme';
 import { QUIZZES, PASS_THRESHOLD } from '@/data/courseData';
 
@@ -96,7 +96,40 @@ export default function QuizView({ mod, lKey, prevScore, onDone, onBack }) {
   const [current,   setCurrent]   = useState(0);
   const [expanded,  setExpanded]  = useState(null); // which review card is open
 
-  if (!quiz) { onBack(); return null; }
+  /* No quiz for this lesson — bail out via effect (never navigate during render) */
+  useEffect(() => { if (!quiz) onBack(); }, [quiz]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* Keyboard shortcuts: A-D / 1-4 answer, arrows navigate, Enter advance.
+     Must be declared before the early return below — hooks can't be skipped. */
+  useEffect(() => {
+    if (submitted || !quiz) return;
+    const onKey = (e) => {
+      const tag = e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      const letter = ['a', 'b', 'c', 'd'].indexOf(e.key.toLowerCase());
+      const num    = ['1', '2', '3', '4'].indexOf(e.key);
+      const sel    = letter >= 0 ? letter : num;
+      if (sel >= 0 && sel < quiz.questions[current].opts.length) {
+        setAnswers(p => ({ ...p, [current]: sel }));
+      } else if (e.key === 'ArrowLeft' && current > 0) {
+        setCurrent(c => c - 1);
+      } else if (e.key === 'ArrowRight' && current < quiz.questions.length - 1 && answers[current] !== undefined) {
+        setCurrent(c => c + 1);
+      } else if (e.key === 'Enter' && tag !== 'BUTTON') {
+        if (current === quiz.questions.length - 1) {
+          if (quiz.questions.every((_, i) => answers[i] !== undefined)) {
+            setSubmitted(true); setExpanded(null);
+          }
+        } else if (answers[current] !== undefined) {
+          setCurrent(c => c + 1);
+        }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [submitted, quiz, current, answers]);
+
+  if (!quiz) return null;
 
   const q           = quiz.questions[current];
   const isFirst     = current === 0;
@@ -360,6 +393,15 @@ export default function QuizView({ mod, lKey, prevScore, onDone, onBack }) {
                   </button>
                 )}
               </div>
+
+              {/* Keyboard hint — desktop only via CSS */}
+              <div className="qv-kbd-hint" style={{
+                marginTop: 14, textAlign: 'center',
+                fontFamily: T.mono, fontSize: 9.5, color: T.faint, letterSpacing: '0.06em',
+              }}>
+                TIP: PRESS <span style={{ color: T.dim }}>A–D</span> TO ANSWER · <span style={{ color: T.dim }}>←/→</span> TO NAVIGATE · <span style={{ color: T.dim }}>ENTER</span> TO CONTINUE
+              </div>
+              <style>{`@media (max-width: 768px), (hover: none) { .qv-kbd-hint { display: none; } }`}</style>
             </div>
           )}
 

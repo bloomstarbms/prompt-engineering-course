@@ -1,10 +1,10 @@
 'use client';
 import { T } from '@/lib/theme';
-import { MODULES, TOTAL_LESSONS } from '@/data/courseData';
+import { MODULES, TOTAL_LESSONS, QUIZZES } from '@/data/courseData';
 import { AccentBtn } from '@/components/ui';
 
-/* Total quiz questions across the course */
-const TOTAL_QUIZ_Q = 81;
+/* Total quiz questions across the course — computed so it never drifts */
+const TOTAL_QUIZ_Q = Object.values(QUIZZES).reduce((a, q) => a + q.questions.length, 0);
 
 /* ─── Brand SVG Logos ──────────────────────────────────────────────────── */
 
@@ -387,7 +387,7 @@ export default function Landing({ onStart, onLogin }) {
               fontSize: 'clamp(17px,2.5vw,22px)', color: T.text,
               letterSpacing: '-0.025em',
             }}>
-              Approved &amp; Aligned with Official AI Best Practices
+              Aligned with Official AI Best Practices
             </div>
           </div>
 

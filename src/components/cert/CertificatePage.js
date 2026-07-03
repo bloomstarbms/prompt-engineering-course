@@ -153,7 +153,7 @@ function OfficialSeal({ color = '#818cf8', size = 90 }) {
         <textPath href={`#seal-top-${size}`} startOffset="50%" textAnchor="middle">PROMPTEN · CERTIFIED ·</textPath>
       </text>
       <text fontFamily="'Courier New', monospace" fontSize={size*0.085} fill={color} fontWeight="700" letterSpacing="1.8" opacity="0.65">
-        <textPath href={`#seal-bot-${size}`} startOffset="50%" textAnchor="middle">PROMPT ENGINEERING · 2026</textPath>
+        <textPath href={`#seal-bot-${size}`} startOffset="50%" textAnchor="middle">{`PROMPT ENGINEERING · ${new Date().getFullYear()}`}</textPath>
       </text>
       {/* Central P */}
       <text x={cx} y={cy + size*0.11}
@@ -739,7 +739,7 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
               <span className="cert-approval-label" style={{
                 fontFamily: T.mono, fontSize: 8,
                 color: 'rgba(255,255,255,0.20)', letterSpacing: '0.18em',
-              }}>CURRICULUM APPROVED BY</span>
+              }}>CURRICULUM ALIGNED WITH</span>
 
               <ApprovalPill label="Anthropic" bg="rgba(217,119,6,0.10)" border="rgba(217,119,6,0.32)" textColor="#D97706"
                 icon={<svg viewBox="0 0 24 24" width="12" height="12" fill="#D97706"><path d="M7 3L11.5 3L4.5 21L0 21Z"/><path d="M12.5 3L17 3L24 21L19.5 21Z"/></svg>}

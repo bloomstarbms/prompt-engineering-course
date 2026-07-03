@@ -61,6 +61,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
+  color-scheme: dark; /* native form controls, scrollbars & UA chrome render dark */
 }
 
 body {
@@ -70,6 +71,17 @@ body {
   line-height: 1.65;
   min-height: 100vh;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  overscroll-behavior-y: none; /* no white rubber-band flash at scroll edges */
+}
+
+/* Respect users who prefer less motion */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ── SCROLLBAR ────────────────────────────────────────────────────────────── */
@@ -84,6 +96,7 @@ h1, h2, h3, h4 {
   letter-spacing: -0.02em;
   font-weight: 600;
   line-height: 1.2;
+  text-wrap: balance; /* no orphan words in headings (progressive enhancement) */
 }
 
 /* ── ANIMATIONS ───────────────────────────────────────────────────────────── */

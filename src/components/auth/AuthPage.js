@@ -90,6 +90,7 @@ export default function AuthPage({ onAuth }) {
     e.preventDefault();
     setForgotError('');
     if (!forgotEmail.trim()) { setForgotError('Please enter your email address.'); return; }
+    if (!supabase) { setForgotError('Service unavailable. Please try again later.'); return; }
     setForgotLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
       redirectTo: `${window.location.origin}/reset-password`,
