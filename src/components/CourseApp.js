@@ -9,85 +9,12 @@ import { isLessonUnlocked } from '@/lib/lessonUnlock';
 import AuthPage        from '@/components/auth/AuthPage';
 import Landing         from '@/components/course/Landing';
 import Sidebar         from '@/components/course/Sidebar';
+import LessonArt       from '@/components/course/LessonArt';
 import QuizView        from '@/components/quiz/QuizView';
 import CertificatePage from '@/components/cert/CertificatePage';
 import ProfilePage     from '@/components/profile/ProfilePage';
 import { getUserCert } from '@/lib/db';
 import { LessonBody, ModPill } from '@/components/ui';
-
-/* ── VideoEmbed ─────────────────────────────────────────────────────────────
- * Detects deleted/private YouTube videos before rendering the iframe.
- * Strategy: YouTube's thumbnail endpoint always returns 200 OK, but serves a
- * fixed 120×90 grey "default thumbnail" image when a video doesn't exist or
- * is private.  We load a 0-byte Image() for the standard thumbnail and compare
- * natural dimensions — 120×90 = unavailable, anything else = OK.
- * This avoids showing the native "Video unavailable" error inside the iframe.
- */
-function VideoEmbed({ vid, title }) {
-  const [unavailable, setUnavailable] = useState(false);
-
-  useEffect(() => {
-    if (!vid) { setUnavailable(true); return; }
-    setUnavailable(false); // reset when lesson changes
-    const img = new Image();
-    img.onload = () => {
-      // 120×90 is YouTube's fixed-size "no thumbnail" placeholder
-      if (img.naturalWidth === 120 && img.naturalHeight === 90) setUnavailable(true);
-    };
-    img.onerror = () => setUnavailable(true);
-    // hqdefault usually exists for all public videos; mqdefault is the fallback
-    img.src = `https://img.youtube.com/vi/${vid}/hqdefault.jpg`;
-  }, [vid]);
-
-  if (unavailable) {
-    return (
-      <div style={{
-        background: '#0f0f0f', position: 'relative', paddingBottom: '56.25%',
-      }}>
-        <div style={{
-          position: 'absolute', inset: 0,
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: 12,
-          color: '#9ca3af', fontFamily: T.font,
-        }}>
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-          </svg>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontWeight: 600, fontSize: 15, color: '#d1d5db', marginBottom: 4 }}>
-              Video temporarily unavailable
-            </div>
-            <div style={{ fontSize: 13, opacity: 0.7 }}>
-              The lesson notes below cover all the material.
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ background: '#000', position: 'relative', paddingBottom: '56.25%' }}>
-      {/* Loading hint — sits behind the iframe, visible only until it paints */}
-      <div aria-hidden="true" style={{
-        position: 'absolute', inset: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: '#3f3f46', fontFamily: T.mono, fontSize: 11, letterSpacing: '0.12em',
-      }}>
-        LOADING VIDEO…
-      </div>
-      <iframe
-        src={`https://www.youtube.com/embed/${vid}?rel=0&modestbranding=1`}
-        title={title}
-        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-      />
-    </div>
-  );
-}
-
 
 /* ─── Pendulum Splash Screen ──────────────────────────────────────────── */
 function SplashScreen() {
@@ -723,7 +650,7 @@ function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed,
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
               {[
                 { icon: '📚', label: `${MODULES.length} Modules` },
-                { icon: '🎬', label: `${TOTAL_LESSONS} Lessons` },
+                { icon: '📖', label: `${TOTAL_LESSONS} Lessons` },
                 { icon: '✅', label: 'Quizzes & Certificate' },
                 { icon: '⚡', label: 'Beginner Friendly' },
               ].map(({ icon, label }) => (
@@ -765,14 +692,12 @@ function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed,
         </div>
       )}
 
-      {/* ── Video embed ── */}
-      {/* VideoEmbed: uses YouTube thumbnail to detect deleted/private videos before
-          rendering the iframe.  thumbnail.jpg always returns 200 but serves a
-          specific 120×90 grey placeholder when the video is unavailable — we detect
-          that by comparing the natural dimensions of the loaded image. */}
-      <div style={{ background: '#000', borderBottom: `1px solid ${T.border}` }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto' }}>
-          <VideoEmbed vid={lesson.vid} title={lesson.title} />
+      {/* ── Concept illustration ── */}
+      {/* Every lesson opens with a hand-sketched SVG diagram (LessonArt)
+          that visually explains the core idea — replaces the old videos. */}
+      <div style={{ background: T.bg1, borderBottom: `1px solid ${T.border}` }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto', padding: 'clamp(10px,2.5vw,24px)' }}>
+          <LessonArt mi={mi} li={li} color={mod.color} tag={mod.tag} title={lesson.title} />
         </div>
       </div>
 
@@ -821,7 +746,7 @@ function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed,
             </span>
           </div>
           <span style={{ fontFamily: T.mono, fontSize: 9, color: T.faint }}>
-            Read along after watching the video
+            Start with the diagram, then read the notes
           </span>
         </div>
 
@@ -907,7 +832,7 @@ function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed,
                   LESSON {activeL + 1} · NO QUIZ
                 </div>
                 <div style={{ fontFamily: T.font, fontSize: 13, color: T.muted }}>
-                  Watched the video and read the notes? Mark this lesson done.
+                  Studied the diagram and read the notes? Mark this lesson done.
                 </div>
               </div>
               <button

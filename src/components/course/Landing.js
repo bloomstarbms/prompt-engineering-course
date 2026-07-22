@@ -535,7 +535,7 @@ export default function Landing({ onStart, onLogin }) {
       <section style={{ background: T.bg1, padding: 'clamp(40px,6vw,64px) clamp(20px,6vw,80px)', borderTop: `1px solid ${T.border}` }}>
         <div style={{ maxWidth: 760, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px,1fr))', gap: 28 }}>
           {[
-            { icon: '📹', title: 'Video + Notes', desc: 'Each lesson has an embedded video and full written notes.' },
+            { icon: '🎨', title: 'Visual Lessons', desc: 'Every lesson opens with a concept diagram plus full written notes.' },
             { icon: '📝', title: 'Lesson Quizzes', desc: 'Test your understanding after every lesson with graded quizzes.' },
             { icon: '📊', title: 'Progress Tracking', desc: 'Your progress is saved automatically. Resume any time.' },
             { icon: '🎓', title: 'Verified Certificate', desc: 'Complete the course and earn a certificate with a unique ID.' },
