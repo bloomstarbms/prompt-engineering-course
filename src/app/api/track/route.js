@@ -8,7 +8,16 @@ export async function POST(req) {
     const { event, email, name } = await req.json();
     if (!event || !email) return Response.json({ ok: false, error: 'Missing fields' }, { status: 400 });
 
-    const normalEmail = email.toLowerCase().trim();
+    /* Public endpoint — validate strictly.  Only two known events exist,
+       emails must look like emails, and lengths are capped so nobody can
+       stuff arbitrary payloads into the analytics table. */
+    if (!['enroll', 'complete'].includes(event)) {
+      return Response.json({ ok: false, error: 'Unknown event' }, { status: 400 });
+    }
+    const normalEmail = String(email).toLowerCase().trim().slice(0, 254);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalEmail)) {
+      return Response.json({ ok: false, error: 'Invalid email' }, { status: 400 });
+    }
 
     /* Upsert with onConflict — idempotent by design.
        The unique index on (email, event) means duplicate calls are silently
@@ -16,7 +25,7 @@ export async function POST(req) {
     const { error } = await supabase
       .from('course_events')
       .upsert(
-        { event, email: normalEmail, name: name || '' },
+        { event, email: normalEmail, name: String(name || '').slice(0, 120) },
         { onConflict: 'email,event', ignoreDuplicates: true }
       );
 
