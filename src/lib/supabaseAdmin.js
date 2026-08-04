@@ -7,10 +7,12 @@
 //
 // Import this ONLY from route handlers / server components.
 
+// 'server-only' makes an accidental client import fail the BUILD rather than
+// shipping silently — the guard we actually want. The runtime check below is
+// kept as a second line of defence.
+import 'server-only';
 import { createClient } from '@supabase/supabase-js';
 
-/* Hard runtime guard: if this module is ever imported into a client bundle,
-   fail loudly at import time rather than shipping silently. */
 if (typeof window !== 'undefined') {
   throw new Error('lib/supabaseAdmin.js is server-only and must not be imported by client code.');
 }
