@@ -375,7 +375,8 @@ export default function AuthPage({ onAuth }) {
                       hint="This name appears on your certificate" />
                   )}
                   <Field label="Email Address" type="email" value={email}
-                    placeholder="you@example.com" autoComplete="email"
+                    placeholder="you@example.com"
+                    autoComplete={mode === 'register' ? 'email' : 'username'}
                     onChange={e => setEmail(e.target.value)} />
                   <Field label="Password" type="password" value={password}
                     placeholder={mode === 'register' ? 'At least 6 characters' : '••••••••'}

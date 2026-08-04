@@ -1,18 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const url   = process.env.NEXT_PUBLIC_SUPABASE_URL   || '';
-const anon  = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const svcKey= process.env.SUPABASE_SERVICE_ROLE_KEY   || '';
+// Client-safe module: only NEXT_PUBLIC_* values are referenced here.
+// The service-role admin client lives in lib/supabaseAdmin.js (server-only).
+const url  = process.env.NEXT_PUBLIC_SUPABASE_URL      || '';
+const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-/* Public client — used for event inserts */
+/* Public client — anon key, RLS-constrained, safe in the browser */
 export const supabase = url && anon
   ? createClient(url, anon)
   : null;
-
-/* Server-only admin client — bypasses RLS, used in API routes only */
-export function createAdminClient() {
-  if (!url || !svcKey) return null;
-  return createClient(url, svcKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-}

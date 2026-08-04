@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabase';
+import { createAdminClient } from '@/lib/supabaseAdmin';
 
 export async function POST(req) {
   /* Auth check — token travels in the request body, not the URL, to avoid
