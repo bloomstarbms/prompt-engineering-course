@@ -156,12 +156,42 @@ export async function getUserCert(userId, accessToken) {
   return data ? normalizeCert(data) : null;
 }
 
+// ── Public verification ───────────────────────────────────────────────────
+// Maps the reduced column set returned by the verify_certificate() RPC.
+// Deliberately has no `email` field: the public verify page never needed the
+// certificate holder's email address, and it is not sent to the browser.
+function normalizePublicCert(row) {
+  return {
+    certId:       row.cert_id,
+    name:         row.name,
+    pct:          row.pct,
+    grade:        row.grade,
+    moduleScores: row.module_scores || [],
+    issuedAt:     row.issued_at,
+  };
+}
+
 export async function getCertificateById(certId) {
+  // Goes through the verify_certificate() RPC rather than reading the table.
+  //
+  // Why: public.certificates is no longer readable by the anon role. The old
+  // implementation did `.select('*')` with anon privileges, which meant any
+  // caller holding the (public) anon key could read every row of the table —
+  // names and email addresses included. The RPC returns only non-PII columns,
+  // and only for an exact cert_id / legacy_cert_id match, so there is no way
+  // to list or page through the table.
+  //
+  // legacy_cert_id is matched inside the function, so verify links shared
+  // before the 004 ID rotation keep resolving.
   const { data, error } = await supabase
-    .from('certificates')
-    .select('*')
-    .eq('cert_id', certId)
-    .maybeSingle();
-  if (error) console.error('[db] getCertificateById error:', error.message, '| certId:', certId);
-  return data ? normalizeCert(data) : null;
+    .rpc('verify_certificate', { p_cert_id: certId });
+
+  if (error) {
+    console.error('[db] getCertificateById error:', error.message, '| certId:', certId);
+    return null;
+  }
+
+  // The function returns a set; supabase-js hands back an array.
+  const row = Array.isArray(data) ? data[0] : data;
+  return row ? normalizePublicCert(row) : null;
 }
