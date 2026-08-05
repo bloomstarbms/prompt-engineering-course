@@ -229,6 +229,8 @@ function ApprovalPill({ label, bg, border, textColor, icon }) {
 export default function CertificatePage({ user, userId, quizScores, onBack, updateProfile }) {
   const [cert,       setCert]       = useState(null);
   const [certLoading, setCertLoading] = useState(true); // true until cert fetch completes
+  const [certError,  setCertError]  = useState('');    // set when issuance fails
+  const [retryTick,  setRetryTick]  = useState(0);     // bumped by the retry button
   const [copied,     setCopied]     = useState(false);
 
   const [nameConfirmed, setNameConfirmed] = useState(!user?.nameIsDefault);
@@ -255,6 +257,7 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
   useEffect(() => {
     if (!userId || !nameConfirmed) return;
     setCertLoading(true);
+    setCertError('');
     async function fetchOrIssueCert() {
       try {
         const existing = await getUserCert(userId);
@@ -268,13 +271,17 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
           setCert(newCert);
         }
       } catch (e) {
+        // Surface the failure. Previously this only logged, which left the page
+        // rendering a certificate that looked complete but had no credential
+        // ID, no issue date, and a Save button stuck reading "Loading…".
         console.error('[CertificatePage] cert error', e);
+        setCertError(e?.message || 'Your certificate could not be issued.');
       } finally {
         setCertLoading(false);
       }
     }
     fetchOrIssueCert();
-  }, [userId, nameConfirmed]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userId, nameConfirmed, retryTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleNameSave() {
     const trimmed = nameInput.trim();
@@ -547,9 +554,52 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
           </div>
         )}
 
+        {/* ── Issuance failed: shown INSTEAD of the certificate ──
+            Rendering the card here would show a plausible-looking certificate
+            with a dash for the date and no credential ID, which is worse than
+            showing nothing: it implies a certificate exists when none does. */}
+        {certError && !cert && (
+          <div style={{
+            background: T.bg1, border: '1.5px solid rgba(248,113,113,0.35)',
+            borderRadius: 14, padding: 'clamp(24px,4vw,32px)',
+            textAlign: 'center', maxWidth: 520, margin: '8px auto 0',
+          }}>
+            <div style={{
+              width: 46, height: 46, borderRadius: '50%', margin: '0 auto 14px',
+              background: 'rgba(248,113,113,0.10)', border: '1.5px solid rgba(248,113,113,0.35)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 20, color: T.error, fontWeight: 700,
+            }}>!</div>
+            <div style={{ fontFamily: T.display, fontWeight: 700, fontSize: 18, color: T.text, marginBottom: 8 }}>
+              We couldn&apos;t issue your certificate
+            </div>
+            <p style={{ fontFamily: T.font, fontSize: 13.5, color: T.muted, lineHeight: 1.7, margin: '0 0 20px' }}>
+              Your course progress is saved — nothing has been lost. This is
+              usually a temporary connection problem, so trying again normally
+              works. If it keeps happening, get in touch and quote your account email.
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button onClick={() => setRetryTick(t => t + 1)} disabled={certLoading} style={{
+                background: T.accent, border: 'none', color: '#fff',
+                padding: '11px 24px', borderRadius: 9, cursor: certLoading ? 'default' : 'pointer',
+                fontFamily: T.font, fontWeight: 700, fontSize: 14, opacity: certLoading ? 0.6 : 1,
+              }}>{certLoading ? 'Trying…' : 'Try again'}</button>
+              <button onClick={onBack} style={{
+                background: 'none', border: `1px solid ${T.border2}`, color: T.muted,
+                padding: '11px 20px', borderRadius: 9, cursor: 'pointer',
+                fontFamily: T.font, fontWeight: 600, fontSize: 14,
+              }}>Back to course</button>
+            </div>
+            <div style={{ fontFamily: T.mono, fontSize: 10, color: T.faint, marginTop: 16, wordBreak: 'break-word' }}>
+              {certError}
+            </div>
+          </div>
+        )}
+
         {/* ══════════════════ CERTIFICATE CARD ══════════════════ */}
         {/* cert-print-scale is a no-op on screen; Firefox print uses it to
             collapse the extra layout space left by transform: scale().     */}
+        {!(certError && !cert) && (
         <div className="cert-print-scale">
         <div className="cert-card" style={{
           position: 'relative', overflow: 'hidden',
@@ -840,7 +890,8 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
 
           </div>{/* /centre */}
         </div>{/* /cert-card */}
-        </div>{/* /cert-print-scale */}
+        </div>
+        )}{/* /cert-print-scale */}
 
         {/* ══════════ ACTION BUTTONS ══════════ */}
         <div className="no-print" style={{
@@ -854,7 +905,9 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
           <button
             onClick={() => cert && window.print()}
             disabled={!cert}
-            title={cert ? 'Save as PDF — works best in Chrome' : 'Loading certificate…'}
+            title={cert ? 'Save as PDF — works best in Chrome'
+                        : certError ? 'Unavailable — no certificate was issued'
+                        : 'Loading certificate…'}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 7,
               background: T.bg1, border: `1px solid ${T.border2}`,
@@ -870,7 +923,7 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
             </svg>
-            {cert ? 'Save as PDF' : 'Loading…'}
+            {cert ? 'Save as PDF' : certError ? 'Unavailable' : 'Loading…'}
           </button>
 
           {cert && (
