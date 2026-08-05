@@ -101,6 +101,7 @@ export function useAuth() {
   const saveTimer      = useRef(null);
   const userIdRef      = useRef(null);   // mirrors userId for use inside event listeners/cleanup
   const progressRef    = useRef(null);   // tracks latest unsaved progress state
+  const tokenRef       = useRef(null);   // freshest access token, kept current across refreshes
   const hydratingRef   = useRef(false);  // mutex — prevents concurrent hydrateUser calls
   const pendingAuthRef = useRef(null);   // queues the latest authUser if one arrives during hydration
 
@@ -232,15 +233,32 @@ export function useAuth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       try {
         if (session) {
-          // Pass access_token so _hydrateUserOnce uses makeTokenClient() for
-          // all DB reads — avoids Web Locks contention with Supabase auto-refresh.
-          await hydrateUser(session.user, session.access_token);
+          // Always capture the freshest token. This branch is entered for every
+          // session-bearing event, TOKEN_REFRESHED included, so tokenRef never
+          // goes stale — which is what server-authenticated calls depend on.
+          tokenRef.current = session.access_token;
+
+          // Re-hydrate ONLY when the identity actually changed.
+          //
+          // Previously every session event re-ran getProfile + loadProgress and
+          // then setProgress(prog). Supabase refreshes the access token roughly
+          // hourly, and progress saves are debounced 800ms — so a refresh firing
+          // inside that window overwrote unsaved in-memory progress with the
+          // stale database row, silently discarding a just-completed lesson.
+          // A bare token refresh carries no new profile or progress data, so
+          // there is nothing to re-read.
+          if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+            // Pass access_token so _hydrateUserOnce uses makeTokenClient() for
+            // all DB reads — avoids Web Locks contention with Supabase auto-refresh.
+            await hydrateUser(session.user, session.access_token);
+          }
         } else {
           // Clear both state and refs so the beforeunload handler doesn't
           // attempt to save stale progress after sign-out.
           clearTimeout(saveTimer.current);
           progressRef.current = null;
           userIdRef.current   = null;
+          tokenRef.current    = null;
           setUser(null);
           setUserId(null);
           setProgress({ completed: {}, quizScores: {}, lastLesson: { m: 0, l: 0 } });
