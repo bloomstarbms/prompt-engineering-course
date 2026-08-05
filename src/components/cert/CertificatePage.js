@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { T, MOD_COLORS, getGrade } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS } from '@/data/courseData';
-import { issueCertificate, getUserCert } from '@/lib/db';
+import { getUserCert } from '@/lib/db';
 
 /* ── Site origin ──────────────────────────────────────────── */
 function getSiteOrigin() {
@@ -226,7 +226,7 @@ function ApprovalPill({ label, bg, border, textColor, icon }) {
 /* ══════════════════════════════════════════════════════════ */
 /*  MAIN PAGE                                                 */
 /* ══════════════════════════════════════════════════════════ */
-export default function CertificatePage({ user, userId, quizScores, onBack, updateProfile }) {
+export default function CertificatePage({ user, userId, quizScores, onBack, updateProfile, issueCertificate }) {
   const [cert,       setCert]       = useState(null);
   const [certLoading, setCertLoading] = useState(true); // true until cert fetch completes
   const [certError,  setCertError]  = useState('');    // set when issuance fails
@@ -264,10 +264,10 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
         if (existing) {
           setCert(existing);
         } else {
-          const newCert = await issueCertificate(userId, {
-            name: user.name, email: user.email, pct, grade: grade.letter,
-            moduleScores, totalCorrect, totalPossible,
-          });
+          // No arguments: the server derives the user from the bearer token
+          // and computes name, scores and grade itself. Nothing the client
+          // could send would be trusted, so nothing is sent.
+          const newCert = await issueCertificate();
           setCert(newCert);
         }
       } catch (e) {

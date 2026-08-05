@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { getProfile, upsertProfile, loadProgress, saveProgress, issueCertificate } from '@/lib/db';
+import { getProfile, upsertProfile, loadProgress, saveProgress, issueCertificateViaApi } from '@/lib/db';
 
 // ── Legacy localStorage helpers (migration only — read but never write) ───
 const LS_USERS    = 'pe_users';
@@ -53,20 +53,13 @@ async function migrateLegacyUser(supabaseUserId, legacyUser, accessToken) {
       }, accessToken);
     }
 
-    // 3. Certificate (preserve the original certId so old verify links keep working)
-    const allCerts = lsGet(LS_CERTS) || {};
-    const legacyCert = Object.values(allCerts).find(c => c.email === legacyUser.email.toLowerCase());
-    if (legacyCert) {
-      await issueCertificate(supabaseUserId, {
-        name:          legacyCert.name,
-        email:         legacyCert.email,
-        pct:           legacyCert.pct           || 0,
-        grade:         legacyCert.grade         || 'F',
-        moduleScores:  legacyCert.moduleScores  || [],
-        totalCorrect:  legacyCert.totalCorrect  || 0,
-        totalPossible: legacyCert.totalPossible || 0,
-      }, accessToken);
-    }
+    // 3. Certificates are no longer migrated here.
+    //    The old code re-inserted the localStorage certificate to preserve its
+    //    original certId, but 004's trigger assigns cert_id unconditionally so
+    //    that preservation already stopped working, and 005 step 3 revokes the
+    //    direct INSERT this relied on. Progress is migrated above, so the
+    //    certificate is simply re-issued through the server route on the user's
+    //    next visit to /cert, computed from that migrated progress.
   } catch (e) {
     console.warn('[migration] partial failure — some data may not have migrated', e);
   }
@@ -407,6 +400,57 @@ export function useAuth() {
   }, [userId]);
 
   // ── UPDATE PROFILE ───────────────────────────────────────────────────
+  // ── CERTIFICATE ISSUANCE ─────────────────────────────────────────────
+  // Waits for a fresh token to arrive on its own before considering a forced
+  // refresh. supabase-js refreshSession() acquires the same Web Locks mutex as
+  // getSession(), which is the contention this codebase routes around
+  // everywhere else — so it is the fallback, not the first move, it is guarded
+  // against concurrent invocation, and a lock error degrades to null rather
+  // than throwing.
+  const waitForFreshToken = useCallback(async (staleToken, ms = 2500) => {
+    const start = Date.now();
+    while (Date.now() - start < ms) {
+      if (tokenRef.current && tokenRef.current !== staleToken) return tokenRef.current;
+      await new Promise(r => setTimeout(r, 150));
+    }
+    return null;
+  }, []);
+
+  const refreshingRef = useRef(null);
+  const forceRefresh = useCallback(async () => {
+    if (!supabase) return null;
+    if (refreshingRef.current) return refreshingRef.current; // single flight
+    const p = (async () => {
+      try {
+        const { data, error } = await supabase.auth.refreshSession();
+        if (error) { console.warn('[useAuth] refreshSession failed:', error.message); return null; }
+        return data?.session?.access_token || null;
+      } catch (e) {
+        // Web Locks "lock was released because another request stole it" lands
+        // here. Returning null lets the caller show the error block.
+        console.warn('[useAuth] refreshSession threw:', e?.message);
+        return null;
+      }
+    })();
+    refreshingRef.current = p;
+    try { return await p; } finally { refreshingRef.current = null; }
+  }, []);
+
+  const handleIssueCertificate = useCallback(async () => {
+    const token = tokenRef.current;
+    if (!token) throw new Error('You appear to be signed out. Please sign in again.');
+    try {
+      return await issueCertificateViaApi(token);
+    } catch (e) {
+      if (e?.status !== 401) throw e;
+      // Token expired between refresh and request. Prefer the lock-free path.
+      let next = await waitForFreshToken(token);
+      if (!next) next = await forceRefresh();
+      if (!next || next === token) throw e;
+      return await issueCertificateViaApi(next);
+    }
+  }, [waitForFreshToken, forceRefresh]);
+
   const handleUpdateProfile = useCallback(async ({ name, bio, avatarUrl }) => {
     if (!userId) return { ok: false, error: 'Not logged in.' };
     try {
@@ -453,6 +497,7 @@ export function useAuth() {
     register:       handleRegister,
     logout:         handleLogout,
     updateProgress,
+    issueCertificate: handleIssueCertificate,
     updateProfile:  handleUpdateProfile,
     updatePassword: handleUpdatePassword,
   };

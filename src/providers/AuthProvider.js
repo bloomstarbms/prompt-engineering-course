@@ -20,6 +20,7 @@ const DEFAULTS = {
   register:       async () => ({ ok: false, error: 'Not initialised' }),
   logout:         async () => {},
   updateProgress: () => {},
+  issueCertificate: async () => { throw new Error('Not initialised'); },
   updateProfile:  async () => ({ ok: false }),
   updatePassword: async () => ({ ok: false }),
 };

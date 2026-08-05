@@ -131,7 +131,7 @@ export default function CourseApp() {
   // ── Auth state comes from the shared context (lives in layout.js).
   // On client-side navigation, ready/user/progress are already populated
   // because the context never unmounts — no re-auth, no splash on nav.
-  const { user, userId, progress, ready, login, register, logout, updateProgress, updateProfile, updatePassword } = useAuthCtx();
+  const { user, userId, progress, ready, login, register, logout, updateProgress, updateProfile, updatePassword, issueCertificate } = useAuthCtx();
 
   // ── URL-based routing — each section has its own path ──────────────
   const router   = useRouter();
@@ -403,6 +403,7 @@ export default function CourseApp() {
         userId={userId}
         quizScores={quizScores}
         updateProfile={updateProfile}
+        issueCertificate={issueCertificate}
         onBack={() => { setHasCert(true); router.push('/course'); }}
       />
     );

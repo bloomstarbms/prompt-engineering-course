@@ -114,7 +114,39 @@ export async function saveProgress(userId, progress, accessToken) {
 
 // ── CERTIFICATES ──────────────────────────────────────────────────────────
 
-export async function issueCertificate(userId, { name, email, pct, grade, moduleScores, totalCorrect, totalPossible }, accessToken) {
+/**
+ * Issue via the server route. The client sends no scores, no name and no
+ * identifiers — the server derives the user from the bearer token and computes
+ * every field itself. See src/app/api/certificates/issue/route.js.
+ *
+ * Token plumbing deliberately lives in useAuth (tokenRef), not here: calling
+ * getSession()/refreshSession() from this layer would reacquire the Web Locks
+ * mutex that makeTokenClient() exists to avoid.
+ */
+export async function issueCertificateViaApi(accessToken) {
+  const res = await fetch('/api/certificates/issue', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  let json = null;
+  try { json = await res.json(); } catch { /* non-JSON error page */ }
+
+  if (!res.ok) {
+    const err = new Error(json?.error || `Certificate service returned ${res.status}.`);
+    err.status = res.status;   // useAuth inspects this to decide whether to retry
+    throw err;
+  }
+
+  // The route wraps its payload: { ok, issued, certificate }. Unwrap it —
+  // handing the envelope to setCert would produce a cert with no certId.
+  if (!json?.certificate) {
+    throw new Error('Certificate service returned an unexpected response.');
+  }
+  return json.certificate;
+}
+
+export async function issueCertificateDirect(userId, { name, email, pct, grade, moduleScores, totalCorrect, totalPossible }, accessToken) {
   // Idempotent: one certificate per user (enforced by a unique constraint on
   // user_id as well, so a race loses at the database rather than duplicating).
   const existing = await getUserCert(userId, accessToken);
