@@ -110,10 +110,28 @@ export async function POST(req) {
     accountCreatedAt !== null && accountCreatedAt < new Date(SYLLABUS_EXPANDED_AT);
   const requiredLessons = predatesExpansion ? LEGACY_SYLLABUS_LESSONS : TOTAL_LESSONS;
 
-  const completedCount = Object.keys(completed).filter(k => completed[k]).length;
+  const completedKeys  = Object.keys(completed);
+  const completedCount = completedKeys.filter(k => completed[k]).length;
+
   if (completedCount < requiredLessons) {
+    // Never render equal numbers. "26 of 26 lessons finished" alongside "course
+    // not complete" is self-contradictory to a reader, and it cannot mean what
+    // it says: if the counts matched, this branch would not have been entered.
+    //
+    // The state it would actually indicate is a data problem — the row holds
+    // enough lesson keys but some carry a falsy value. The client only ever
+    // writes `true`, so a falsy entry is an anomaly rather than deliberate
+    // incompletion, and telling someone they are short of lessons they can see
+    // ticked in the UI would send them looking for work that does not exist.
+    const looksLikeDataProblem = completedKeys.length >= requiredLessons;
+    if (looksLikeDataProblem) {
+      console.warn('[certificates/issue] progress anomaly:',
+        `${completedKeys.length} keys but only ${completedCount} truthy for user`, userId);
+    }
     return NextResponse.json({
-      error: `Course not complete — ${completedCount} of ${requiredLessons} lessons finished.`,
+      error: looksLikeDataProblem
+        ? 'Your progress record could not be read correctly. Please reload and try again — if it keeps happening, get in touch and quote your account email.'
+        : `Course not complete — ${completedCount} of ${requiredLessons} lessons finished.`,
     }, { status: 403 });
   }
 
