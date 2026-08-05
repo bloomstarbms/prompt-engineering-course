@@ -6,81 +6,22 @@ import { AccentBtn } from '@/components/ui';
 /* Total quiz questions across the course — computed so it never drifts */
 const TOTAL_QUIZ_Q = Object.values(QUIZZES).reduce((a, q) => a + q.questions.length, 0);
 
-/* ─── Brand SVG Logos ──────────────────────────────────────────────────── */
-
-/*
- * Anthropic "A" mark — two solid parallelogram stripes that together form
- * a wide A shape, matching their official logomark geometry exactly.
- * Left stripe:  upper-centre (x 7–11.5, y 3) → lower-left (x 0–4.5, y 21)
- * Right stripe: upper-centre (x 12.5–17, y 3) → lower-right (x 19.5–24, y 21)
- * Both stripes have the same slope and width; small gap between them at top.
- */
-const AnthropicLogo = () => (
-  <svg viewBox="0 0 24 24" width="30" height="30" fill="#D97706">
-    <path d="M7 3L11.5 3L4.5 21L0 21Z"/>
-    <path d="M12.5 3L17 3L24 21L19.5 21Z"/>
-  </svg>
-);
-
-const OpenAILogo = () => (
-  <svg viewBox="0 0 24 24" width="30" height="30" fill="#10b981">
-    <path d="M22.28 9.82a5.98 5.98 0 00-.52-4.91 6.05 6.05 0 00-6.51-2.9A6.07 6.07 0 004.98 4.18a5.98 5.98 0 00-4 2.9 6.05 6.05 0 00.74 7.1 5.98 5.98 0 00.51 4.91 6.05 6.05 0 006.51 2.9A5.98 5.98 0 0013.26 24a6.06 6.06 0 005.77-4.21 5.99 5.99 0 004-2.9 6.06 6.06 0 00-.75-7.07zM13.26 22.43a4.48 4.48 0 01-2.88-1.04l.14-.08 4.78-2.76a.79.79 0 00.39-.68v-6.74l2.02 1.17a.07.07 0 01.04.05v5.58a4.5 4.5 0 01-4.49 4.5zm-9.66-4.13a4.47 4.47 0 01-.53-3.01l.14.08 4.78 2.76a.77.77 0 00.78 0l5.84-3.37v2.33a.08.08 0 01-.03.06L9.74 19.95a4.5 4.5 0 01-6.14-1.65zM2.34 7.9a4.49 4.49 0 012.37-1.97V11.6a.77.77 0 00.39.68l5.81 3.35-2.02 1.17a.08.08 0 01-.07 0l-4.83-2.79A4.5 4.5 0 012.34 7.9zm16.6 3.85l-5.84-3.37 2.02-1.17a.08.08 0 01.07 0l4.83 2.79a4.5 4.5 0 01-.68 8.1v-5.68a.79.79 0 00-.4-.67zm2.01-3.02l-.14-.09-4.77-2.78a.78.78 0 00-.79 0L9.41 9.23V6.9a.07.07 0 01.03-.06l4.83-2.79a4.5 4.5 0 016.68 4.66zM8.31 12.86l-2.02-1.16a.08.08 0 01-.04-.06V6.07a4.5 4.5 0 017.38-3.45l-.14.08-4.78 2.76a.79.79 0 00-.4.68zm1.1-2.37l2.6-1.5 2.61 1.5v2.99l-2.6 1.5-2.61-1.5z"/>
-  </svg>
-);
-
-const ChatGPTLogo = () => (
-  <svg viewBox="0 0 24 24" width="30" height="30" fill="#74aa9c">
-    <path d="M22.28 9.82a5.98 5.98 0 00-.52-4.91 6.05 6.05 0 00-6.51-2.9A6.07 6.07 0 004.98 4.18a5.98 5.98 0 00-4 2.9 6.05 6.05 0 00.74 7.1 5.98 5.98 0 00.51 4.91 6.05 6.05 0 006.51 2.9A5.98 5.98 0 0013.26 24a6.06 6.06 0 005.77-4.21 5.99 5.99 0 004-2.9 6.06 6.06 0 00-.75-7.07zM13.26 22.43a4.48 4.48 0 01-2.88-1.04l.14-.08 4.78-2.76a.79.79 0 00.39-.68v-6.74l2.02 1.17a.07.07 0 01.04.05v5.58a4.5 4.5 0 01-4.49 4.5zm-9.66-4.13a4.47 4.47 0 01-.53-3.01l.14.08 4.78 2.76a.77.77 0 00.78 0l5.84-3.37v2.33a.08.08 0 01-.03.06L9.74 19.95a4.5 4.5 0 01-6.14-1.65zM2.34 7.9a4.49 4.49 0 012.37-1.97V11.6a.77.77 0 00.39.68l5.81 3.35-2.02 1.17a.08.08 0 01-.07 0l-4.83-2.79A4.5 4.5 0 012.34 7.9zm16.6 3.85l-5.84-3.37 2.02-1.17a.08.08 0 01.07 0l4.83 2.79a4.5 4.5 0 01-.68 8.1v-5.68a.79.79 0 00-.4-.67zm2.01-3.02l-.14-.09-4.77-2.78a.78.78 0 00-.79 0L9.41 9.23V6.9a.07.07 0 01.03-.06l4.83-2.79a4.5 4.5 0 016.68 4.66zM8.31 12.86l-2.02-1.16a.08.08 0 01-.04-.06V6.07a4.5 4.5 0 017.38-3.45l-.14.08-4.78 2.76a.79.79 0 00-.4.68zm1.1-2.37l2.6-1.5 2.61 1.5v2.99l-2.6 1.5-2.61-1.5z"/>
-  </svg>
-);
-
-const GoogleLogo = () => (
-  <svg viewBox="0 0 24 24" width="30" height="30">
-    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-  </svg>
-);
-
-/* ─── Trust badge data ─────────────────────────────────────────────────── */
-const TRUST_BADGES = [
-  {
-    name: 'Anthropic',
-    sub: 'CLAUDE AI GUIDELINES',
-    color: '#D97706',
-    border: 'rgba(217,119,6,0.28)',
-    logoBg: 'rgba(217,119,6,0.08)',
-    glow: 'rgba(217,119,6,0.14)',
-    Logo: AnthropicLogo,
-  },
-  {
-    name: 'OpenAI',
-    sub: 'GPT MODEL BEST PRACTICES',
-    color: '#10b981',
-    border: 'rgba(16,185,129,0.28)',
-    logoBg: 'rgba(16,185,129,0.08)',
-    glow: 'rgba(16,185,129,0.14)',
-    Logo: OpenAILogo,
-  },
-  {
-    name: 'ChatGPT',
-    sub: 'PROMPT DESIGN STANDARDS',
-    color: '#74aa9c',
-    border: 'rgba(116,170,156,0.28)',
-    logoBg: 'rgba(116,170,156,0.08)',
-    glow: 'rgba(116,170,156,0.14)',
-    Logo: ChatGPTLogo,
-  },
-  {
-    name: 'Google DeepMind',
-    sub: 'GEMINI RESEARCH & GUIDELINES',
-    color: '#4285F4',
-    border: 'rgba(66,133,244,0.28)',
-    logoBg: 'rgba(66,133,244,0.08)',
-    glow: 'rgba(66,133,244,0.14)',
-    Logo: GoogleLogo,
-  },
+/* ─── Primary sources ──────────────────────────────────────────────────────
+ * Named documents the curriculum is written from. Editable in one place.
+ *
+ * `url: null` renders as plain text rather than a dead link — better to show a
+ * source we haven't linked yet than to ship an anchor that goes nowhere.
+ * Replace null with the exact URL to turn each into a link.
+ * ───────────────────────────────────────────────────────────────────────── */
+const SOURCES = [
+  { publisher: 'Anthropic',  title: 'Prompt engineering overview (Claude documentation)', url: null }, // TODO: exact URL
+  { publisher: 'OpenAI',     title: 'Prompt engineering guide (API documentation)',        url: null }, // TODO: exact URL
+  { publisher: 'Google',     title: 'Prompting strategies (Gemini API documentation)',     url: null }, // TODO: exact URL
+  { publisher: 'Wei et al.', title: 'Chain-of-Thought Prompting Elicits Reasoning in Large Language Models (2022)', url: null }, // TODO
+  { publisher: 'Wang et al.',title: 'Self-Consistency Improves Chain of Thought Reasoning in Language Models (2022)', url: null }, // TODO
+  { publisher: 'Yao et al.', title: 'ReAct: Synergizing Reasoning and Acting in Language Models (2022)', url: null }, // TODO
+  { publisher: 'Yao et al.', title: 'Tree of Thoughts: Deliberate Problem Solving with Large Language Models (2023)', url: null }, // TODO
+  { publisher: 'Lewis et al.', title: 'Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks (2020)', url: null }, // TODO
 ];
 
 /* ─── Module SVG Icons (index matches MODULES array) ──────────────────── */
@@ -361,109 +302,55 @@ export default function Landing({ onStart, onLogin }) {
         </div>
       </section>
 
-      {/* ── Trust / Approved-by strip ── */}
+      {/* ── Built from the primary sources ── */}
       <section style={{
         background: T.bg1,
         borderTop: `1px solid ${T.border}`,
         borderBottom: `1px solid ${T.border}`,
         padding: 'clamp(36px,5vw,52px) clamp(20px,6vw,80px)',
       }}>
-        <div style={{ maxWidth: 920, margin: '0 auto' }}>
-
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 7,
-              background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.18)',
-              borderRadius: 100, padding: '4px 14px', marginBottom: 14,
-            }}>
-              <span style={{ fontSize: 9, color: '#34d399' }}>✦</span>
-              <span style={{ fontFamily: T.mono, fontSize: 10, color: '#34d399', letterSpacing: '0.12em' }}>
-                CURRICULUM ALIGNMENT
-              </span>
-            </div>
-            <div style={{
-              fontFamily: T.display, fontWeight: 700,
-              fontSize: 'clamp(17px,2.5vw,22px)', color: T.text,
-              letterSpacing: '-0.025em',
-            }}>
-              Aligned with Official AI Best Practices
-            </div>
-          </div>
-
-          {/* Badge grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
-            gap: 14, marginBottom: 24,
+        <div style={{ maxWidth: 720, margin: '0 auto' }}>
+          <h2 style={{
+            fontFamily: T.display, fontWeight: 700,
+            fontSize: 'clamp(17px,2.5vw,22px)', color: T.text,
+            letterSpacing: '-0.025em', margin: '0 0 12px',
           }}>
-            {TRUST_BADGES.map(b => (
-              <div key={b.name} style={{
-                background: T.bg, border: `1px solid ${T.border}`,
-                borderRadius: 14, padding: '22px 18px 18px',
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                gap: 11, textAlign: 'center',
-                transition: 'border-color 0.2s, box-shadow 0.2s, transform 0.2s',
-                cursor: 'default',
-                borderTop: `2px solid ${b.color}30`,
-              }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = b.border;
-                  e.currentTarget.style.boxShadow = `0 8px 28px ${b.glow}`;
-                  e.currentTarget.style.transform = 'translateY(-3px)';
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = T.border;
-                  e.currentTarget.style.borderTopColor = b.color + '30'; // restore brand accent
-                  e.currentTarget.style.boxShadow = 'none';
-                  e.currentTarget.style.transform = 'none';
-                }}
-              >
-                {/* Logo container */}
-                <div style={{
-                  width: 54, height: 54, borderRadius: 13,
-                  background: b.logoBg, border: `1px solid ${b.border}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <b.Logo />
-                </div>
+            Built from the primary sources
+          </h2>
 
-                {/* Brand name + sub */}
-                <div>
-                  <div style={{
-                    fontFamily: T.font, fontWeight: 700, fontSize: 14,
-                    color: T.text, marginBottom: 4, letterSpacing: '-0.01em',
-                  }}>
-                    {b.name}
-                  </div>
-                  <div style={{
-                    fontFamily: T.mono, fontSize: 9, color: b.color,
-                    letterSpacing: '0.07em', lineHeight: 1.4,
-                  }}>
-                    {b.sub}
-                  </div>
-                </div>
-
-                {/* Aligned pill */}
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.2)',
-                  borderRadius: 100, padding: '4px 11px',
-                }}>
-                  <span style={{ fontSize: 10, color: '#34d399' }}>✓</span>
-                  <span style={{ fontFamily: T.mono, fontSize: 9, color: '#34d399', letterSpacing: '0.08em' }}>ALIGNED</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Fine print */}
           <p style={{
-            textAlign: 'center', fontFamily: T.font, fontSize: 11,
-            color: T.faint, lineHeight: 1.6, margin: 0,
+            fontFamily: T.font, fontSize: 14, color: T.muted,
+            lineHeight: 1.7, margin: '0 0 26px', maxWidth: 620,
           }}>
-            Course content reflects official prompting guidelines, documentation, and research published by each platform.
+            This course is written from the official prompting documentation and
+            published research of the major model providers. It is not affiliated
+            with or endorsed by any of them.
           </p>
+
+          <ul style={{
+            listStyle: 'none', margin: 0, padding: 0,
+            display: 'flex', flexDirection: 'column', gap: 11,
+          }}>
+            {SOURCES.map(src => (
+              <li key={src.title} style={{
+                fontFamily: T.font, fontSize: 13.5, lineHeight: 1.6, color: T.muted,
+              }}>
+                <span style={{ fontFamily: T.mono, fontSize: 11, color: T.dim }}>
+                  {src.publisher}
+                </span>
+                <span style={{ color: T.faint }}>{'  ·  '}</span>
+                {src.url ? (
+                  <a href={src.url} target="_blank" rel="noopener noreferrer"
+                    style={{ color: T.muted, textDecoration: 'none', borderBottom: `1px solid ${T.border2}` }}
+                    onMouseEnter={e => { e.currentTarget.style.color = T.text; e.currentTarget.style.borderBottomColor = T.accentBorder; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = T.muted; e.currentTarget.style.borderBottomColor = T.border2; }}
+                  >{src.title}</a>
+                ) : (
+                  <span>{src.title}</span>
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
