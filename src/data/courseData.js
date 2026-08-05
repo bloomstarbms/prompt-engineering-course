@@ -2644,21 +2644,30 @@ export const QUIZZES = {
 export const TOTAL_LESSONS = MODULES.reduce((a, m) => a + m.lessons.length, 0);
 
 /**
- * Lessons a learner must have completed to earn a certificate.
+ * Grandfather clause for the syllabus expansion of 2026-04-20 (commit a86ad6f),
+ * when the course grew from 22 lessons to 26.
  *
- * This is deliberately NOT TOTAL_LESSONS. The syllabus grew from 22 lessons to
- * 26 on 2026-04-20 (commit a86ad6f). Someone who finished the 22-lesson course
- * earned their certificate under the syllabus that existed at the time, and
- * deriving the requirement from the live MODULES array silently strands every
- * one of them the moment the course grows — they simply stop qualifying, with
- * no code change and no visible decision anywhere.
+ * This is a TIME-BOUNDED exception, not a lowered requirement. Accounts created
+ * before the cutoff qualify at LEGACY_SYLLABUS_LESSONS, because they signed up
+ * to a 22-lesson course and finishing it was genuinely finishing it. Everyone
+ * who joined afterwards must complete all TOTAL_LESSONS — otherwise the bar
+ * would be permanently lowered and "Certificate of Completion" would be false
+ * on its face for anyone registering today.
  *
- * So the requirement is stated explicitly here. Adding lessons is now safe by
- * default: TOTAL_LESSONS moves, this does not. Raising this number
- * retroactively invalidates completions that were legitimately earned, so
- * treat any change to it as a policy decision rather than housekeeping.
+ * Why account creation and not the progress row: public.progress has no
+ * created_at column, only updated_at, and updated_at is rewritten on every save
+ * — so it records the last time someone studied, not when they started, and is
+ * useless as a cohort signal. auth.users.created_at is the only reliable
+ * pre-existing timestamp, and it already arrives with the verified token, so no
+ * extra query is needed.
+ *
+ * Do not derive the requirement from the live MODULES array again. Doing so is
+ * what silently disqualified the earlier cohort in the first place: the course
+ * grew, and their completions quietly stopped counting with no code change and
+ * no decision recorded anywhere.
  */
-export const MIN_LESSONS_FOR_CERTIFICATE = 22;
+export const SYLLABUS_EXPANDED_AT     = '2026-04-20T00:00:00Z';
+export const LEGACY_SYLLABUS_LESSONS  = 22;
 
 export const PASS_THRESHOLD = 70; // % score needed to pass a quiz and unlock the next lesson
 

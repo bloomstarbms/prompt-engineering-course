@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabaseAdmin';
-import { MODULES, TOTAL_LESSONS, MIN_LESSONS_FOR_CERTIFICATE } from '@/data/courseData';
+import { MODULES, TOTAL_LESSONS, LEGACY_SYLLABUS_LESSONS, SYLLABUS_EXPANDED_AT } from '@/data/courseData';
 import { getGrade } from '@/lib/theme';
 
 /**
@@ -96,15 +96,24 @@ export async function POST(req) {
   const completed  = progressRow?.completed   || {};
   const quizScores = progressRow?.quiz_scores || {};
 
-  // Grandfather clause. Measured against MIN_LESSONS_FOR_CERTIFICATE, not
-  // TOTAL_LESSONS: the syllabus grew 22 -> 26 and anyone who finished the
-  // earlier course earned their certificate under the rules that existed then.
-  // Using the live array here would revoke qualifications retroactively every
-  // time a lesson is added.
+  // Grandfather clause, bounded to the cohort it exists for.
+  //
+  // Accounts predating the 2026-04-20 syllabus expansion qualify at the old
+  // 22-lesson bar; everyone since must complete all TOTAL_LESSONS. A blanket
+  // floor would permanently lower the requirement and make the certificate's
+  // own wording untrue for anyone registering today.
+  //
+  // created_at comes from the verified token, so this cannot be spoofed by the
+  // caller — same trust boundary as the user id itself.
+  const accountCreatedAt = authData.user.created_at ? new Date(authData.user.created_at) : null;
+  const predatesExpansion =
+    accountCreatedAt !== null && accountCreatedAt < new Date(SYLLABUS_EXPANDED_AT);
+  const requiredLessons = predatesExpansion ? LEGACY_SYLLABUS_LESSONS : TOTAL_LESSONS;
+
   const completedCount = Object.keys(completed).filter(k => completed[k]).length;
-  if (completedCount < MIN_LESSONS_FOR_CERTIFICATE) {
+  if (completedCount < requiredLessons) {
     return NextResponse.json({
-      error: `Course not complete — ${completedCount} of ${MIN_LESSONS_FOR_CERTIFICATE} required lessons finished.`,
+      error: `Course not complete — ${completedCount} of ${requiredLessons} lessons finished.`,
     }, { status: 403 });
   }
 
