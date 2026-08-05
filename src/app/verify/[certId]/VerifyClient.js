@@ -126,10 +126,10 @@ export default function VerifyClient({ certId }) {
               }}>✓</div>
               <div>
                 <div style={{ fontFamily: T.font, fontWeight: 700, fontSize: 15, color: '#059669' }}>
-                  Certificate Verified
+                  Completion Record Found
                 </div>
                 <div style={{ fontFamily: T.mono, fontSize: 10, color: T.dim, marginTop: 1 }}>
-                  This certificate is authentic
+                  This certificate was issued by Prompten
                 </div>
               </div>
             </div>
@@ -159,6 +159,16 @@ export default function VerifyClient({ certId }) {
                 </div>
                 <div style={{ fontFamily: T.font, fontSize: 13, color: T.muted }}>
                   Full course completion · All {TOTAL_LESSONS} lessons
+                </div>
+                <div style={{
+                  fontFamily: T.font, fontSize: 11.5, color: T.dim,
+                  lineHeight: 1.6, marginTop: 10, maxWidth: 420,
+                  marginLeft: 'auto', marginRight: 'auto',
+                }}>
+                  This record confirms that the named person completed this
+                  self-paced online course on the date shown. Quizzes are taken
+                  online without supervision; this is not a proctored exam and
+                  is not an assessment by any third party.
                 </div>
               </div>
 

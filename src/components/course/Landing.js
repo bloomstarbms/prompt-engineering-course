@@ -538,7 +538,7 @@ export default function Landing({ onStart, onLogin }) {
             { icon: '🎨', title: 'Visual Lessons', desc: 'Every lesson opens with a concept diagram plus full written notes.' },
             { icon: '📝', title: 'Lesson Quizzes', desc: 'Test your understanding after every lesson with graded quizzes.' },
             { icon: '📊', title: 'Progress Tracking', desc: 'Your progress is saved automatically. Resume any time.' },
-            { icon: '🎓', title: 'Verified Certificate', desc: 'Complete the course and earn a certificate with a unique ID.' },
+            { icon: '🎓', title: 'Certificate of Completion', desc: 'Finish the course and earn a certificate with a unique ID anyone can look up.' },
           ].map(f => (
             <div key={f.title}>
               <div style={{ fontSize: 28, marginBottom: 10 }}>{f.icon}</div>

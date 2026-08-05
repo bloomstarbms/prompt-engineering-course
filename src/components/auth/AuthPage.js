@@ -66,7 +66,7 @@ const FEATURES = [
   { icon: '🎨', title: `${TOTAL_LESSONS} illustrated lessons`, desc: 'Concept diagrams + full written notes' },
   { icon: '🧠', title: 'Graded quizzes', desc: 'Every lesson has a knowledge check' },
   { icon: '☁️', title: 'Cloud-synced progress', desc: 'Resume from any device, any time' },
-  { icon: '🎓', title: 'Verified certificate', desc: 'Publicly verifiable certificate of completion' },
+  { icon: '🎓', title: 'Certificate of completion', desc: 'Shareable, with a public completion record' },
 ];
 
 const MOD_COLORS = MODULES.slice(0, 6).map(m => m.color);

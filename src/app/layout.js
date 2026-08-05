@@ -7,7 +7,7 @@ export const metadata = {
     default: 'Prompt Engineering — Zero to Mastery',
     template: '%s · PromptMastery',
   },
-  description: 'A technically rigorous, career-grade prompt engineering course. 8 modules, 26 lessons, quizzes, and a verified certificate.',
+  description: 'A technically rigorous, career-grade prompt engineering course. 8 modules, 26 lessons, quizzes, and a certificate of completion.',
   keywords: ['prompt engineering', 'LLM', 'AI', 'ChatGPT', 'Claude', 'machine learning'],
   openGraph: {
     title: 'Prompt Engineering — Zero to Mastery',

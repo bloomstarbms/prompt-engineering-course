@@ -437,7 +437,7 @@ export default function ProfilePage({
                 </div>
                 <div style={{ fontFamily:T.font, fontSize:12, color:T.muted }}>
                   {completedCount===TOTAL_LESSONS
-                    ? 'Course complete — view and download your verified certificate.'
+                    ? 'Course complete — view and download your certificate of completion.'
                     : 'You have a certificate — view it any time.'}
                 </div>
               </div>
