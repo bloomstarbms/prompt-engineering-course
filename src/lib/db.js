@@ -146,39 +146,10 @@ export async function issueCertificateViaApi(accessToken) {
   return json.certificate;
 }
 
-export async function issueCertificateDirect(userId, { name, email, pct, grade, moduleScores, totalCorrect, totalPossible }, accessToken) {
-  // Idempotent: one certificate per user (enforced by a unique constraint on
-  // user_id as well, so a race loses at the database rather than duplicating).
-  const existing = await getUserCert(userId, accessToken);
-  if (existing) return existing;
-
-  const client = accessToken ? makeTokenClient(accessToken) : supabase;
-  const { data, error } = await client
-    .from('certificates')
-    .insert({
-      user_id:        userId,
-      // cert_id intentionally omitted — assigned by the database trigger
-      name,
-      email:          email.toLowerCase(),
-      pct:            pct || 0,
-      grade:          grade || 'F',
-      module_scores:  moduleScores  || [],
-      total_correct:  totalCorrect  || 0,
-      total_possible: totalPossible || 0,
-    })
-    .select()
-    .single();
-  if (error) {
-    // 23505 = unique violation: another tab or a retry won the race and the
-    // certificate already exists. Return that one rather than failing.
-    if (error.code === '23505') {
-      const existingAfterRace = await getUserCert(userId, accessToken);
-      if (existingAfterRace) return existingAfterRace;
-    }
-    throw new Error(error.message);
-  }
-  return normalizeCert(data);
-}
+// issueCertificateDirect() removed. It inserted the certificate row straight
+// from the browser; 005b revokes INSERT from `authenticated`, so that path no
+// longer exists at the database level either. Issuance goes through
+// issueCertificateViaApi() -> /api/certificates/issue.
 
 export async function getUserCert(userId, accessToken) {
   const client = accessToken ? makeTokenClient(accessToken) : supabase;
