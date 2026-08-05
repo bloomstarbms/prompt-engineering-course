@@ -65,7 +65,6 @@ async function migrateLegacyUser(supabaseUserId, legacyUser, accessToken) {
         moduleScores:  legacyCert.moduleScores  || [],
         totalCorrect:  legacyCert.totalCorrect  || 0,
         totalPossible: legacyCert.totalPossible || 0,
-        existingCertId: legacyCert.certId,  // preserve so old verify links still work
       }, accessToken);
     }
   } catch (e) {
