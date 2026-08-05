@@ -2643,6 +2643,23 @@ export const QUIZZES = {
 
 export const TOTAL_LESSONS = MODULES.reduce((a, m) => a + m.lessons.length, 0);
 
+/**
+ * Lessons a learner must have completed to earn a certificate.
+ *
+ * This is deliberately NOT TOTAL_LESSONS. The syllabus grew from 22 lessons to
+ * 26 on 2026-04-20 (commit a86ad6f). Someone who finished the 22-lesson course
+ * earned their certificate under the syllabus that existed at the time, and
+ * deriving the requirement from the live MODULES array silently strands every
+ * one of them the moment the course grows — they simply stop qualifying, with
+ * no code change and no visible decision anywhere.
+ *
+ * So the requirement is stated explicitly here. Adding lessons is now safe by
+ * default: TOTAL_LESSONS moves, this does not. Raising this number
+ * retroactively invalidates completions that were legitimately earned, so
+ * treat any change to it as a policy decision rather than housekeeping.
+ */
+export const MIN_LESSONS_FOR_CERTIFICATE = 22;
+
 export const PASS_THRESHOLD = 70; // % score needed to pass a quiz and unlock the next lesson
 
 /* getGrade lives in src/lib/theme.js — imported from there by all components */

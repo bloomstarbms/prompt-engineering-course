@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabaseAdmin';
-import { MODULES, TOTAL_LESSONS } from '@/data/courseData';
+import { MODULES, TOTAL_LESSONS, MIN_LESSONS_FOR_CERTIFICATE } from '@/data/courseData';
 import { getGrade } from '@/lib/theme';
 
 /**
@@ -96,10 +96,15 @@ export async function POST(req) {
   const completed  = progressRow?.completed   || {};
   const quizScores = progressRow?.quiz_scores || {};
 
+  // Grandfather clause. Measured against MIN_LESSONS_FOR_CERTIFICATE, not
+  // TOTAL_LESSONS: the syllabus grew 22 -> 26 and anyone who finished the
+  // earlier course earned their certificate under the rules that existed then.
+  // Using the live array here would revoke qualifications retroactively every
+  // time a lesson is added.
   const completedCount = Object.keys(completed).filter(k => completed[k]).length;
-  if (completedCount < TOTAL_LESSONS) {
+  if (completedCount < MIN_LESSONS_FOR_CERTIFICATE) {
     return NextResponse.json({
-      error: `Course not complete — ${completedCount} of ${TOTAL_LESSONS} lessons finished.`,
+      error: `Course not complete — ${completedCount} of ${MIN_LESSONS_FOR_CERTIFICATE} required lessons finished.`,
     }, { status: 403 });
   }
 
@@ -144,6 +149,10 @@ export async function POST(req) {
       module_scores:  moduleScores,
       total_correct:  totalCorrect,
       total_possible: totalPossible,
+      // Records the syllabus this certificate was issued against, so a future
+      // change to the course is a visible edit in the data rather than an
+      // invisible shift in what the certificate meant.
+      syllabus_size:  TOTAL_LESSONS,
     })
     .select()
     .single();
