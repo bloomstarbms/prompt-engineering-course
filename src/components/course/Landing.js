@@ -14,14 +14,41 @@ const TOTAL_QUIZ_Q = Object.values(QUIZZES).reduce((a, q) => a + q.questions.len
  * Replace null with the exact URL to turn each into a link.
  * ───────────────────────────────────────────────────────────────────────── */
 const SOURCES = [
-  { publisher: 'Anthropic',  title: 'Prompt engineering overview (Claude documentation)', url: null }, // TODO: exact URL
-  { publisher: 'OpenAI',     title: 'Prompt engineering guide (API documentation)',        url: null }, // TODO: exact URL
-  { publisher: 'Google',     title: 'Prompting strategies (Gemini API documentation)',     url: null }, // TODO: exact URL
-  { publisher: 'Wei et al.', title: 'Chain-of-Thought Prompting Elicits Reasoning in Large Language Models (2022)', url: null }, // TODO
-  { publisher: 'Wang et al.',title: 'Self-Consistency Improves Chain of Thought Reasoning in Language Models (2022)', url: null }, // TODO
-  { publisher: 'Yao et al.', title: 'ReAct: Synergizing Reasoning and Acting in Language Models (2022)', url: null }, // TODO
-  { publisher: 'Yao et al.', title: 'Tree of Thoughts: Deliberate Problem Solving with Large Language Models (2023)', url: null }, // TODO
-  { publisher: 'Lewis et al.', title: 'Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks (2020)', url: null }, // TODO
+  // ── Papers the curriculum is built on ──────────────────────────────────
+  // Each of these has a dedicated lesson or a substantive taught section with
+  // a quiz question — verified against src/data/courseData.js, not assumed.
+  { publisher: 'Wei et al., 2022',
+    title: 'Chain-of-Thought Prompting Elicits Reasoning in Large Language Models',
+    url: 'https://arxiv.org/abs/2201.11903' },
+  { publisher: 'Wang et al., 2022',
+    title: 'Self-Consistency Improves Chain of Thought Reasoning in Language Models',
+    url: 'https://arxiv.org/abs/2203.11171' },
+  { publisher: 'Yao et al., 2022',
+    title: 'ReAct: Synergizing Reasoning and Acting in Language Models',
+    url: 'https://arxiv.org/abs/2210.03629' },
+  { publisher: 'Yao et al., 2023',
+    title: 'Tree of Thoughts: Deliberate Problem Solving with Large Language Models',
+    url: 'https://arxiv.org/abs/2305.10601' },
+  { publisher: 'Lewis et al., 2020',
+    title: 'Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks',
+    url: 'https://arxiv.org/abs/2005.11401' },
+
+  // ── Provider documentation ─────────────────────────────────────────────
+  // KEEP ONLY IF THESE PAGES ACTUALLY INFORMED THE VENDOR-SPECIFIC MATERIAL
+  // (the Claude-XML and GPT-Markdown guidance in Module 07). If that came from
+  // general knowledge rather than these documents, delete these three entries:
+  // citing a source you did not draw on is borrowed authority, which is the
+  // reason the vendor endorsement badges were removed in the first place.
+  // Only the author can answer that, so they are left in pending your call.
+  { publisher: 'Anthropic',
+    title: 'Prompt engineering overview',
+    url: 'https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview' },
+  { publisher: 'OpenAI',
+    title: 'Prompt engineering',
+    url: 'https://developers.openai.com/api/docs/guides/prompt-engineering' },
+  { publisher: 'Google',
+    title: 'Prompt design strategies',
+    url: 'https://ai.google.dev/gemini-api/docs/prompting-strategies' },
 ];
 
 /* ─── Module SVG Icons (index matches MODULES array) ──────────────────── */
