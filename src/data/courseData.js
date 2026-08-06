@@ -15,6 +15,7 @@ export const MODULES = [
   {
     id: 0,
     tag: "01",
+    slug: "foundations-of-llms",
     color: MOD_COLORS[0],
     title: "Foundations of LLMs",
     icon: "◈",
@@ -22,6 +23,8 @@ export const MODULES = [
     lessons: [
       {
         title: "How LLMs Actually Work",
+        slug: "how-llms-actually-work",
+        isPublic: true,
         dur: "22 min",
         vid: "wjZofJX0v4M",
         intro: "Before you write a single prompt, it helps to know what's actually happening inside the AI. In this lesson, you'll get a plain-English understanding of how language models work — no technical background needed. This foundation will make every technique in the course click faster.",
@@ -77,6 +80,8 @@ Understanding how the AI works at a basic level is the foundation for everything
       },
       {
         title: "The Anatomy of a Prompt",
+        slug: "anatomy-of-a-prompt",
+        isPublic: true,
         dur: "15 min",
         vid: "dOxUroR57xs",
         intro: "Most people write prompts the same way they'd type a Google search — and get back shallow, hit-or-miss results. In this lesson, you'll learn the six building blocks of a well-structured prompt and see exactly what separates weak prompts from ones that reliably get great output.",
@@ -140,6 +145,8 @@ The anatomy of a prompt is like the grammar of a sentence — it has required pa
       },
       {
         title: "Mental Models for Prompting",
+        slug: "mental-models-for-prompting",
+        isPublic: true,
         dur: "20 min",
         vid: "p09yRj47kNM",
         intro: "The way you think about the AI shapes the prompts you write. In this lesson, you'll pick up three mental models — simple but powerful analogies — that will permanently change how you approach every prompting task. You'll finish with a clear mental picture of what you're really doing when you write a prompt.",
@@ -195,6 +202,7 @@ Mental models are the foundation of real expertise. Rather than memorizing a lis
   {
     id: 1,
     tag: "02",
+    slug: "core-techniques",
     color: MOD_COLORS[1],
     title: "Core Techniques",
     icon: "⬡",
@@ -202,6 +210,7 @@ Mental models are the foundation of real expertise. Rather than memorizing a lis
     lessons: [
       {
         title: "Zero-Shot, Few-Shot & Many-Shot",
+        slug: "zero-shot-few-shot-many-shot",
         dur: "18 min",
         vid: "aOm75o2Z5-o",
         intro: "One of the fastest ways to improve AI output is to show it what you want instead of just describing it. In this lesson, you'll learn the difference between asking with no examples (zero-shot), with a few examples (few-shot), and with many examples — and when each approach gives you the best results.",
@@ -272,6 +281,7 @@ Zero-shot, few-shot, and many-shot are your three tiers. They represent increasi
       },
       {
         title: "Chain-of-Thought Prompting",
+        slug: "chain-of-thought-prompting",
         dur: "20 min",
         vid: "H4YK_7MAckk",
         intro: "When you ask the AI to show its work, something surprising happens — the answers get dramatically better. In this lesson, you'll learn Chain-of-Thought prompting: a simple technique of asking the AI to reason step by step before answering, which reduces errors and makes complex tasks manageable.",
@@ -337,6 +347,7 @@ Chain-of-Thought (step-by-step) prompting is perhaps the single most important t
       },
       {
         title: "Role & Persona Prompting",
+        slug: "role-and-persona-prompting",
         dur: "22 min",
         vid: "eMlx5fFNoYc",
         intro: "Telling the AI who it is changes everything it produces. In this lesson, you'll learn how to assign a role or persona to the AI — shaping its vocabulary, depth, and tone — and use that technique to get expert-level responses tailored to any audience.",
@@ -407,6 +418,7 @@ Role prompting is one of the easiest techniques with the highest impact. Every n
       },
       {
         title: "Instruction Clarity & Constraints",
+        slug: "instruction-clarity-and-constraints",
         dur: "22 min",
         vid: "hkhDdcM5V94",
         intro: "Vague instructions produce vague results. In this lesson, you'll learn how to write crystal-clear prompts using the CRISP framework, how to add constraints that keep the AI on track, and how specific word choices can dramatically tighten the quality of every response.",
@@ -489,6 +501,7 @@ Instruction clarity is the bridge between intent and output. Even the most sophi
   {
     id: 2,
     tag: "03",
+    slug: "advanced-systems",
     color: MOD_COLORS[2],
     title: "Advanced Systems",
     icon: "⬟",
@@ -496,6 +509,7 @@ Instruction clarity is the bridge between intent and output. Even the most sophi
     lessons: [
       {
         title: "Prompt Chaining & Pipelines",
+        slug: "prompt-chaining-and-pipelines",
         dur: "20 min",
         vid: "T9aRN5JkmL8",
         intro: "Some tasks are too complex for a single prompt to handle well. In this lesson, you'll learn how to break big tasks into focused steps — where each step's output feeds the next — so you can build reliable, multi-stage AI workflows for complex real-world work.",
@@ -576,6 +590,7 @@ Prompt chaining is what takes AI from answering single questions to powering rea
       },
       {
         title: "Tree of Thoughts (ToT)",
+        slug: "tree-of-thoughts",
         dur: "20 min",
         vid: "lG7Uxts9SXs",
         intro: "Step-by-step thinking is powerful, but what if the first path the AI takes turns out to be wrong? In this lesson, you'll learn Tree of Thoughts — a technique where the AI explores multiple lines of reasoning simultaneously, evaluates them, and picks the best — giving you much smarter answers on complex problems.",
@@ -648,6 +663,7 @@ Tree of Thoughts is one of the most powerful prompting architectures. It's not j
       },
       {
         title: "Self-Reflection & Critique Loops",
+        slug: "self-reflection-and-critique-loops",
         dur: "18 min",
         vid: "DjuXACWYkkU",
         intro: "Even a well-designed prompt can produce output with errors or blind spots. In this lesson, you'll learn how to set up self-reflection loops — prompting the AI to review and critique its own work against a checklist — so every output goes through a quality check before it reaches you.",
@@ -728,6 +744,7 @@ Self-reflection and critique loops are the closest thing prompt engineering has 
       },
       {
         title: "RAG Prompt Engineering",
+        slug: "rag-prompt-engineering",
         dur: "22 min",
         vid: "MlK6SIjcjE8",
         intro: "AI models have a knowledge cutoff — they can't access your documents or real-time information on their own. In this lesson, you'll learn Retrieval-Augmented Generation (RAG): the technique of feeding the AI the right context from your own sources, so it answers accurately from your data instead of guessing.",
@@ -813,6 +830,7 @@ Retrieval-Augmented Generation has become the backbone of enterprise AI products
   {
     id: 3,
     tag: "04",
+    slug: "output-engineering",
     color: MOD_COLORS[3],
     title: "Output Engineering",
     icon: "◎",
@@ -820,6 +838,7 @@ Retrieval-Augmented Generation has become the backbone of enterprise AI products
     lessons: [
       {
         title: "Structured Output Design",
+        slug: "structured-output-design",
         dur: "12 min",
         vid: "T-D1OfcDW1M",
         intro: "Getting the right answer is one thing — getting it in the right format is another. In this lesson, you'll learn how to precisely control the structure of AI output: JSON, tables, lists, or any custom format your workflow needs — so responses slot directly into your tools and processes.",
@@ -910,6 +929,7 @@ Structured output design is non-negotiable for any production AI application. Yo
       },
       {
         title: "Length, Tone & Style Control",
+        slug: "length-tone-and-style-control",
         dur: "18 min",
         vid: "2IK3DFHRFfw",
         intro: "Two prompts can produce the same facts but feel completely different — one is clear and punchy, the other padded and off-brand. In this lesson, you'll learn to control response length, tone, and writing style with precision, and build a personal prompt library for reusing what works.",
@@ -987,6 +1007,7 @@ Length, tone, and style control are the finishing tools of prompt engineering. A
   {
     id: 4,
     tag: "05",
+    slug: "optimization-and-evaluation",
     color: MOD_COLORS[4],
     title: "Optimization & Evaluation",
     icon: "◉",
@@ -994,6 +1015,7 @@ Length, tone, and style control are the finishing tools of prompt engineering. A
     lessons: [
       {
         title: "Building an Eval Framework",
+        slug: "building-an-eval-framework",
         dur: "20 min",
         vid: "_ZvnD73m40o",
         intro: "How do you know if your prompt is actually good — or just good enough? In this lesson, you'll build a simple evaluation framework: a set of criteria and test cases you can run your prompts against to measure quality, catch failures, and know exactly when a prompt is ready to use.",
@@ -1076,6 +1098,7 @@ Building a test framework is what turns prompt engineering from art into enginee
       },
       {
         title: "A/B Testing & Iteration",
+        slug: "ab-testing-and-iteration",
         dur: "25 min",
         vid: "bZQun8Y4L2A",
         intro: "A great prompt rarely appears on the first try. In this lesson, you'll learn a systematic approach to prompt improvement — running controlled A/B comparisons, identifying what's failing, and iterating with a clear methodology — so you can reliably make prompts better over time.",
@@ -1163,6 +1186,7 @@ A/B testing and iteration is how good prompts become great ones. The difference 
       },
       {
         title: "Prompt Security & Robustness",
+        slug: "prompt-security-and-robustness",
         dur: "18 min",
         vid: "osKyvYJ3PRM",
         intro: "Real-world prompts face unexpected inputs, edge cases, and sometimes deliberate attempts to hijack them. In this lesson, you'll learn how to make your prompts robust: handling bad inputs gracefully, defending against prompt injection, and designing for reliability at scale.",
@@ -1266,6 +1290,7 @@ Prompt security is non-negotiable for any customer-facing AI application. Prompt
   {
     id: 5,
     tag: "06",
+    slug: "domain-applications",
     color: MOD_COLORS[5],
     title: "Domain Applications",
     icon: "⬢",
@@ -1273,6 +1298,7 @@ Prompt security is non-negotiable for any customer-facing AI application. Prompt
     lessons: [
       {
         title: "Code Generation & Debugging",
+        slug: "code-generation-and-debugging",
         dur: "15 min",
         vid: "zizonToFXDs",
         intro: "Code generation is one of the highest-value uses of AI — but only when you know how to ask for it correctly. In this lesson, you'll learn prompting patterns built specifically for coding tasks: writing, reviewing, debugging, and explaining code so you get accurate, runnable output every time.",
@@ -1369,6 +1395,7 @@ Code generation is the domain where prompt engineering has the highest practical
       },
       {
         title: "Data Analysis & Research",
+        slug: "data-analysis-and-research",
         dur: "20 min",
         vid: "kCc8FmEb1nY",
         intro: "AI can compress hours of research and data analysis into minutes — if you know how to direct it. In this lesson, you'll learn how to prompt for data interpretation, literature synthesis, and structured research reports, keeping accuracy high when working with factual or numerical content.",
@@ -1455,6 +1482,7 @@ Data analysis and research are where the structured analytical power of AI shine
       },
       {
         title: "Agentic Prompting & Tool Use",
+        slug: "agentic-prompting-and-tool-use",
         dur: "15 min",
         vid: "y1WnHpedi2A",
         intro: "The frontier of prompt engineering is agentic AI — models that don't just answer questions but take sequences of actions: browsing, writing files, calling tools. In this lesson, you'll learn how to structure prompts for AI agents, manage multi-step tool use, and keep autonomous workflows under control.",
@@ -1561,6 +1589,7 @@ Agentic prompting is where AI stops being a question-answering tool and starts b
   {
     id: 6,
     tag: "07",
+    slug: "production-and-mastery",
     color: MOD_COLORS[6],
     title: "Production & Mastery",
     icon: "⬠",
@@ -1568,6 +1597,7 @@ Agentic prompting is where AI stops being a question-answering tool and starts b
     lessons: [
       {
         title: "Prompt Management at Scale",
+        slug: "prompt-management-at-scale",
         dur: "12 min",
         vid: "F8NKVhkZZWI",
         intro: "When you're using AI seriously, you'll quickly accumulate dozens of prompts. In this lesson, you'll learn how to organize, version, and manage prompts at scale — building a personal or team library that makes your best prompts reusable, findable, and improvable over time.",
@@ -1670,6 +1700,7 @@ Prompt management at scale is what separates "AI experiments" from "AI products.
       },
       {
         title: "Model Selection & Cross-Model",
+        slug: "model-selection-and-cross-model-prompting",
         dur: "20 min",
         vid: "sal78ACtGTc",
         intro: "Not all AI models are the same — they have different strengths, costs, and behaviors. In this lesson, you'll learn how to choose the right model for each task, how the same prompt behaves differently across models, and how to write model-agnostic prompts that work reliably wherever you deploy them.",
@@ -1748,6 +1779,7 @@ Model selection is a strategic decision affecting quality, cost, and speed simul
       },
       {
         title: "Building Your PE Practice",
+        slug: "building-your-prompt-engineering-practice",
         dur: "22 min",
         vid: "KrRD7r7y7NY",
         intro: "You've now covered the full map of prompt engineering. In this final lesson, you'll bring it all together — building a personal practice: a regular workflow for improving your prompts, staying current with new techniques, and applying what you've learned to the specific domain where you need it most.",
@@ -1854,6 +1886,7 @@ You've completed Prompt Engineering: Zero to Mastery. But completing the course 
   {
     id: 7,
     tag: "08",
+    slug: "advanced-frontiers",
     color: MOD_COLORS[7],
     title: "Advanced Frontiers",
     icon: "✦",
@@ -1861,6 +1894,7 @@ You've completed Prompt Engineering: Zero to Mastery. But completing the course 
     lessons: [
       {
         title: "Multimodal & Vision Prompting",
+        slug: "multimodal-and-vision-prompting",
         dur: "22 min",
         vid: "qMk8jk4NZDA",
         intro: "Most AI users still treat AI as text-only — but today's frontier models like Claude 3, GPT-4o, and Gemini 1.5 can see, analyze, and reason about images, PDFs, charts, and screenshots with remarkable precision. This lesson teaches you exactly how to write effective prompts when visual inputs are involved.",
@@ -1991,6 +2025,7 @@ Multimodal prompting extends every text-based skill you've built to a new dimens
       },
       {
         title: "Hallucination Detection & Mitigation",
+        slug: "hallucination-detection-and-mitigation",
         dur: "25 min",
         vid: "1zd8QWxg7CM",
         intro: "Hallucination — AI confidently stating false information — is the single biggest barrier to using AI in production. It's not a bug being fixed; it's a fundamental property of how language models work. In this lesson you'll understand exactly why it happens and build a toolkit of proven techniques to reduce it to near-zero for your use cases.",
@@ -2120,6 +2155,7 @@ Hallucination management separates demo prompt engineering from production promp
       },
       {
         title: "Conversational Design & Memory Management",
+        slug: "conversational-design-and-memory-management",
         dur: "20 min",
         vid: "W2HVdB4Jbjs",
         intro: "Designing a multi-turn AI interaction is fundamentally different from writing a single prompt. A single prompt is a specification. A conversation is an architecture — with state, persona, memory, and failure modes that span multiple turns. This lesson gives you the framework to build well-designed, coherent AI conversation experiences.",
@@ -2280,6 +2316,7 @@ Conversational AI design is where prompt engineering meets product design. The t
       },
       {
         title: "Meta-Prompting: AI-Assisted Prompt Design",
+        slug: "meta-prompting",
         dur: "18 min",
         vid: "0JZisMktcbA",
         intro: "Meta-prompting is using AI to help you write better prompts — and it's one of the most powerful, most underused skills in the field. In this lesson, you'll build a complete workflow for using AI as your prompting co-pilot: to generate, critique, stress-test, and compress your prompts. This is how professional prompt engineers maintain quality at scale.",

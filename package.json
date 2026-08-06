@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "check:course": "node scripts/check-course-integrity.mjs",
+    "prebuild": "node scripts/check-course-integrity.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.43.1",

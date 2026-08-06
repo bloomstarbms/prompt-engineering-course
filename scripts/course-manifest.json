@@ -1,0 +1,199 @@
+{
+  "_README": "FROZEN POSITIONAL MANIFEST — see scripts/check-course-integrity.mjs. Regenerate ONLY when deliberately changing the course structure, and read the warning in that script first.",
+  "generatedAt": "2026-08-05",
+  "lessonsPerModule": [
+    3,
+    4,
+    4,
+    2,
+    3,
+    3,
+    3,
+    4
+  ],
+  "totalLessons": 26,
+  "positions": [
+    {
+      "key": "0-0",
+      "moduleSlug": "foundations-of-llms",
+      "lessonSlug": "how-llms-actually-work",
+      "moduleTitle": "Foundations of LLMs",
+      "lessonTitle": "How LLMs Actually Work"
+    },
+    {
+      "key": "0-1",
+      "moduleSlug": "foundations-of-llms",
+      "lessonSlug": "anatomy-of-a-prompt",
+      "moduleTitle": "Foundations of LLMs",
+      "lessonTitle": "The Anatomy of a Prompt"
+    },
+    {
+      "key": "0-2",
+      "moduleSlug": "foundations-of-llms",
+      "lessonSlug": "mental-models-for-prompting",
+      "moduleTitle": "Foundations of LLMs",
+      "lessonTitle": "Mental Models for Prompting"
+    },
+    {
+      "key": "1-0",
+      "moduleSlug": "core-techniques",
+      "lessonSlug": "zero-shot-few-shot-many-shot",
+      "moduleTitle": "Core Techniques",
+      "lessonTitle": "Zero-Shot, Few-Shot & Many-Shot"
+    },
+    {
+      "key": "1-1",
+      "moduleSlug": "core-techniques",
+      "lessonSlug": "chain-of-thought-prompting",
+      "moduleTitle": "Core Techniques",
+      "lessonTitle": "Chain-of-Thought Prompting"
+    },
+    {
+      "key": "1-2",
+      "moduleSlug": "core-techniques",
+      "lessonSlug": "role-and-persona-prompting",
+      "moduleTitle": "Core Techniques",
+      "lessonTitle": "Role & Persona Prompting"
+    },
+    {
+      "key": "1-3",
+      "moduleSlug": "core-techniques",
+      "lessonSlug": "instruction-clarity-and-constraints",
+      "moduleTitle": "Core Techniques",
+      "lessonTitle": "Instruction Clarity & Constraints"
+    },
+    {
+      "key": "2-0",
+      "moduleSlug": "advanced-systems",
+      "lessonSlug": "prompt-chaining-and-pipelines",
+      "moduleTitle": "Advanced Systems",
+      "lessonTitle": "Prompt Chaining & Pipelines"
+    },
+    {
+      "key": "2-1",
+      "moduleSlug": "advanced-systems",
+      "lessonSlug": "tree-of-thoughts",
+      "moduleTitle": "Advanced Systems",
+      "lessonTitle": "Tree of Thoughts (ToT)"
+    },
+    {
+      "key": "2-2",
+      "moduleSlug": "advanced-systems",
+      "lessonSlug": "self-reflection-and-critique-loops",
+      "moduleTitle": "Advanced Systems",
+      "lessonTitle": "Self-Reflection & Critique Loops"
+    },
+    {
+      "key": "2-3",
+      "moduleSlug": "advanced-systems",
+      "lessonSlug": "rag-prompt-engineering",
+      "moduleTitle": "Advanced Systems",
+      "lessonTitle": "RAG Prompt Engineering"
+    },
+    {
+      "key": "3-0",
+      "moduleSlug": "output-engineering",
+      "lessonSlug": "structured-output-design",
+      "moduleTitle": "Output Engineering",
+      "lessonTitle": "Structured Output Design"
+    },
+    {
+      "key": "3-1",
+      "moduleSlug": "output-engineering",
+      "lessonSlug": "length-tone-and-style-control",
+      "moduleTitle": "Output Engineering",
+      "lessonTitle": "Length, Tone & Style Control"
+    },
+    {
+      "key": "4-0",
+      "moduleSlug": "optimization-and-evaluation",
+      "lessonSlug": "building-an-eval-framework",
+      "moduleTitle": "Optimization & Evaluation",
+      "lessonTitle": "Building an Eval Framework"
+    },
+    {
+      "key": "4-1",
+      "moduleSlug": "optimization-and-evaluation",
+      "lessonSlug": "ab-testing-and-iteration",
+      "moduleTitle": "Optimization & Evaluation",
+      "lessonTitle": "A/B Testing & Iteration"
+    },
+    {
+      "key": "4-2",
+      "moduleSlug": "optimization-and-evaluation",
+      "lessonSlug": "prompt-security-and-robustness",
+      "moduleTitle": "Optimization & Evaluation",
+      "lessonTitle": "Prompt Security & Robustness"
+    },
+    {
+      "key": "5-0",
+      "moduleSlug": "domain-applications",
+      "lessonSlug": "code-generation-and-debugging",
+      "moduleTitle": "Domain Applications",
+      "lessonTitle": "Code Generation & Debugging"
+    },
+    {
+      "key": "5-1",
+      "moduleSlug": "domain-applications",
+      "lessonSlug": "data-analysis-and-research",
+      "moduleTitle": "Domain Applications",
+      "lessonTitle": "Data Analysis & Research"
+    },
+    {
+      "key": "5-2",
+      "moduleSlug": "domain-applications",
+      "lessonSlug": "agentic-prompting-and-tool-use",
+      "moduleTitle": "Domain Applications",
+      "lessonTitle": "Agentic Prompting & Tool Use"
+    },
+    {
+      "key": "6-0",
+      "moduleSlug": "production-and-mastery",
+      "lessonSlug": "prompt-management-at-scale",
+      "moduleTitle": "Production & Mastery",
+      "lessonTitle": "Prompt Management at Scale"
+    },
+    {
+      "key": "6-1",
+      "moduleSlug": "production-and-mastery",
+      "lessonSlug": "model-selection-and-cross-model-prompting",
+      "moduleTitle": "Production & Mastery",
+      "lessonTitle": "Model Selection & Cross-Model"
+    },
+    {
+      "key": "6-2",
+      "moduleSlug": "production-and-mastery",
+      "lessonSlug": "building-your-prompt-engineering-practice",
+      "moduleTitle": "Production & Mastery",
+      "lessonTitle": "Building Your PE Practice"
+    },
+    {
+      "key": "7-0",
+      "moduleSlug": "advanced-frontiers",
+      "lessonSlug": "multimodal-and-vision-prompting",
+      "moduleTitle": "Advanced Frontiers",
+      "lessonTitle": "Multimodal & Vision Prompting"
+    },
+    {
+      "key": "7-1",
+      "moduleSlug": "advanced-frontiers",
+      "lessonSlug": "hallucination-detection-and-mitigation",
+      "moduleTitle": "Advanced Frontiers",
+      "lessonTitle": "Hallucination Detection & Mitigation"
+    },
+    {
+      "key": "7-2",
+      "moduleSlug": "advanced-frontiers",
+      "lessonSlug": "conversational-design-and-memory-management",
+      "moduleTitle": "Advanced Frontiers",
+      "lessonTitle": "Conversational Design & Memory Management"
+    },
+    {
+      "key": "7-3",
+      "moduleSlug": "advanced-frontiers",
+      "lessonSlug": "meta-prompting",
+      "moduleTitle": "Advanced Frontiers",
+      "lessonTitle": "Meta-Prompting: AI-Assisted Prompt Design"
+    }
+  ]
+}
