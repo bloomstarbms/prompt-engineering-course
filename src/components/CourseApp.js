@@ -317,17 +317,40 @@ export default function CourseApp({ initialM = null, initialL = null }) {
   /* can the "Next →" button fire? */
   const canAdvance = !quiz || quizPassed;
 
+  /* ── The single arrival path ──────────────────────────────────────────
+     Everything that must happen when a reader lands on a lesson lives here,
+     however they arrived: sidebar click, next/prev, a shared link, or the
+     back button.
+
+     navigate() previously did four things inline — set position, record the
+     resume point, reset scroll, close the mobile drawer. Three of those were
+     incidental to navigation and invisible until a second entry point
+     existed; when real URLs arrived, URL entry silently skipped all three.
+     Consolidating means a future entry point cannot miss them either. */
+  useEffect(() => {
+    if (contentRef.current) contentRef.current.scrollTop = 0;
+    if (isMobile) setSidebarOpen(false);
+
+    // Resume point. updateProgress debounces at 800ms and clears its pending
+    // timer on each call, so paging quickly through lessons collapses to one
+    // write rather than one per lesson. Skipped when the position already
+    // matches, so an ordinary page load writes nothing, and skipped entirely
+    // when signed out (updateProgress also no-ops without a userId).
+    if (!user) return;
+    const stored = progress?.lastLesson;
+    if (stored?.m === activeM && stored?.l === activeL) return;
+    updateProgress(prev => ({ ...prev, lastLesson: { m: activeM, l: activeL } }));
+  }, [activeM, activeL]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const navigate = useCallback((mi, li) => {
     setActiveM(mi);
     setActiveL(li);
     // Push the canonical lesson URL so every lesson is linkable and the back
     // button steps through lessons. lessonHref is presentation only — the
-    // indices above remain what progress is keyed by.
+    // indices above remain what progress is keyed by. Side effects are handled
+    // by the arrival effect above, not here.
     router.push(lessonHref(mi, li));
-    if (contentRef.current) contentRef.current.scrollTop = 0;
-    if (isMobile) setSidebarOpen(false);
-    updateProgress(prev => ({ ...prev, lastLesson: { m: mi, l: li } }));
-  }, [isMobile, updateProgress, router]);
+  }, [router]);
 
   function markComplete() {
     // immediate=true: lesson completion is critical — don't risk losing it
@@ -355,7 +378,6 @@ export default function CourseApp({ initialM = null, initialL = null }) {
         completed: { ...prev.completed, [lKey]: true },
       }));
     }
-    if (contentRef.current) contentRef.current.scrollTop = 0;
     if (activeL < mod.lessons.length - 1) {
       navigate(activeM, activeL + 1);
     } else if (activeM < MODULES.length - 1) {
@@ -364,7 +386,6 @@ export default function CourseApp({ initialM = null, initialL = null }) {
   }
 
   function goPrev() {
-    if (contentRef.current) contentRef.current.scrollTop = 0;
     if (activeL > 0) {
       navigate(activeM, activeL - 1);
     } else if (activeM > 0) {
