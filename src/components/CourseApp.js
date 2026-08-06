@@ -14,6 +14,7 @@ import QuizView        from '@/components/quiz/QuizView';
 import CertificatePage from '@/components/cert/CertificatePage';
 import ProfilePage     from '@/components/profile/ProfilePage';
 import { getUserCert } from '@/lib/db';
+import { lessonHref, isPublicLesson } from '@/lib/courseRoutes';
 import { LessonBody, ModPill } from '@/components/ui';
 
 /* ─── Pendulum Splash Screen ──────────────────────────────────────────── */
@@ -127,7 +128,10 @@ function SplashScreen() {
   );
 }
 
-export default function CourseApp() {
+export default function CourseApp({ initialM = null, initialL = null }) {
+  // initialM/initialL arrive from /course/[moduleSlug]/[lessonSlug], already
+  // resolved from slugs by the server component. They are plain indices — the
+  // same indices that key progress — so nothing downstream changes shape.
   // ── Auth state comes from the shared context (lives in layout.js).
   // On client-side navigation, ready/user/progress are already populated
   // because the context never unmounts — no re-auth, no splash on nav.
@@ -139,6 +143,8 @@ export default function CourseApp() {
 
   const page = useMemo(() => {
     const map = { '/course': 'course', '/profile': 'profile', '/cert': 'cert', '/auth': 'auth', '/quiz': 'quiz' };
+    // /course/<moduleSlug>/<lessonSlug> is the course view at a specific lesson.
+    if (pathname?.startsWith('/course/')) return 'course';
     return map[pathname] || 'landing';
   }, [pathname]);
 
@@ -185,8 +191,20 @@ export default function CourseApp() {
   // ── Course position ──────────────────────────────────────────────────
   // Initialise directly from progress so navigating back to /course after
   // visiting /profile shows the correct lesson without an extra render.
-  const [activeM, setActiveM] = useState(() => progress?.lastLesson?.m ?? 0);
-  const [activeL, setActiveL] = useState(() => progress?.lastLesson?.l ?? 0);
+  // URL wins when we are on a lesson route; otherwise resume where they left
+  // off. `atLessonUrl` also stops the resume effect from yanking a deep-linked
+  // reader back to their last position.
+  const atLessonUrl = initialM !== null && initialL !== null;
+  const [activeM, setActiveM] = useState(() => (atLessonUrl ? initialM : progress?.lastLesson?.m ?? 0));
+  const [activeL, setActiveL] = useState(() => (atLessonUrl ? initialL : progress?.lastLesson?.l ?? 0));
+
+  // Keep state in step when navigating between lesson URLs (client-side nav
+  // remounts nothing, so the props change without a fresh mount).
+  useEffect(() => {
+    if (!atLessonUrl) return;
+    setActiveM(initialM);
+    setActiveL(initialL);
+  }, [initialM, initialL, atLessonUrl]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile,    setIsMobile]    = useState(false);
   const contentRef       = useRef(null);
@@ -194,15 +212,27 @@ export default function CourseApp() {
 
   /* Auto-redirect ─────────────────────────────────────────────────────
      Logged-in user on landing/auth → push to /course.
-     Logged-out user on a protected page → push to /auth.           */
+     Logged-out user on a protected page → push to /auth, EXCEPT on a public
+     lesson, which is readable without an account. Without this exemption the
+     ungating in 3b would be undone by the redirect: the page would render for
+     a frame and then bounce to /auth.
+
+     A signed-in user deep-linking to a lesson is left where they are rather
+     than being pushed to /course — the URL is an explicit request. */
+  const onPublicLesson = atLessonUrl && isPublicLesson(activeM, activeL);
+
   useEffect(() => {
     if (!ready) return;
     if (user && (page === 'landing' || page === 'auth')) {
       router.replace('/course');
-    } else if (!user && !['landing', 'auth'].includes(page)) {
+    } else if (!user && !['landing', 'auth'].includes(page) && !onPublicLesson) {
+      // Remember where they were headed so login can return them here (3a).
+      if (typeof window !== 'undefined' && page === 'course' && atLessonUrl) {
+        try { sessionStorage.setItem('pe_return_to', pathname); } catch { /* private mode */ }
+      }
       router.replace('/auth');
     }
-  }, [ready, user, page]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ready, user, page, onPublicLesson]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* responsive */
   useEffect(() => {
@@ -230,6 +260,9 @@ export default function CourseApp() {
     if (!user) { progressRestored.current = false; return; }
     if (progressRestored.current) return;
     progressRestored.current = true;
+    // A deep link is an explicit request for a specific lesson — never
+    // overwrite it with the stored resume position.
+    if (atLessonUrl) return;
     setActiveM(progress.lastLesson?.m ?? 0);
     setActiveL(progress.lastLesson?.l ?? 0);
   }, [user, progress]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -287,11 +320,14 @@ export default function CourseApp() {
   const navigate = useCallback((mi, li) => {
     setActiveM(mi);
     setActiveL(li);
-    setPage('course');
+    // Push the canonical lesson URL so every lesson is linkable and the back
+    // button steps through lessons. lessonHref is presentation only — the
+    // indices above remain what progress is keyed by.
+    router.push(lessonHref(mi, li));
     if (contentRef.current) contentRef.current.scrollTop = 0;
     if (isMobile) setSidebarOpen(false);
     updateProgress(prev => ({ ...prev, lastLesson: { m: mi, l: li } }));
-  }, [isMobile, updateProgress]);
+  }, [isMobile, updateProgress, router]);
 
   function markComplete() {
     // immediate=true: lesson completion is critical — don't risk losing it
@@ -377,7 +413,18 @@ export default function CourseApp() {
   if (page === 'auth' || !user) return (
     <AuthPage onAuth={async (mode, name, email, password) => {
       const result = await handleAuth(mode, name, email, password);
-      if (result.ok && !result.needsConfirm) router.push('/course');
+      if (result.ok && !result.needsConfirm) {
+        // Deep-link-then-login: return them to the lesson they asked for,
+        // not a generic dashboard. Cleared immediately so it cannot leak into
+        // a later, unrelated sign-in.
+        let dest = '/course';
+        try {
+          const saved = sessionStorage.getItem('pe_return_to');
+          if (saved && saved.startsWith('/course/')) dest = saved;
+          sessionStorage.removeItem('pe_return_to');
+        } catch { /* private mode — fall back to /course */ }
+        router.push(dest);
+      }
       return result;
     }} />
   );

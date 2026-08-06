@@ -1,0 +1,69 @@
+import { MODULES } from '@/data/courseData';
+
+/**
+ * Slug ↔ position mapping for course URLs.
+ *
+ * ─── THE RULE THIS FILE EXISTS TO ENFORCE ─────────────────────────────────
+ * progress.completed and progress.quiz_scores are keyed by POSITION —
+ * `${m}-${l}` — and always will be. Slugs are a URL surface layered on top;
+ * they are never a storage key and never derived from one.
+ *
+ * Direction matters:
+ *
+ *   resolvePosition(moduleSlug, lessonSlug) -> { mi, li }
+ *       AUTHORITATIVE. Routing resolves a URL to a position exactly once, at
+ *       the route boundary. Everything downstream works in indices.
+ *
+ *   lessonHref(mi, li) -> '/course/<moduleSlug>/<lessonSlug>'
+ *       PRESENTATION ONLY. Builds a link for a position we already hold. It
+ *       must never be round-tripped back into a storage key — take the index
+ *       you already have instead of re-deriving it from a URL you just built.
+ *
+ * Both read the same authored slugs in courseData.js, so they cannot disagree.
+ * scripts/check-course-integrity.mjs fails the build if a slug ever moves to a
+ * different position, which is what stops a URL change from silently
+ * repointing stored progress.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/** Slug pair -> { mi, li }, or null if either slug is unknown. */
+export function resolvePosition(moduleSlug, lessonSlug) {
+  if (!moduleSlug || !lessonSlug) return null;
+  const mi = MODULES.findIndex(m => m.slug === moduleSlug);
+  if (mi === -1) return null;
+  const li = MODULES[mi].lessons.findIndex(l => l.slug === lessonSlug);
+  if (li === -1) return null;
+  return { mi, li };
+}
+
+/** Position -> canonical lesson URL. Presentation only; see the note above. */
+export function lessonHref(mi, li) {
+  const m = MODULES[mi];
+  const l = m?.lessons?.[li];
+  if (!m || !l) return '/course';
+  return `/course/${m.slug}/${l.slug}`;
+}
+
+/** Position -> the module's first lesson. Used by landing-page module cards. */
+export function moduleHref(mi) {
+  return lessonHref(mi, 0);
+}
+
+/** True when a lesson is readable without an account (Task 3b). */
+export function isPublicLesson(mi, li) {
+  return MODULES[mi]?.lessons?.[li]?.isPublic === true;
+}
+
+/** Every public lesson, for sitemap generation and static params. */
+export function publicLessons() {
+  const out = [];
+  MODULES.forEach((m, mi) => m.lessons.forEach((l, li) => {
+    if (l.isPublic) out.push({ mi, li, moduleSlug: m.slug, lessonSlug: l.slug, module: m, lesson: l });
+  }));
+  return out;
+}
+
+/** Every lesson as a slug pair — used to pre-generate routes. */
+export function allLessonParams() {
+  return MODULES.flatMap(m =>
+    m.lessons.map(l => ({ moduleSlug: m.slug, lessonSlug: l.slug })));
+}
