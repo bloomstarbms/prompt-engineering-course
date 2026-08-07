@@ -15,6 +15,7 @@ import CertificatePage from '@/components/cert/CertificatePage';
 import ProfilePage     from '@/components/profile/ProfilePage';
 import { getUserCert } from '@/lib/db';
 import { lessonHref, isPublicLesson } from '@/lib/courseRoutes';
+import LockedPanel from '@/components/course/LockedPanel';
 import { LessonBody, ModPill } from '@/components/ui';
 
 /* ─── Pendulum Splash Screen ──────────────────────────────────────────── */
@@ -256,6 +257,14 @@ export default function CourseApp({ initialM = null, initialL = null }) {
      lands directly on /course after a fresh page load.  The effect re-runs
      whenever user or progress changes so it catches the post-hydration batch
      where both become available at the same time. */
+  //  LOAD-BEARING: the progressRestored latch below is one of two brakes that
+  //  stop this effect and the arrival effect from driving each other. This one
+  //  writes position from lastLesson; the arrival effect writes lastLesson from
+  //  position. Without the latch, every write here would re-trigger that effect
+  //  and vice versa — a write loop that the 800ms debounce would hide locally
+  //  while still hammering the database for every signed-in user. Do not remove
+  //  it, or the equality check in the arrival effect, without replacing the
+  //  cycle protection.
   useEffect(() => {
     if (!user) { progressRestored.current = false; return; }
     if (progressRestored.current) return;
@@ -274,6 +283,31 @@ export default function CourseApp({ initialM = null, initialL = null }) {
   const isLastLesson = activeM === MODULES.length - 1 && activeL === mod.lessons.length - 1;
 
   const { completed, quizScores } = progress;
+
+  /* ── Unlock enforcement on the URL path ────────────────────────────────
+     Until lessons had URLs, isLessonUnlocked() was consulted only by the
+     sidebar, so the sequential rule held because the sidebar was the only way
+     in. Real URLs made every lesson directly addressable and that implicit
+     gate disappeared — a learner on lesson 3 could simply type the URL of
+     lesson 26.
+
+     Enforced here rather than by redirecting to the furthest unlocked lesson:
+     a redirect makes the URL lie, so a shared link silently shows something
+     else and the reader is bounced with no explanation. Rendering a locked
+     state at the lesson's own address keeps the URL honest and says why. */
+  const lessonUnlocked = user
+    ? isLessonUnlocked(activeM, activeL, completed, quizScores)
+    : isPublicLesson(activeM, activeL);
+
+  // Furthest lesson they can actually open, for the "continue" action.
+  const furthestOpen = useMemo(() => {
+    if (!user) return { m: 0, l: 0 };
+    let best = { m: 0, l: 0 };
+    MODULES.forEach((mm, mi) => mm.lessons.forEach((_, li) => {
+      if (isLessonUnlocked(mi, li, completed, quizScores)) best = { m: mi, l: li };
+    }));
+    return best;
+  }, [user, completed, quizScores]);
   const completedCount = Object.keys(completed).length;
   const allDone = completedCount === TOTAL_LESSONS;
 
@@ -337,6 +371,9 @@ export default function CourseApp({ initialM = null, initialL = null }) {
     // matches, so an ordinary page load writes nothing, and skipped entirely
     // when signed out (updateProgress also no-ops without a userId).
     if (!user) return;
+    // LOAD-BEARING: second of the two cycle brakes (see the resume effect).
+    // The resume effect sets position FROM lastLesson, so without this equality
+    // check that write would bounce straight back as a new write.
     const stored = progress?.lastLesson;
     if (stored?.m === activeM && stored?.l === activeL) return;
     updateProgress(prev => ({ ...prev, lastLesson: { m: activeM, l: activeL } }));
@@ -428,6 +465,7 @@ export default function CourseApp({ initialM = null, initialL = null }) {
     <Landing
       onStart={() => router.push(user ? '/course' : '/auth')}
       onLogin={() => router.push(user ? '/course' : '/auth')}
+      onOpenModule={(href) => router.push(href)}
     />
   );
 
@@ -528,6 +566,7 @@ export default function CourseApp({ initialM = null, initialL = null }) {
           onLogout={() => { logout(); router.replace('/'); }}
           isMobile={isMobile}
           completed={completed}
+          onSignUp={() => router.push('/auth')}
         />
       </div>
 
@@ -655,6 +694,23 @@ export default function CourseApp({ initialM = null, initialL = null }) {
 
         {/* scrollable content — video + notes in one view */}
         <main ref={contentRef} style={{ flex: 1, overflowY: 'auto' }}>
+          {!lessonUnlocked ? (
+            <div style={{ padding: 'clamp(24px,5vw,48px) clamp(16px,4vw,32px)', maxWidth: 640, margin: '0 auto' }}>
+              <ModPill icon={mod.icon} title={mod.title} color={mod.color} />
+              <h1 style={{
+                fontFamily: T.display, fontWeight: 700,
+                fontSize: 'clamp(18px,3vw,24px)', color: T.text,
+                letterSpacing: '-0.03em', margin: '10px 0 20px', lineHeight: 1.2,
+              }}>{lesson.title}</h1>
+              <LockedPanel
+                variant="locked"
+                title="Not unlocked yet"
+                body={`Lessons open in order, so the ones before this need finishing first — including passing their quizzes. This link will work as soon as you get here.`}
+                primaryLabel="Go to my next lesson"
+                onPrimary={() => navigate(furthestOpen.m, furthestOpen.l)}
+              />
+            </div>
+          ) : (
           <LessonView
             lesson={lesson}
             mod={mod}
@@ -671,7 +727,12 @@ export default function CourseApp({ initialM = null, initialL = null }) {
             isLastLesson={isLastLesson}
             canSeeCert={canSeeCert}
             onCert={() => router.push('/cert')}
+            signedOut={!user}
+            onSignUp={() => router.push('/auth')}
+            isLastPublicLesson={!user && isPublicLesson(activeM, activeL)
+              && !isPublicLesson(activeM, activeL + 1)}
           />
+          )}
         </main>
       </div>
     </div>
@@ -679,7 +740,7 @@ export default function CourseApp({ initialM = null, initialL = null }) {
 }
 
 /* ── Combined Lesson View: video + notes in single scroll ──────────────── */
-function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed, quizPct, activeL, onQuiz, onMarkComplete, goNext, isLastLesson, canSeeCert, onCert }) {
+function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed, quizPct, activeL, onQuiz, onMarkComplete, goNext, isLastLesson, canSeeCert, onCert, signedOut = false, onSignUp, isLastPublicLesson = false }) {
   const isComplete = completed[lKey];
   const [mi, li] = lKey.split('-').map(Number);
   const isCourseStart = mi === 0 && li === 0;
@@ -824,7 +885,66 @@ function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed,
 
         {/* ── Quiz card OR completion / mark-complete actions ── */}
         <div style={{ marginTop: 40, paddingTop: 24, borderTop: `1px solid ${T.border}` }}>
-          {quiz ? (
+          {signedOut ? (
+            /* ── Reading is free; the interactive layer needs an account ──
+               Shown rather than hidden, so the value of signing up is legible
+               from inside the lesson rather than only at a wall. */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <LockedPanel
+                compact icon="📝"
+                title={quiz ? `Quiz — ${quiz.questions.length} questions` : 'Lesson quiz'}
+                body="Check what you picked up, graded instantly."
+                primaryLabel="Create free account"
+                onPrimary={onSignUp}
+              />
+              <LockedPanel
+                compact icon="📊"
+                title="Save your progress"
+                body="Pick up where you left off, on any device."
+                primaryLabel="Create free account"
+                onPrimary={onSignUp}
+              />
+              <LockedPanel
+                compact icon="🎓"
+                title="Certificate of completion"
+                body="Finish the course and earn a shareable certificate."
+                primaryLabel="Create free account"
+                onPrimary={onSignUp}
+              />
+
+              {isLastPublicLesson && (
+                <div style={{
+                  marginTop: 10, padding: 'clamp(20px,4vw,28px)',
+                  borderRadius: 14, textAlign: 'center',
+                  background: `linear-gradient(135deg, ${T.accentLight}, rgba(192,132,252,0.06))`,
+                  border: `1.5px solid ${T.accentBorder}`,
+                }}>
+                  <div style={{
+                    fontFamily: T.display, fontWeight: 800,
+                    fontSize: 'clamp(17px,2.6vw,21px)', color: T.text,
+                    letterSpacing: '-0.03em', marginBottom: 8,
+                  }}>
+                    That&apos;s the end of the free preview
+                  </div>
+                  <p style={{
+                    fontFamily: T.font, fontSize: 13.5, color: T.muted,
+                    lineHeight: 1.7, margin: '0 auto 18px', maxWidth: 420,
+                  }}>
+                    You&apos;ve finished Module 01. The remaining 23 lessons cover
+                    the techniques the rest of the course is built on — chain-of-thought,
+                    prompt chaining, RAG, evaluation and agentic patterns.
+                    Free, no card needed.
+                  </p>
+                  <button onClick={onSignUp} style={{
+                    background: T.accent, border: 'none', color: '#fff',
+                    padding: '13px 30px', borderRadius: 10, cursor: 'pointer',
+                    fontFamily: T.font, fontWeight: 700, fontSize: 14.5,
+                    boxShadow: '0 4px 16px rgba(99,102,241,0.35)',
+                  }}>Continue the course — free →</button>
+                </div>
+              )}
+            </div>
+          ) : quiz ? (
             <QuizCard
               quiz={quiz}
               mod={mod}

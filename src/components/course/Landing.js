@@ -2,6 +2,7 @@
 import { T } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS, QUIZZES } from '@/data/courseData';
 import { AccentBtn } from '@/components/ui';
+import { moduleHref } from '@/lib/courseRoutes';
 
 /* Total quiz questions across the course — computed so it never drifts */
 const TOTAL_QUIZ_Q = Object.values(QUIZZES).reduce((a, q) => a + q.questions.length, 0);
@@ -116,7 +117,7 @@ const MODULE_SVGS = [
   ),
 ];
 
-export default function Landing({ onStart, onLogin }) {
+export default function Landing({ onStart, onLogin, onOpenModule }) {
   return (
     <div style={{ minHeight: '100vh', background: T.bg, overflowX: 'hidden' }}>
 
@@ -396,8 +397,15 @@ export default function Landing({ onStart, onLogin }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 268px), 1fr))', gap: 14 }}>
             {MODULES.map(m => {
               const ModIcon = MODULE_SVGS[m.id];
+              // A module is previewable when any of its lessons is public.
+              // Module 01 opens straight into its first lesson; the rest still
+              // route to /auth, but say so before the click rather than after.
+              const isFree = m.lessons.some(l => l.isPublic);
               return (
-                <div key={m.id} onClick={onStart} style={{
+                <div key={m.id}
+                  onClick={() => (isFree ? onOpenModule(moduleHref(m.id)) : onStart())}
+                  title={isFree ? 'Read this module free — no account needed' : 'Create a free account to unlock'}
+                  style={{
                   background: T.bg, border: `1px solid ${T.border}`,
                   borderRadius: 14, padding: '20px 22px', cursor: 'pointer',
                   transition: 'all 0.2s', boxShadow: T.shadowSm,
@@ -436,7 +444,24 @@ export default function Landing({ onStart, onLogin }) {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontFamily: T.mono, fontSize: 10, color: T.dim }}>{m.lessons.length} lessons</span>
-                    <span style={{ fontSize: 13, color: m.color, fontWeight: 600 }}>→</span>
+                    {isFree ? (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 5,
+                        fontFamily: T.mono, fontSize: 9, letterSpacing: '0.08em',
+                        color: m.color, background: `${m.color}12`,
+                        border: `1px solid ${m.color}30`, borderRadius: 100, padding: '3px 9px',
+                      }}>FREE TO READ →</span>
+                    ) : (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 5,
+                        fontFamily: T.mono, fontSize: 9, letterSpacing: '0.08em', color: T.dim,
+                      }}>
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        ACCOUNT NEEDED
+                      </span>
+                    )}
                   </div>
                 </div>
               );

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { T, getGrade } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS } from '@/data/courseData';
 import { isLessonUnlocked } from '@/lib/lessonUnlock';
+import { isPublicLesson } from '@/lib/courseRoutes';
 import { Ring } from '@/components/ui';
 
 /* ── Avatar ── */
@@ -51,12 +52,23 @@ function SidebarAvatar({ name, avatarUrl, size = 34, fontSize = 12, ringColor })
 export default function Sidebar({
   user, activeM, activeL, progress, quizScores,
   canSeeCert, onNavigate, onCert, onProfile, onLogout, isMobile, completed,
+  onSignUp,
 }) {
-  const completedCount = Object.keys(completed).length;
+  // A signed-out reader on a public lesson sees the full curriculum with locks
+  // — that is the point of ungating — so this component must render without a
+  // user. Progress UI is replaced by an invitation rather than shown empty.
+  const signedOut = !user;
+
+  // Lock predicate differs by audience: signed-out readers can open anything
+  // marked public; signed-in learners follow the sequential unlock rule.
+  const isOpen = (mi, li) => signedOut
+    ? isPublicLesson(mi, li)
+    : isLessonUnlocked(mi, li, completed, quizScores);
+  const completedCount = Object.keys(completed || {}).length;
   const prog           = Math.round(completedCount / TOTAL_LESSONS * 100);
 
-  const totalCorrect  = Object.values(quizScores).reduce((a, v) => a + v.score, 0);
-  const totalPossible = Object.values(quizScores).reduce((a, v) => a + v.total, 0);
+  const totalCorrect  = Object.values(quizScores || {}).reduce((a, v) => a + v.score, 0);
+  const totalPossible = Object.values(quizScores || {}).reduce((a, v) => a + v.total, 0);
   const overallPct    = totalPossible > 0 ? Math.round(totalCorrect / totalPossible * 100) : 0;
   const overallGrade  = getGrade(overallPct);
   const mod           = MODULES[activeM];
@@ -69,6 +81,24 @@ export default function Sidebar({
 
       {/* ── Header / User Card ── */}
       <div style={{ padding: '14px 14px 10px', borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
+
+        {signedOut ? (
+          <div style={{ padding: '4px 2px 6px' }}>
+            <div style={{ fontFamily: T.font, fontWeight: 700, fontSize: 13, color: T.text, marginBottom: 4 }}>
+              Free preview
+            </div>
+            <div style={{ fontFamily: T.font, fontSize: 11.5, color: T.muted, lineHeight: 1.5, marginBottom: 10 }}>
+              Module 01 is open to read. Create a free account to unlock the rest,
+              take the quizzes and save your progress.
+            </div>
+            <button onClick={onSignUp} style={{
+              width: '100%', background: T.accent, border: 'none', color: '#fff',
+              borderRadius: 9, padding: '9px', cursor: 'pointer',
+              fontFamily: T.font, fontWeight: 700, fontSize: 12.5,
+              boxShadow: '0 4px 14px rgba(99,102,241,0.30)',
+            }}>Create free account</button>
+          </div>
+        ) : (<>
 
         {/* User row */}
         <button onClick={onProfile} style={{
@@ -127,13 +157,14 @@ export default function Sidebar({
             <span style={{ fontFamily: T.mono, fontSize: 9, color: T.faint }}>NO QUIZZES YET</span>
           )}
         </div>
+        </>)}
       </div>
 
       {/* ── Module / lesson list ── */}
       <nav style={{ flex: 1, overflowY: 'auto', paddingBottom: 4 }}>
         {MODULES.map((m, mi) => {
           const isActive  = activeM === mi;
-          const modLocked = !isLessonUnlocked(mi, 0, completed, quizScores);
+          const modLocked = !isOpen(mi, 0);
           const lessonsDone = m.lessons.filter((_, li) => completed[`${mi}-${li}`]).length;
           const modComplete = lessonsDone === m.lessons.length;
 
@@ -146,7 +177,7 @@ export default function Sidebar({
 
           return (
             <ModuleSection
-              key={mi} m={m} mi={mi} isActive={isActive}
+              key={mi} m={m} mi={mi} isActive={isActive} isOpen={isOpen}
               activeL={activeL} completed={completed} quizScores={quizScores}
               mPct={mPct} modComplete={modComplete} modLocked={modLocked}
               lessonsDone={lessonsDone} onNavigate={onNavigate}
@@ -160,6 +191,13 @@ export default function Sidebar({
         padding: '10px 12px', borderTop: `1px solid ${T.border}`,
         flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6,
       }}>
+        {signedOut ? (
+          <button onClick={onSignUp} style={{
+            width: '100%', background: T.bg1, border: `1px solid ${T.accentBorder}`,
+            color: T.accent, borderRadius: 9, padding: '10px', cursor: 'pointer',
+            fontFamily: T.font, fontWeight: 700, fontSize: 12,
+          }}>Unlock all 26 lessons — free</button>
+        ) : (<>
         {canSeeCert && (
           <button onClick={onCert} style={{
             width: '100%',
@@ -208,13 +246,14 @@ export default function Sidebar({
             Sign Out
           </button>
         </div>
+        </>)}
       </div>
     </aside>
   );
 }
 
 /* ── Module Section ── */
-function ModuleSection({ m, mi, isActive, activeL, completed, quizScores, mPct, modComplete, modLocked, lessonsDone, onNavigate }) {
+function ModuleSection({ m, mi, isActive, isOpen, activeL, completed, quizScores, mPct, modComplete, modLocked, lessonsDone, onNavigate }) {
   return (
     <div>
       {/* Module header row */}
@@ -282,7 +321,7 @@ function ModuleSection({ m, mi, isActive, activeL, completed, quizScores, mPct, 
             const isDone = !!completed[lk];
             const qs     = quizScores[lk];
             const isAct  = activeL === li;
-            const locked = !isLessonUnlocked(mi, li, completed, quizScores);
+            const locked = !isOpen(mi, li);
             const qPct   = qs ? Math.round(qs.score / qs.total * 100) : null;
             const qGrade = qPct !== null ? getGrade(qPct) : null;
 
