@@ -313,7 +313,10 @@ export function useAuth() {
       registerRes  = await fetch('/api/auth/register', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name: legacyUser.name || email.split('@')[0], email, password }),
+        // legacyMigration: this person is being migrated during sign-in and
+        // never saw a consent checkbox. Their consented_at stays null, which is
+        // the truthful record. See migration 006.
+        body:    JSON.stringify({ name: legacyUser.name || email.split('@')[0], email, password, legacyMigration: true }),
       });
       registerJson = await registerRes.json();
     } catch {
@@ -348,7 +351,7 @@ export function useAuth() {
       res  = await fetch('/api/auth/register', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name, email, password }),
+        body:    JSON.stringify({ name, email, password, consented: true }),
       });
       json = await res.json();
     } catch {

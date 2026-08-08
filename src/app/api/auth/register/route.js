@@ -28,13 +28,33 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
   }
 
-  const { name, email, password } = body;
+  const { name, email, password, consented, legacyMigration } = body;
 
   // ── Basic server-side validation ──────────────────────────────────────
   if (!name?.trim())     return NextResponse.json({ error: 'Name is required.' },              { status: 400 });
   if (!email?.trim())    return NextResponse.json({ error: 'Email is required.' },             { status: 400 });
   if (!password)         return NextResponse.json({ error: 'Password is required.' },          { status: 400 });
   if (password.length < 6) return NextResponse.json({ error: 'Password must be at least 6 characters.' }, { status: 400 });
+
+  /* Consent is enforced here, not only in the form.
+     The checkbox is what a person meets; this is what makes it a control
+     rather than a decoration, since anything can POST to this endpoint.
+
+     legacyMigration is the one bypass, and it is explicit on purpose. That
+     path runs inside login(), for someone whose account predates Supabase and
+     who is being migrated during sign-in — they never saw a checkbox and
+     inventing consent for them would be a lie in a column meant as evidence.
+     Their consented_at stays null, which is the accurate answer. */
+  if (!legacyMigration && consented !== true) {
+    return NextResponse.json(
+      { error: 'You must confirm you are 18 or older and accept the Terms and Privacy Policy.' },
+      { status: 400 },
+    );
+  }
+
+  /* Stamped from the server clock, never from the client's.
+     A timestamp the subject supplies is not evidence of anything. */
+  const consentedAt = consented === true ? new Date().toISOString() : null;
 
   // ── Create user (auto-confirmed — no email needed) ────────────────────
   const { data, error } = await admin.auth.admin.createUser({
@@ -62,7 +82,7 @@ export async function POST(req) {
     await admin
       .from('profiles')
       .upsert(
-        { id: data.user.id, name: name.trim(), bio: '', avatar_url: '' },
+        { id: data.user.id, name: name.trim(), bio: '', avatar_url: '', consented_at: consentedAt },
         { onConflict: 'id', ignoreDuplicates: true },
       );
   }
