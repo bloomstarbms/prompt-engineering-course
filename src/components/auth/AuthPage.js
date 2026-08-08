@@ -78,6 +78,11 @@ export default function AuthPage({ onAuth }) {
   const [password, setPassword] = useState('');
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
+  // Both documents state 18+. Stating an age limit without ever asking is
+  // worse than not stating one: it claims a control that does not exist. The
+  // NDPA requires verifiable parental consent below 18, which this site is not
+  // set up to obtain, so the honest position is to ask and to refuse.
+  const [isAdult, setIsAdult]   = useState(false);
 
   const [forgotEmail,   setForgotEmail]   = useState('');
   const [forgotError,   setForgotError]   = useState('');
@@ -103,6 +108,13 @@ export default function AuthPage({ onAuth }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    // Guarded here as well as with the input's `required`. The native
+    // attribute is the one users actually meet; this is the one that still
+    // holds if the markup changes or the browser is unusual.
+    if (mode === 'register' && !isAdult) {
+      setError('Please confirm you are 18 or older and accept the Terms and Privacy Policy.');
+      return;
+    }
     setLoading(true);
     await new Promise(r => setTimeout(r, 280));
     const result = await onAuth(mode, name, email, password);
@@ -382,6 +394,36 @@ export default function AuthPage({ onAuth }) {
                     placeholder={mode === 'register' ? 'At least 6 characters' : '••••••••'}
                     autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
                     onChange={e => setPassword(e.target.value)} />
+
+                  {mode === 'register' && (
+                    <label
+                      style={{
+                        display: 'flex', alignItems: 'flex-start', gap: 10,
+                        cursor: 'pointer', marginTop: 2,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        required
+                        checked={isAdult}
+                        onChange={e => setIsAdult(e.target.checked)}
+                        style={{ marginTop: 3, width: 15, height: 15, accentColor: T.accent, cursor: 'pointer', flexShrink: 0 }}
+                      />
+                      <span style={{ fontFamily: T.font, fontSize: 12.5, color: T.muted, lineHeight: 1.55 }}>
+                        I am 18 or older and I accept the{' '}
+                        {/* New tab on purpose: reading the terms should not
+                            discard a half-filled signup form. */}
+                        <a href="/terms" target="_blank" rel="noopener noreferrer"
+                          style={{ color: T.accent, textDecoration: 'underline', textUnderlineOffset: 2 }}>
+                          Terms of Use
+                        </a>{' '}and{' '}
+                        <a href="/privacy" target="_blank" rel="noopener noreferrer"
+                          style={{ color: T.accent, textDecoration: 'underline', textUnderlineOffset: 2 }}>
+                          Privacy Policy
+                        </a>.
+                      </span>
+                    </label>
+                  )}
 
                   {error && <ErrorBox>{error}</ErrorBox>}
 
