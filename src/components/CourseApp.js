@@ -294,6 +294,24 @@ export default function CourseApp({ initialM = null, initialL = null }) {
 
   const { completed, quizScores } = progress;
 
+  /* ── THE one lock predicate ───────────────────────────────────────────
+     Who may open lesson (mi, li). Signed-in learners follow the sequential
+     unlock rule; signed-out readers get whatever is marked public.
+
+     One function, passed to everyone who asks the question. It used to be
+     written out three times — here, in the sidebar's own isOpen, and inline
+     in the sidebar's click handler — and the third copy checked only
+     isLessonUnlocked, with no signed-out branch. Signed out, `completed` is
+     empty, so that copy admitted lesson 1 and silently rejected lessons 2 and
+     3: the sidebar drew them as open, the handler dropped the click, and the
+     reader got a dead control with no explanation.
+
+     The bug was the duplication, not the branch. Do not re-inline this. */
+  const canOpen = useCallback(
+    (mi, li) => (user ? isLessonUnlocked(mi, li, completed, quizScores) : isPublicLesson(mi, li)),
+    [user, completed, quizScores],
+  );
+
   /* ── Unlock enforcement on the URL path ────────────────────────────────
      Until lessons had URLs, isLessonUnlocked() was consulted only by the
      sidebar, so the sequential rule held because the sidebar was the only way
@@ -305,9 +323,7 @@ export default function CourseApp({ initialM = null, initialL = null }) {
      a redirect makes the URL lie, so a shared link silently shows something
      else and the reader is bounced with no explanation. Rendering a locked
      state at the lesson's own address keeps the URL honest and says why. */
-  const lessonUnlocked = user
-    ? isLessonUnlocked(activeM, activeL, completed, quizScores)
-    : isPublicLesson(activeM, activeL);
+  const lessonUnlocked = canOpen(activeM, activeL);
 
   /* Giving the quiz its own URL made it directly addressable, and the quiz
      branch returns before the lesson view's locked state is ever reached — so
@@ -692,9 +708,8 @@ export default function CourseApp({ initialM = null, initialL = null }) {
           activeL={activeL}
           progress={progress}
           quizScores={quizScores}
-          onNavigate={(mi, li) => {
-            if (isLessonUnlocked(mi, li, completed, quizScores)) navigate(mi, li);
-          }}
+          onNavigate={(mi, li) => { if (canOpen(mi, li)) navigate(mi, li); }}
+          isOpen={canOpen}
           canSeeCert={canSeeCert}
           onCert={() => router.push('/cert')}
           onProfile={() => router.push('/profile')}

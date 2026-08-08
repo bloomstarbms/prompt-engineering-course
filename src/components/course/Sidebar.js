@@ -2,8 +2,6 @@
 import { useState, useEffect } from 'react';
 import { T, getGrade } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS } from '@/data/courseData';
-import { isLessonUnlocked } from '@/lib/lessonUnlock';
-import { isPublicLesson } from '@/lib/courseRoutes';
 import { Ring } from '@/components/ui';
 
 /* ── Avatar ── */
@@ -52,18 +50,18 @@ function SidebarAvatar({ name, avatarUrl, size = 34, fontSize = 12, ringColor })
 export default function Sidebar({
   user, activeM, activeL, progress, quizScores,
   canSeeCert, onNavigate, onCert, onProfile, onLogout, isMobile, completed,
-  onSignUp,
+  onSignUp, isOpen,
 }) {
   // A signed-out reader on a public lesson sees the full curriculum with locks
   // — that is the point of ungating — so this component must render without a
   // user. Progress UI is replaced by an invitation rather than shown empty.
   const signedOut = !user;
 
-  // Lock predicate differs by audience: signed-out readers can open anything
-  // marked public; signed-in learners follow the sequential unlock rule.
-  const isOpen = (mi, li) => signedOut
-    ? isPublicLesson(mi, li)
-    : isLessonUnlocked(mi, li, completed, quizScores);
+  // `isOpen` is supplied by CourseApp (canOpen) so the sidebar's rendering and
+  // CourseApp's click handler cannot disagree about who may open a lesson.
+  // This used to be a second copy of the rule; the handler held a third that
+  // omitted the signed-out branch, which drew Module 01 as open and then
+  // refused the clicks.
   const completedCount = Object.keys(completed || {}).length;
   const prog           = Math.round(completedCount / TOTAL_LESSONS * 100);
 
