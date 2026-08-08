@@ -395,15 +395,25 @@ export default function CourseApp({ initialM = null, initialL = null }) {
     // write rather than one per lesson. Skipped when the position already
     // matches, so an ordinary page load writes nothing, and skipped entirely
     // when signed out (updateProgress also no-ops without a userId).
-    // user?.id is in the deps and must stay there. On a cold load of a lesson
-    // URL, auth has not resolved yet when this first runs, so without it the
-    // effect returned here and never ran again — the position never changed,
-    // so nothing retriggered it. The resume point was silently never recorded
-    // for anyone arriving by URL, which is exactly what lesson URLs made the
-    // common case. It also fed a worse bug: /quiz re-derives its position from
-    // lastLesson, so a stale value served the quiz for a different lesson and
-    // wrote its result to that lesson's key.
-    if (!user) return;
+    // `userId` and `ready` are in the deps and must stay there. On a cold load
+    // of a lesson URL auth has not resolved when this first runs, so without a
+    // dep that actually changes the effect returns here and never runs again —
+    // the position does not change, so nothing retriggers it. The resume point
+    // was then never recorded for anyone arriving by URL, which lesson URLs
+    // made the common case.
+    //
+    // It must be `userId`, not `user?.id`. The user object is
+    // { email, name, bio, avatarUrl, nameIsDefault } and carries no id at all,
+    // so `user?.id` is undefined both before and after sign-in: a dep that
+    // never changes, and a fix that reads correctly while doing nothing. The
+    // UUID lives in its own state. This was shipped once as `user?.id` and had
+    // to be corrected after the deployed behaviour was checked; the build was
+    // green either way.
+    //
+    // `ready` also gates the write so it cannot fire before progress has
+    // loaded. updateProgress builds the row from current state, so writing
+    // against a not-yet-hydrated progress would persist an empty `completed`.
+    if (!ready || !user || !userId) return;
     // LOAD-BEARING: second of the two cycle brakes (see the resume effect).
     // The resume effect sets position FROM lastLesson, so without this equality
     // check that write would bounce straight back as a new write. It is also
@@ -412,7 +422,7 @@ export default function CourseApp({ initialM = null, initialL = null }) {
     const stored = progress?.lastLesson;
     if (stored?.m === activeM && stored?.l === activeL) return;
     updateProgress(prev => ({ ...prev, lastLesson: { m: activeM, l: activeL } }));
-  }, [activeM, activeL, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeM, activeL, userId, ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Lesson prose, loaded on demand ───────────────────────────────────
      Bodies were 74% of courseData.js and are now per-module chunks. This

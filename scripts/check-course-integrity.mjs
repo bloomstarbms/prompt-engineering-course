@@ -155,6 +155,33 @@ for (const k of Object.keys(QUIZZES || {})) {
   if (!MODULES[mi]?.lessons?.[li]) fail(`QUIZZES has key ${k}, which is not a lesson`);
 }
 
+// ── 7. `user?.id` is always undefined ────────────────────────────────────
+// The auth user object is { email, name, bio, avatarUrl, nameIsDefault } — the
+// UUID lives in separate `userId` state. So `user?.id` reads as a perfectly
+// ordinary identity check while evaluating to undefined every time.
+//
+// This is here because it already happened. It was used as a useEffect
+// dependency to re-run the arrival effect once auth resolved; being forever
+// undefined, the dep never changed, the effect never re-ran, and the resume
+// point silently stopped being recorded for readers arriving by URL — which in
+// turn let /quiz serve the wrong lesson's quiz and write the result to that
+// lesson's key. The build was green throughout. Nothing about the expression
+// looks wrong, which is exactly why a grep is worth more than a comment.
+for (const rel of ['src/components/CourseApp.js', 'src/hooks/useAuth.js', 'src/providers/AuthProvider.js']) {
+  // Strip comments rather than skipping any line containing them. The first
+  // version of this check skipped lines matching '//' — and the real offender
+  // ends in an eslint-disable comment, so the guard against a vacuous fix was
+  // itself vacuous. Blank the comments, keep the code, keep the line numbers.
+  const src = readFileSync(join(root, rel), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '))
+    .replace(/\/\/[^\n]*/g, '');
+  src.split('\n').forEach((line, i) => {
+    if (/\buser\s*\?\.\s*id\b/.test(line)) {
+      fail(`${rel}:${i + 1} uses \`user?.id\`, which is always undefined — use \`userId\``);
+    }
+  });
+}
+
 // ── Report ───────────────────────────────────────────────────────────────
 if (problems.length) {
   console.error('\n  COURSE INTEGRITY CHECK FAILED\n');
