@@ -646,12 +646,25 @@ export default function CourseApp({ initialM = null, initialL = null, serverBody
      component's keyframes. Passing a body in without this change would have
      produced a green build, a passing route, and still-empty HTML.
 
+     The landing page qualifies for the same reason and needs no body: it is
+     marketing copy that reads identically to everyone, so there is nothing to
+     wait for. It is also the single most valuable URL on the site to have in
+     the index, and it was shipping 489 characters of CSS.
+
      Server and client agree on the condition, so hydration matches. The cost
-     is that a signed-in reader cold-loading a public lesson briefly sees the
-     signed-out rendering before auth resolves — unavoidable while the session
-     lives in localStorage, which the server cannot read. Client-side
-     navigation is unaffected. */
-  const canRenderWithoutAuth = serverBody != null;
+     is that a signed-in reader cold-loading a public lesson or the landing
+     page briefly sees the signed-out rendering before auth resolves. On the
+     landing page they are then redirected to /course as before; previously
+     that wait happened behind the splash. Client-side navigation is
+     unaffected.
+
+     THAT FLASH IS NOT A CONSEQUENCE OF HOW THIS WAS BUILT. It is inherent to
+     server-rendering anything while the session lives in localStorage, which
+     the server cannot read. Restructuring / as a server page with client
+     islands would flash identically, for the same reason. The only fix is
+     moving auth to cookies, which is a substantially larger change. Do not
+     read this paragraph as a reason to redo the work a different way. */
+  const canRenderWithoutAuth = serverBody != null || page === 'landing';
   if (!canRenderWithoutAuth && ((!ready && !forceReady) || !splashDone)) return <SplashScreen />;
 
   /* ── URL-driven routing ─────────────────────────────────────────────
