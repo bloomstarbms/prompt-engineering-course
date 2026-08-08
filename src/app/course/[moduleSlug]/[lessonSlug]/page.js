@@ -3,7 +3,8 @@ import CourseApp from '@/components/CourseApp';
 import { resolvePosition, allLessonParams } from '@/lib/courseRoutes';
 
 /**
- * HOLDING MEASURE — remove in Task 4.
+ * NOINDEX — mostly steady state, not a holding measure. Read to the end
+ * before removing this: a blanket removal is a regression.
  *
  * These routes currently serve an empty client-rendered shell that inherits the
  * landing page's title, description and og tags verbatim. 32 prerendered pages
@@ -22,8 +23,17 @@ import { resolvePosition, allLessonParams } from '@/lib/courseRoutes';
  * `follow: true` so link equity still flows and the crawler reaches the
  * landing page.
  *
- * REMOVE THIS once these routes server-render real content and carry their own
- * title, description, canonical and og tags.
+ * NOT A BLANKET HOLDING MEASURE — most of this is the steady state.
+ *
+ * Only the three public Module 01 lessons ever become indexable. The other 23
+ * are gated, and gated bodies must stay out of the server-rendered HTML by
+ * design, so those URLs are permanently contentless and should stay noindex
+ * permanently. Task 4 therefore carves a small allow-list rather than removing
+ * this tag: removing it broadly would silently re-expose 23 empty pages, which
+ * is the same regression this commit fixed wearing a different hat.
+ *
+ * The sitemap must describe the same set — anything indexable is in it,
+ * anything not is in neither.
  */
 export const metadata = {
   robots: { index: false, follow: true },

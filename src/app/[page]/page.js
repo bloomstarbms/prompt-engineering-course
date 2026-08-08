@@ -10,7 +10,8 @@
 import CourseApp from '@/components/CourseApp';
 
 /**
- * HOLDING MEASURE — remove in Task 4.
+ * NOINDEX — mostly steady state, not a holding measure. Read to the end
+ * before removing this: a blanket removal is a regression.
  *
  * These routes currently serve an empty client-rendered shell that inherits the
  * landing page's title, description and og tags verbatim. 32 prerendered pages
@@ -29,8 +30,11 @@ import CourseApp from '@/components/CourseApp';
  * `follow: true` so link equity still flows and the crawler reaches the
  * landing page.
  *
- * REMOVE THIS once these routes server-render real content and carry their own
- * title, description, canonical and og tags.
+ * NOT A HOLDING MEASURE — this is the steady state for these routes.
+ *
+ * /course, /profile, /cert, /quiz and /auth are application surfaces, not
+ * content. They have nothing to index now and will have nothing to index
+ * later, so this tag stays. Do not remove it in Task 4.
  */
 export const metadata = {
   robots: { index: false, follow: true },
