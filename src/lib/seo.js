@@ -54,18 +54,21 @@ export function clampDescription(text, max = 155) {
  */
 
 /**
- * FLIPS TO TRUE ONLY WHEN THE PUBLIC LESSON BODIES ARE IN THE SERVER HTML.
+ * TRUE ONLY BECAUSE THE PUBLIC LESSON BODIES ARE NOW IN THE SERVER HTML.
  *
- * It is false today because those bodies still load in a client effect, so
- * the pages are empty to a crawler. Setting this true before the SSR work
- * would invite Google to index three blank pages and point a sitemap at them
- * — worse than the sparse single page this started as, and the exact thing
- * the noindex commit exists to prevent.
+ * Verified against the deployment, not the build, before this was flipped:
  *
- * Do not flip it because the routes render. Flip it when view-source contains
- * the lesson prose.
+ *   3 public lessons   6838 / 4884 / 5402 chars of visible text over the wire,
+ *                      authored prose present, and 6613 chars still rendered
+ *                      with scripts blocked in a sandboxed frame
+ *   23 gated lessons   489 chars each — the same number measured before any of
+ *                      this work began, so no gated body reached a payload
+ *
+ * If this is ever set true again after a change to how bodies load, re-run
+ * that check first. The failure it guards against is silent: three empty pages
+ * in the index, invited by a sitemap, visible in no application test.
  */
-export const PUBLIC_LESSONS_INDEXABLE = false;
+export const PUBLIC_LESSONS_INDEXABLE = true;
 
 /** Every URL that may be indexed, right now. Truthful at every commit. */
 export function indexableUrls() {
