@@ -31,13 +31,23 @@ alter table public.profiles
 comment on column public.profiles.consented_at is
   'When the user confirmed 18+ and accepted the Terms and Privacy Policy at registration. Written server-side only. NULL means never asked (pre-dates the documents, or migrated from a legacy account) — it does not mean refused.';
 
--- The value is only evidence if the subject cannot write it.
+-- ─── THESE TWO STATEMENTS DO NOTHING. SEE 007. ───────────────────────────
+-- Kept because they were applied to production, and a migration file should
+-- say what was run rather than what was meant.
 --
--- profiles has RLS allowing a user to update their own row, which would let
--- anyone set their own consent date to whatever they liked. A column-level
--- revoke closes that without touching the row policies: the user keeps full
--- control of name, bio and avatar_url and cannot touch this one. The register
--- endpoint writes it with the service role, which is not subject to either.
+-- The intent was right: the value is only evidence if the subject cannot
+-- write it, and profiles has RLS allowing a user to update their own row.
+-- The mechanism was wrong. In PostgreSQL a column-level REVOKE cannot
+-- subtract from a table-level grant, and Supabase grants UPDATE on the whole
+-- table to `authenticated`. So this revoked a permission that was never
+-- separately held and left the column writable.
+--
+-- Confirmed after applying:
+--   select has_column_privilege('authenticated','public.profiles',
+--                               'consented_at','UPDATE');   -- true
+--
+-- 007 pins the column with a trigger instead. Do not delete these lines
+-- thinking they are the protection.
 revoke update (consented_at) on public.profiles from authenticated;
 revoke update (consented_at) on public.profiles from anon;
 
@@ -48,8 +58,11 @@ revoke update (consented_at) on public.profiles from anon;
 --   where table_schema = 'public' and table_name = 'profiles'
 --     and column_name = 'consented_at';
 --
--- Expect: NO row containing 'UPDATE' for consented_at.
---   select grantee, privilege_type
---   from information_schema.column_privileges
---   where table_schema = 'public' and table_name = 'profiles'
---     and column_name = 'consented_at';
+-- The second check originally here read information_schema.column_privileges
+-- and expected no UPDATE row. It has been removed because it cannot answer the
+-- question: that view reports a column as updatable whether the privilege came
+-- from the column or from the whole table, so it returns the same result
+-- whether the revoke worked or not. It would have read as confirmation.
+--
+-- The real check is in 007, and it is an attempted write rather than a
+-- catalogue query.
