@@ -15,6 +15,8 @@ import CertificatePage from '@/components/cert/CertificatePage';
 import ProfilePage     from '@/components/profile/ProfilePage';
 import { getUserCert } from '@/lib/db';
 import { lessonHref, quizHref, isPublicLesson } from '@/lib/courseRoutes';
+import { DOCS_PUBLISHED } from '@/lib/docs';
+import ConsentGate from '@/components/auth/ConsentGate';
 import LockedPanel from '@/components/course/LockedPanel';
 import { loadLessonBody, prefetchModuleBodies } from '@/data/lessonContent';
 import { LessonBody, ModPill } from '@/components/ui';
@@ -137,7 +139,7 @@ export default function CourseApp({ initialM = null, initialL = null, serverBody
   // ── Auth state comes from the shared context (lives in layout.js).
   // On client-side navigation, ready/user/progress are already populated
   // because the context never unmounts — no re-auth, no splash on nav.
-  const { user, userId, progress, ready, login, register, logout, updateProgress, updateProfile, updatePassword, issueCertificate } = useAuthCtx();
+  const { user, userId, progress, ready, login, register, logout, updateProgress, acceptTerms, updateProfile, updatePassword, issueCertificate } = useAuthCtx();
 
   // ── URL-based routing — each section has its own path ──────────────
   const router   = useRouter();
@@ -709,6 +711,26 @@ export default function CourseApp({ initialM = null, initialL = null, serverBody
 
   // The redirect above is an effect, so it fires after this render. Without
   // this the locked quiz would paint for a frame before it vanished.
+  /* One-time acceptance for accounts predating the documents.
+     Placed after the landing and auth branches so it never interrupts a
+     signed-out reader, and before every signed-in surface so it cannot be
+     stepped around by going straight to a URL. /privacy and /terms are their
+     own routes outside CourseApp, so the documents stay readable from here.
+
+     Gated on DOCS_PUBLISHED: this is a one-shot prompt, and anyone shown it
+     while the documents still read [TODO] would be recording consent to
+     nothing and would never be asked again. consented_at IS NULL finds the
+     same people whenever it runs. */
+  if (DOCS_PUBLISHED && user && user.consentedAt == null) {
+    return (
+      <ConsentGate
+        userName={user.nameIsDefault ? '' : user.name}
+        onAccept={acceptTerms}
+        onSignOut={() => { logout(); router.replace('/'); }}
+      />
+    );
+  }
+
   if (page === 'quiz' && !lessonUnlocked) return <SplashScreen />;
 
   if (page === 'quiz') return (

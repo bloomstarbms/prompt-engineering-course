@@ -201,6 +201,9 @@ export function useAuth() {
         bio:         profile?.bio        ?? '',
         avatarUrl:   profile?.avatar_url ?? '',
         nameIsDefault,   // true when falling back to email prefix — UI shows a "set your name" prompt
+        // null means never asked — an account predating the documents, or one
+        // migrated from localStorage. It does NOT mean refused. See 006.
+        consentedAt: profile?.consented_at ?? null,
       });
     } catch (e) {
       console.error('[useAuth] hydrateUser error', e);
@@ -404,6 +407,29 @@ export function useAuth() {
     });
   }, [userId]);
 
+  /* ── ACCEPT THE DOCUMENTS ─────────────────────────────────────────────
+     For accounts that predate the Terms and Privacy Policy. The client cannot
+     write consented_at — 006 revokes that column from authenticated on
+     purpose — so this goes through /api/consent, which verifies a bearer token
+     and writes with the service role. */
+  const acceptTerms = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) return { ok: false, error: 'Your session has expired. Please sign in again.' };
+      const res = await fetch('/api/consent', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      if (!res.ok) return { ok: false, error: json.error || 'Could not record your acceptance.' };
+      setUser(u => (u ? { ...u, consentedAt: json.consentedAt } : u));
+      return { ok: true };
+    } catch {
+      return { ok: false, error: 'Network error. Please check your connection and try again.' };
+    }
+  }, []);
+
   // ── UPDATE PROFILE ───────────────────────────────────────────────────
   // ── CERTIFICATE ISSUANCE ─────────────────────────────────────────────
   // Waits for a fresh token to arrive on its own before considering a forced
@@ -502,6 +528,7 @@ export function useAuth() {
     register:       handleRegister,
     logout:         handleLogout,
     updateProgress,
+    acceptTerms,
     issueCertificate: handleIssueCertificate,
     updateProfile:  handleUpdateProfile,
     updatePassword: handleUpdatePassword,
