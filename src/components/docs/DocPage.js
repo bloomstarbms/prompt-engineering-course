@@ -3,7 +3,7 @@ import { T } from '@/lib/theme';
 import { LessonBody } from '@/components/ui';
 
 /**
- * Shared shell for /privacy and /terms.
+ * Shared shell for the static document pages: /privacy, /terms, /about.
  *
  * Server component — no 'use client'. These pages are static text with no
  * interactivity, so there is nothing to hydrate beyond the links, and the
@@ -15,7 +15,7 @@ import { LessonBody } from '@/components/ui';
  * and readable by someone who is signed out, mid-signup, or has just had their
  * account deleted — none of which should depend on the auth-aware shell.
  */
-export default function LegalPage({ title, updated, markdown, otherHref, otherLabel }) {
+export default function DocPage({ title, updated, markdown, links = [] }) {
   return (
     <div style={{ minHeight: '100dvh', background: T.bg, display: 'flex', flexDirection: 'column' }}>
       <header
@@ -59,16 +59,20 @@ export default function LegalPage({ title, updated, markdown, otherHref, otherLa
         >
           {title}
         </h1>
-        <p style={{ fontFamily: T.mono, fontSize: 12, color: T.dim, margin: '0 0 28px', letterSpacing: '0.04em' }}>
-          Last updated: {updated}
-        </p>
+        {updated && (
+          <p style={{ fontFamily: T.mono, fontSize: 12, color: T.dim, margin: '0 0 28px', letterSpacing: '0.04em' }}>
+            Last updated: {updated}
+          </p>
+        )}
 
         <LessonBody text={markdown} color={T.accent} />
 
         <div style={{ marginTop: 40, paddingTop: 20, borderTop: `1px solid ${T.border}`, display: 'flex', gap: 18, flexWrap: 'wrap' }}>
-          <Link href={otherHref} style={{ color: T.accent, fontFamily: T.font, fontSize: 14, textDecoration: 'none' }}>
-            {otherLabel} →
-          </Link>
+          {links.map(({ href, label }) => (
+            <Link key={href} href={href} style={{ color: T.accent, fontFamily: T.font, fontSize: 14, textDecoration: 'none' }}>
+              {label} →
+            </Link>
+          ))}
           <Link href="/" style={{ color: T.muted, fontFamily: T.font, fontSize: 14, textDecoration: 'none' }}>
             Back to the course
           </Link>

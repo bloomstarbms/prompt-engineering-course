@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { T } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS, QUIZZES } from '@/data/courseData';
 import { AccentBtn } from '@/components/ui';
@@ -503,12 +504,32 @@ export default function Landing({ onStart, onLogin, onOpenModule }) {
         </div>
       </section>
 
-      {/* ── Bottom footer ── */}
+      {/* ── Bottom footer ──
+           The legal links live here because GAID requires the privacy notice
+           to be reachable from the homepage, and until now the site had no
+           footer links at all. Real <Link>s, not buttons: they must work for a
+           signed-out reader, and for a crawler following them. */}
       <footer style={{
         background: T.bg, borderTop: `1px solid ${T.border}`,
-        padding: '14px 24px',
+        padding: '16px 24px',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
+        gap: 16, flexWrap: 'wrap',
       }}>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          {[['/about', 'About'], ['/privacy', 'Privacy'], ['/terms', 'Terms']].map(([href, label]) => (
+            <Link
+              key={href}
+              href={href}
+              style={{
+                fontFamily: T.mono, fontSize: 11, color: T.dim,
+                letterSpacing: '0.04em', textDecoration: 'none',
+              }}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
+        <span style={{ color: T.faint, fontSize: 11 }}>·</span>
         <span style={{ fontFamily: T.mono, fontSize: 11, color: T.faint, letterSpacing: '0.04em' }}>
           Powered by{' '}
           <a

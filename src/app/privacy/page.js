@@ -1,4 +1,4 @@
-import LegalPage from '@/components/legal/LegalPage';
+import DocPage from '@/components/docs/DocPage';
 import { PRIVACY_MD } from '@/content/legal';
 import { isIndexable, absolute, SITE_NAME } from '@/lib/seo';
 
@@ -22,12 +22,11 @@ export const metadata = {
 
 export default function PrivacyPage() {
   return (
-    <LegalPage
+    <DocPage
       title="Privacy Policy"
       updated="[DATE]"
       markdown={PRIVACY_MD}
-      otherHref="/terms"
-      otherLabel="Terms of Use"
+      links={[{ href: '/terms', label: 'Terms of Use' }, { href: '/about', label: 'About' }]}
     />
   );
 }
