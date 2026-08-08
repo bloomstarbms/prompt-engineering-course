@@ -308,7 +308,9 @@ export default function CourseApp({ initialM = null, initialL = null }) {
 
      The bug was the duplication, not the branch. Do not re-inline this. */
   const canOpen = useCallback(
-    (mi, li) => (user ? isLessonUnlocked(mi, li, completed, quizScores) : isPublicLesson(mi, li)),
+    (mi, li, completedOverride) => (user
+      ? isLessonUnlocked(mi, li, completedOverride ?? completed, quizScores)
+      : isPublicLesson(mi, li)),
     [user, completed, quizScores],
   );
 
@@ -528,17 +530,36 @@ export default function CourseApp({ initialM = null, initialL = null }) {
 
   function goNext() {
     /* auto-complete no-quiz lessons when user advances */
-    if (!quiz && !completed[lKey]) {
+    const autoCompleting = !quiz && !completed[lKey];
+    if (autoCompleting) {
       updateProgress(prev => ({
         ...prev,
         completed: { ...prev.completed, [lKey]: true },
       }));
     }
-    if (activeL < mod.lessons.length - 1) {
-      navigate(activeM, activeL + 1);
-    } else if (activeM < MODULES.length - 1) {
-      navigate(activeM + 1, 0);
-    }
+
+    let nm, nl;
+    if (activeL < mod.lessons.length - 1)   { nm = activeM;     nl = activeL + 1; }
+    else if (activeM < MODULES.length - 1)  { nm = activeM + 1; nl = 0; }
+    else return; // last lesson of the last module — nowhere to go
+
+    /* Ask, rather than rely on the callers. Until now goNext had no unlock
+       check of its own and was safe only because every control that reaches it
+       renders under a condition that happens to imply the next lesson is
+       unlocked. That is the same shape as the four bugs this codebase has
+       already produced: a rule that holds because of what is true elsewhere
+       instead of because someone checked.
+
+       The override matters. updateProgress is a setState, so `completed` in
+       this closure still lacks the lesson we are completing on this very call.
+       Checking against it would read the next lesson as locked and silently
+       refuse to advance — turning a safety guard into the exact dead control
+       it exists to prevent. Currently unreachable (all 26 lessons have
+       quizzes), which is precisely why it would have gone unnoticed. */
+    const effectiveCompleted = autoCompleting ? { ...completed, [lKey]: true } : completed;
+    if (!canOpen(nm, nl, effectiveCompleted)) return;
+
+    navigate(nm, nl);
   }
 
   function goPrev() {
