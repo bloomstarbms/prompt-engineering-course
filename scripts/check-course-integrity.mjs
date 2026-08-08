@@ -26,7 +26,7 @@
  * ────────────────────────────────────────────────────────────────────────── */
 
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -35,12 +35,40 @@ const root = join(here, '..');
 const problems = [];
 const fail = (msg) => problems.push(msg);
 
-// courseData.js is self-contained ESM data with no imports of its own, so it can
-// be evaluated directly from a data: URL. Deliberately no bundler dependency:
-// a guard that the build depends on should not itself add supply-chain surface.
-const dataSrc = readFileSync(join(root, 'src/data/courseData.js'), 'utf8');
+// Node warns MODULE_TYPELESS_PACKAGE_JSON because package.json has no
+// "type": "module", so a .js file containing module syntax is re-parsed as ESM.
+// Expected and harmless here; adding "type": "module" would break
+// next.config.js, which uses module.exports.
+//
+// Filtered by name rather than suppressed wholesale — a guard that swallows all
+// warnings hides the next genuine one, which is the same "trains people to
+// ignore output" problem one level up.
+const SILENCED = 'MODULE_TYPELESS_PACKAGE_JSON';
+const _emitWarning = process.emitWarning;
+process.emitWarning = (warning, ...rest) => {
+  // emitWarning has three shapes: (warning), (warning, type, code) and
+  // (warning, { type, code }). The identifier is the CODE in each, so check all
+  // three rather than one — matching on `type` silently filters nothing.
+  const code =
+    warning?.code ??
+    (typeof rest[1] === 'string' ? rest[1] : undefined) ??
+    rest[0]?.code;
+  if (code === SILENCED) return;
+  return _emitWarning.call(process, warning, ...rest);
+};
+
+// Loaded through a file:// URL, not a data: URL. A data: URL cannot resolve
+// relative specifiers, so the old loader worked only while courseData.js
+// happened to have no imports of its own — and the per-module content split
+// gives it imports. That would have broken the guard at the exact moment it
+// mattered most: a loader failure during the riskiest change to the data it
+// protects, which reads as "guard is broken" rather than "data is wrong".
+//
+// Depending on "this file happens to have no imports" is the same shape of
+// implicit invariant as "the unlock rule holds because the sidebar is the only
+// way in". Removed rather than documented.
 const { MODULES, QUIZZES, TOTAL_LESSONS } = await import(
-  'data:text/javascript;base64,' + Buffer.from(dataSrc, 'utf8').toString('base64')
+  pathToFileURL(join(root, 'src/data/courseData.js')).href
 );
 
 const manifest = JSON.parse(readFileSync(join(here, 'course-manifest.json'), 'utf8'));
