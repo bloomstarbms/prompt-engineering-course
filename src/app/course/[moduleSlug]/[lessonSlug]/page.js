@@ -1,6 +1,10 @@
 import { notFound } from 'next/navigation';
 import CourseApp from '@/components/CourseApp';
-import { resolvePosition, allLessonParams } from '@/lib/courseRoutes';
+import JsonLd from '@/components/seo/JsonLd';
+import { lessonBreadcrumbJsonLd, lessonJsonLd } from '@/lib/jsonld';
+import { resolvePosition, allLessonParams, lessonHref } from '@/lib/courseRoutes';
+import { MODULES } from '@/data/courseData';
+import { SITE_NAME, absolute, clampDescription, isIndexable } from '@/lib/seo';
 
 /**
  * NOINDEX — mostly steady state, not a holding measure. Read to the end
@@ -35,9 +39,35 @@ import { resolvePosition, allLessonParams } from '@/lib/courseRoutes';
  * The sitemap must describe the same set — anything indexable is in it,
  * anything not is in neither.
  */
-export const metadata = {
-  robots: { index: false, follow: true },
-};
+export async function generateMetadata({ params }) {
+  const pos = resolvePosition(params.moduleSlug, params.lessonSlug);
+  // Unknown slug: the page component calls notFound(), so this only has to
+  // avoid throwing first. Metadata runs before the component.
+  if (!pos) return { robots: { index: false, follow: false } };
+
+  const mod = MODULES[pos.mi];
+  const lesson = mod.lessons[pos.li];
+  const href = lessonHref(pos.mi, pos.li);
+  const description = clampDescription(lesson.intro);
+
+  return {
+    title: lesson.title,
+    description,
+    alternates: { canonical: href },
+    // Read from the indexable set, never decided here. That is what keeps this
+    // tag and the sitemap describing the same URLs. Resolves to false for all
+    // 26 today; flipping PUBLIC_LESSONS_INDEXABLE changes this and the sitemap
+    // together, in one edit, once the bodies are server-rendered.
+    robots: { index: isIndexable(href), follow: true },
+    openGraph: {
+      title: `${lesson.title} · ${SITE_NAME}`,
+      description,
+      url: absolute(href),
+      type: 'article',
+      siteName: SITE_NAME,
+    },
+  };
+}
 
 
 /**
@@ -58,5 +88,15 @@ export function generateStaticParams() {
 export default function LessonPage({ params }) {
   const pos = resolvePosition(params.moduleSlug, params.lessonSlug);
   if (!pos) notFound();
-  return <CourseApp initialM={pos.mi} initialL={pos.li} />;
+  return (
+    <>
+      {/* Server-rendered, so this reaches the HTML even though the lesson body
+          does not yet. Present on gated lessons too: it describes the lesson,
+          it does not disclose it, and it is ready for the day the three public
+          URLs become indexable. */}
+      <JsonLd data={lessonBreadcrumbJsonLd(pos.mi, pos.li)} />
+      <JsonLd data={lessonJsonLd(pos.mi, pos.li)} />
+      <CourseApp initialM={pos.mi} initialL={pos.li} />
+    </>
+  );
 }
