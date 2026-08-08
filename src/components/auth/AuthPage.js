@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { T } from '@/lib/theme';
+import { DOCS_PUBLISHED } from '@/lib/docs';
 import { MODULES, TOTAL_LESSONS } from '@/data/courseData';
 import { supabase } from '@/lib/supabase';
 
@@ -112,7 +113,9 @@ export default function AuthPage({ onAuth }) {
     // attribute is the one users actually meet; this is the one that still
     // holds if the markup changes or the browser is unusual.
     if (mode === 'register' && !isAdult) {
-      setError('Please confirm you are 18 or older and accept the Terms and Privacy Policy.');
+      setError(DOCS_PUBLISHED
+        ? 'Please confirm you are 18 or older and accept the Terms and Privacy Policy.'
+        : 'Please confirm you are 18 or older.');
       return;
     }
     setLoading(true);
@@ -410,17 +413,28 @@ export default function AuthPage({ onAuth }) {
                         style={{ marginTop: 3, width: 15, height: 15, accentColor: T.accent, cursor: 'pointer', flexShrink: 0 }}
                       />
                       <span style={{ fontFamily: T.font, fontSize: 12.5, color: T.muted, lineHeight: 1.55 }}>
-                        I am 18 or older and I accept the{' '}
-                        {/* New tab on purpose: reading the terms should not
-                            discard a half-filled signup form. */}
-                        <a href="/terms" target="_blank" rel="noopener noreferrer"
-                          style={{ color: T.accent, textDecoration: 'underline', textUnderlineOffset: 2 }}>
-                          Terms of Use
-                        </a>{' '}and{' '}
-                        <a href="/privacy" target="_blank" rel="noopener noreferrer"
-                          style={{ color: T.accent, textDecoration: 'underline', textUnderlineOffset: 2 }}>
-                          Privacy Policy
-                        </a>.
+                        {/* The documents are only named once they are published.
+                            Asking someone to accept a Privacy Policy that still
+                            reads [TODO] is asking them to agree to a placeholder;
+                            the age confirmation stands on its own and is required
+                            either way. See lib/docs.js. */}
+                        {DOCS_PUBLISHED ? (
+                          <>
+                            I am 18 or older and I accept the{' '}
+                            {/* New tab on purpose: reading the terms should not
+                                discard a half-filled signup form. */}
+                            <a href="/terms" target="_blank" rel="noopener noreferrer"
+                              style={{ color: T.accent, textDecoration: 'underline', textUnderlineOffset: 2 }}>
+                              Terms of Use
+                            </a>{' '}and{' '}
+                            <a href="/privacy" target="_blank" rel="noopener noreferrer"
+                              style={{ color: T.accent, textDecoration: 'underline', textUnderlineOffset: 2 }}>
+                              Privacy Policy
+                            </a>.
+                          </>
+                        ) : (
+                          <>I confirm that I am 18 or older.</>
+                        )}
                       </span>
                     </label>
                   )}

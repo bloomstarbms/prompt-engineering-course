@@ -1,4 +1,5 @@
 import { publicLessons, lessonHref } from '@/lib/courseRoutes';
+import { DOCS_PUBLISHED, DOC_PAGES } from '@/lib/docs';
 
 /**
  * Canonical host and site identity.
@@ -72,10 +73,11 @@ export const PUBLIC_LESSONS_INDEXABLE = true;
 
 /** Every URL that may be indexed, right now. Truthful at every commit. */
 export function indexableUrls() {
-  // The legal pages are public content and are not conditional on anything:
-  // GAID requires the privacy notice to be reachable, and a notice nobody can
-  // find is not a notice. They ship indexable from the first commit.
-  const urls = ['/', '/about', '/privacy', '/terms'];
+  // The document pages are public content — GAID requires the privacy notice
+  // to be reachable — but only once they say something. While they still hold
+  // value placeholders they are neither indexed nor listed. See lib/docs.js.
+  const urls = ['/'];
+  if (DOCS_PUBLISHED) urls.push(...DOC_PAGES.map(d => d.href));
   if (PUBLIC_LESSONS_INDEXABLE) {
     for (const p of publicLessons()) urls.push(lessonHref(p.mi, p.li));
   }

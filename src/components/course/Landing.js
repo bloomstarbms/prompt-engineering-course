@@ -4,6 +4,7 @@ import { T } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS, QUIZZES } from '@/data/courseData';
 import { AccentBtn } from '@/components/ui';
 import { moduleHref } from '@/lib/courseRoutes';
+import { DOCS_PUBLISHED, DOC_PAGES } from '@/lib/docs';
 
 /* Total quiz questions across the course — computed so it never drifts */
 const TOTAL_QUIZ_Q = Object.values(QUIZZES).reduce((a, q) => a + q.questions.length, 0);
@@ -515,21 +516,25 @@ export default function Landing({ onStart, onLogin, onOpenModule }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         gap: 16, flexWrap: 'wrap',
       }}>
-        <nav style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          {[['/about', 'About'], ['/privacy', 'Privacy'], ['/terms', 'Terms']].map(([href, label]) => (
-            <Link
-              key={href}
-              href={href}
-              style={{
-                fontFamily: T.mono, fontSize: 11, color: T.dim,
-                letterSpacing: '0.04em', textDecoration: 'none',
-              }}
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
-        <span style={{ color: T.faint, fontSize: 11 }}>·</span>
+        {DOCS_PUBLISHED && (
+          <>
+            <nav style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+              {DOC_PAGES.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  style={{
+                    fontFamily: T.mono, fontSize: 11, color: T.dim,
+                    letterSpacing: '0.04em', textDecoration: 'none',
+                  }}
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
+            <span style={{ color: T.faint, fontSize: 11 }}>·</span>
+          </>
+        )}
         <span style={{ fontFamily: T.mono, fontSize: 11, color: T.faint, letterSpacing: '0.04em' }}>
           Powered by{' '}
           <a
