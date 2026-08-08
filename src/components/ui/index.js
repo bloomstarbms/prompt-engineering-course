@@ -247,7 +247,25 @@ export function LessonBody({ text, color }) {
 }
 
 function inlineMarkup(text, color) {
-  return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/).map((p, i) => {
+  // Links added for the legal pages. Purely additive: no lesson body contains a
+  // markdown link or any [text](...) sequence, checked before this went in, so
+  // the 26 lessons render byte-identically.
+  return text.split(/(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/).map((p, i) => {
+    const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(p);
+    if (link) {
+      const [, label, href] = link;
+      const external = /^https?:/i.test(href);
+      return (
+        <a
+          key={i}
+          href={href}
+          {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          style={{ color, textDecoration: 'underline', textUnderlineOffset: 3 }}
+        >
+          {label}
+        </a>
+      );
+    }
     if (p.startsWith('**') && p.endsWith('**')) {
       return <strong key={i} style={{ color: T.text, fontWeight: 600 }}>{p.slice(2, -2)}</strong>;
     }

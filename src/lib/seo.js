@@ -72,7 +72,10 @@ export const PUBLIC_LESSONS_INDEXABLE = true;
 
 /** Every URL that may be indexed, right now. Truthful at every commit. */
 export function indexableUrls() {
-  const urls = ['/'];
+  // The legal pages are public content and are not conditional on anything:
+  // GAID requires the privacy notice to be reachable, and a notice nobody can
+  // find is not a notice. They ship indexable from the first commit.
+  const urls = ['/', '/privacy', '/terms'];
   if (PUBLIC_LESSONS_INDEXABLE) {
     for (const p of publicLessons()) urls.push(lessonHref(p.mi, p.li));
   }
