@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation';
 import CourseApp from '@/components/CourseApp';
 import JsonLd from '@/components/seo/JsonLd';
 import { lessonBreadcrumbJsonLd, lessonJsonLd } from '@/lib/jsonld';
-import { resolvePosition, allLessonParams, lessonHref } from '@/lib/courseRoutes';
+import { resolvePosition, allLessonParams, lessonHref, isPublicLesson } from '@/lib/courseRoutes';
+import { loadLessonBody } from '@/data/lessonContent';
 import { MODULES } from '@/data/courseData';
 import { SITE_NAME, absolute, clampDescription, isIndexable } from '@/lib/seo';
 
@@ -85,9 +86,25 @@ export function generateStaticParams() {
   return allLessonParams();
 }
 
-export default function LessonPage({ params }) {
+export default async function LessonPage({ params }) {
   const pos = resolvePosition(params.moduleSlug, params.lessonSlug);
   if (!pos) notFound();
+
+  /* Public lessons only.
+     Awaiting the loader HERE, in a server component, is what puts the prose in
+     the HTML — 3c built it with static specifiers precisely so this would work.
+     The same await inside CourseApp would arrive after hydration and never
+     reach the source.
+
+     Gated lessons pass null and keep loading on the client. Their bodies must
+     stay out of the server payload, so the condition is on the lesson, never on
+     who is asking: a signed-in reader gets exactly the same HTML as a crawler,
+     and there is no code path where a gated body is rendered server-side for
+     anyone. */
+  const serverBody = isPublicLesson(pos.mi, pos.li)
+    ? await loadLessonBody(pos.mi, pos.li)
+    : null;
+
   return (
     <>
       {/* Server-rendered, so this reaches the HTML even though the lesson body
@@ -96,7 +113,7 @@ export default function LessonPage({ params }) {
           URLs become indexable. */}
       <JsonLd data={lessonBreadcrumbJsonLd(pos.mi, pos.li)} />
       <JsonLd data={lessonJsonLd(pos.mi, pos.li)} />
-      <CourseApp initialM={pos.mi} initialL={pos.li} />
+      <CourseApp initialM={pos.mi} initialL={pos.li} serverBody={serverBody} />
     </>
   );
 }

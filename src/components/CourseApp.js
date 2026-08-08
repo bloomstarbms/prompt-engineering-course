@@ -130,7 +130,7 @@ function SplashScreen() {
   );
 }
 
-export default function CourseApp({ initialM = null, initialL = null }) {
+export default function CourseApp({ initialM = null, initialL = null, serverBody = null }) {
   // initialM/initialL arrive from /course/[moduleSlug]/[lessonSlug], already
   // resolved from slugs by the server component. They are plain indices — the
   // same indices that key progress — so nothing downstream changes shape.
@@ -452,7 +452,17 @@ export default function CourseApp({ initialM = null, initialL = null }) {
      their body server-rendered to satisfy "full lesson text with JavaScript
      disabled". Task 4 moves the public path to a server component; this
      effect stays for the gated path. */
-  const [lessonBody, setLessonBody] = useState('');
+  /* True when `serverBody` describes the lesson currently on screen.
+     initialM/initialL identify the ROUTE's lesson; activeM/activeL identify
+     what the reader is looking at. navigate() moves the second before the
+     first — it sets position, then pushes the URL — so between those two there
+     is a render where the server body belongs to the previous lesson. Using it
+     then would show one lesson's prose under another's heading, at that
+     lesson's URL. Same failure the quiz had. */
+  const serverBodyApplies = serverBody != null && activeM === initialM && activeL === initialL;
+
+  // Seeded, not empty: this is what puts the prose in the server-rendered HTML.
+  const [lessonBody, setLessonBody] = useState(serverBodyApplies ? serverBody : '');
   const [bodyError,  setBodyError]  = useState(false);
   const [bodyTick,   setBodyTick]   = useState(0);   // bumped by the retry button
   const bodyReqRef = useRef('');
@@ -460,6 +470,17 @@ export default function CourseApp({ initialM = null, initialL = null }) {
   useEffect(() => {
     const want = `${activeM}-${activeL}`;
     bodyReqRef.current = want;
+
+    // Already have it from the server — don't clear and refetch. Without this
+    // the effect would blank the prose on mount and reload it over the network,
+    // which both flickers and throws away the point of rendering it on the
+    // server in the first place.
+    if (serverBodyApplies) {
+      setLessonBody(serverBody);
+      setBodyError(false);
+      return;
+    }
+
     let cancelled = false;
     setLessonBody('');
     setBodyError(false);
@@ -486,7 +507,7 @@ export default function CourseApp({ initialM = null, initialL = null }) {
       });
 
     return () => { cancelled = true; };
-  }, [activeM, activeL, bodyTick]);
+  }, [activeM, activeL, bodyTick, serverBodyApplies, serverBody]);
 
   /* Warm the next lesson's chunk on arrival. Without this, every next/prev
      click waits on a network fetch that used to be instant, which shows as a
@@ -614,7 +635,24 @@ export default function CourseApp({ initialM = null, initialL = null }) {
   /* ── Splash ─────────────────────────────────────────────────────────
      Show until auth resolves AND the 1.3s minimum has elapsed.
      On client-side navigation splashDone starts as true so this is skipped. */
-  if ((!ready && !forceReady) || !splashDone) return <SplashScreen />;
+  /* The splash is skipped when this route can render meaningfully without
+     knowing who the reader is — a public lesson whose body arrived from the
+     server.
+
+     This is the line that actually decided the site had no crawlable content.
+     `splashDone` initialises to `ready`, and `ready` is false on the server, so
+     every route server-rendered <SplashScreen /> and nothing else: all three
+     page types shipped byte-identical HTML whose only visible text was this
+     component's keyframes. Passing a body in without this change would have
+     produced a green build, a passing route, and still-empty HTML.
+
+     Server and client agree on the condition, so hydration matches. The cost
+     is that a signed-in reader cold-loading a public lesson briefly sees the
+     signed-out rendering before auth resolves — unavoidable while the session
+     lives in localStorage, which the server cannot read. Client-side
+     navigation is unaffected. */
+  const canRenderWithoutAuth = serverBody != null;
+  if (!canRenderWithoutAuth && ((!ready && !forceReady) || !splashDone)) return <SplashScreen />;
 
   /* ── URL-driven routing ─────────────────────────────────────────────
      Each section has its own path.
