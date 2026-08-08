@@ -391,12 +391,40 @@ export default function CourseApp({ initialM = null, initialL = null }) {
      disabled". Task 4 moves the public path to a server component; this
      effect stays for the gated path. */
   const [lessonBody, setLessonBody] = useState('');
+  const [bodyError,  setBodyError]  = useState(false);
+  const [bodyTick,   setBodyTick]   = useState(0);   // bumped by the retry button
+  const bodyReqRef = useRef('');
+
   useEffect(() => {
+    const want = `${activeM}-${activeL}`;
+    bodyReqRef.current = want;
     let cancelled = false;
     setLessonBody('');
-    loadLessonBody(activeM, activeL).then(b => { if (!cancelled) setLessonBody(b); });
+    setBodyError(false);
+
+    loadLessonBody(activeM, activeL)
+      .then(b => {
+        // Two guards, deliberately. `cancelled` is set by this effect's cleanup,
+        // which React runs before the next effect — that alone discards a stale
+        // response. The ref comparison restates it in terms a reader can check
+        // without reasoning about cleanup ordering: if the reader has moved on,
+        // this body belongs to a lesson they are no longer looking at, and
+        // rendering it would show the wrong prose under the right heading and
+        // the right URL.
+        if (cancelled || bodyReqRef.current !== want) return;
+        setLessonBody(b);
+      })
+      .catch(() => {
+        // A dynamic import rejects when the chunk cannot be fetched. The common
+        // cause is a deploy: a client mid-session asks for hashed filenames that
+        // no longer exist. Without this branch the lesson renders with no body
+        // and no explanation — the same silent partial render fixed on /cert.
+        if (cancelled || bodyReqRef.current !== want) return;
+        setBodyError(true);
+      });
+
     return () => { cancelled = true; };
-  }, [activeM, activeL]);
+  }, [activeM, activeL, bodyTick]);
 
   /* Warm the next lesson's chunk on arrival. Without this, every next/prev
      click waits on a network fetch that used to be instant, which shows as a
@@ -757,6 +785,8 @@ export default function CourseApp({ initialM = null, initialL = null }) {
             mod={mod}
             lKey={lKey}
             lessonBody={lessonBody}
+            bodyError={bodyError}
+            onRetryBody={() => setBodyTick(t => t + 1)}
             completed={completed}
             quiz={quiz}
             quizScore={quizScore}
@@ -782,7 +812,7 @@ export default function CourseApp({ initialM = null, initialL = null }) {
 }
 
 /* ── Combined Lesson View: video + notes in single scroll ──────────────── */
-function LessonView({ lesson, mod, lKey, lessonBody, completed, quiz, quizScore, quizPassed, quizPct, activeL, onQuiz, onMarkComplete, goNext, isLastLesson, canSeeCert, onCert, signedOut = false, onSignUp, isLastPublicLesson = false }) {
+function LessonView({ lesson, mod, lKey, lessonBody, bodyError, onRetryBody, completed, quiz, quizScore, quizPassed, quizPct, activeL, onQuiz, onMarkComplete, goNext, isLastLesson, canSeeCert, onCert, signedOut = false, onSignUp, isLastPublicLesson = false }) {
   const isComplete = completed[lKey];
   const [mi, li] = lKey.split('-').map(Number);
   const isCourseStart = mi === 0 && li === 0;
@@ -923,7 +953,41 @@ function LessonView({ lesson, mod, lKey, lessonBody, completed, quiz, quizScore,
         </div>
 
         {/* ── Lesson body (notes) ── */}
-        <LessonBody text={lessonBody || ''} color={mod.color} />
+        {bodyError ? (
+          <div style={{
+            background: 'rgba(248,113,113,0.06)',
+            border: '1.5px solid rgba(248,113,113,0.30)',
+            borderRadius: 12, padding: 'clamp(18px,3vw,24px)',
+          }}>
+            <div style={{
+              fontFamily: T.display, fontWeight: 700, fontSize: 15,
+              color: T.text, marginBottom: 6,
+            }}>
+              This lesson&apos;s text didn&apos;t load
+            </div>
+            <p style={{
+              fontFamily: T.font, fontSize: 13.5, color: T.muted,
+              lineHeight: 1.65, margin: '0 0 16px',
+            }}>
+              This usually means the site updated while your tab was open, so
+              reloading fixes it. Your progress is safe either way.
+            </p>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button onClick={() => window.location.reload()} style={{
+                background: T.accent, border: 'none', color: '#fff',
+                padding: '10px 20px', borderRadius: 9, cursor: 'pointer',
+                fontFamily: T.font, fontWeight: 700, fontSize: 13,
+              }}>Reload the page</button>
+              <button onClick={onRetryBody} style={{
+                background: 'none', border: `1px solid ${T.border2}`, color: T.muted,
+                padding: '10px 18px', borderRadius: 9, cursor: 'pointer',
+                fontFamily: T.font, fontWeight: 600, fontSize: 13,
+              }}>Try again</button>
+            </div>
+          </div>
+        ) : (
+          <LessonBody text={lessonBody || ''} color={mod.color} />
+        )}
 
         {/* ── Quiz card OR completion / mark-complete actions ── */}
         <div style={{ marginTop: 40, paddingTop: 24, borderTop: `1px solid ${T.border}` }}>
