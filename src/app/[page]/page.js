@@ -1,6 +1,6 @@
 /**
  * Dynamic route that handles all SPA "pages":
- *   /course  /profile  /cert  /auth  /quiz
+ *   /course  /profile  /cert  /auth
  *
  * Each renders the same CourseApp shell, which reads usePathname() to
  * decide what to display. Specific routes (api/*, verify/*, admin,
@@ -32,9 +32,20 @@ import CourseApp from '@/components/CourseApp';
  *
  * NOT A HOLDING MEASURE — this is the steady state for these routes.
  *
- * /course, /profile, /cert, /quiz and /auth are application surfaces, not
- * content. They have nothing to index now and will have nothing to index
- * later, so this tag stays. Do not remove it in Task 4.
+ * /course, /profile, /cert and /auth are application surfaces, not content.
+ * They have nothing to index now and will have nothing to index later, so this
+ * tag stays. Do not remove it in Task 4.
+ *
+ * THE FULL INDEXABLE SET, so Task 4 does not have to rediscover it:
+ *
+ *   indexable   the landing page, plus the 3 public Module 01 lessons
+ *   noindex     the 4 app surfaces above
+ *               the 23 gated lesson URLs   (no content without an account)
+ *               all 26 lesson quiz URLs    (interactive, account-only)
+ *
+ * The sitemap lists exactly the indexable set and nothing else. Quiz routes
+ * are noindex for the same reason /profile is — they are a form, not a
+ * document — and they carry their own tag in the quiz route file.
  */
 export const metadata = {
   robots: { index: false, follow: true },
@@ -50,7 +61,10 @@ export function generateStaticParams() {
     { page: 'profile' },
     { page: 'cert'    },
     { page: 'auth'    },
-    { page: 'quiz'    },
+    // 'quiz' is gone: it now lives at /course/<m>/<l>/quiz so it can read its
+    // position from the URL rather than inferring one from lastLesson. A stale
+    // bookmark of /quiz falls through to the landing view, and the
+    // auto-redirect in CourseApp sends a signed-in reader on to /course.
   ];
 }
 

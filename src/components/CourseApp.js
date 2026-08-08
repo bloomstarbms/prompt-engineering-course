@@ -14,7 +14,7 @@ import QuizView        from '@/components/quiz/QuizView';
 import CertificatePage from '@/components/cert/CertificatePage';
 import ProfilePage     from '@/components/profile/ProfilePage';
 import { getUserCert } from '@/lib/db';
-import { lessonHref, isPublicLesson } from '@/lib/courseRoutes';
+import { lessonHref, quizHref, isPublicLesson } from '@/lib/courseRoutes';
 import LockedPanel from '@/components/course/LockedPanel';
 import { loadLessonBody, prefetchModuleBodies } from '@/data/lessonContent';
 import { LessonBody, ModPill } from '@/components/ui';
@@ -144,9 +144,15 @@ export default function CourseApp({ initialM = null, initialL = null }) {
   const pathname = usePathname();
 
   const page = useMemo(() => {
-    const map = { '/course': 'course', '/profile': 'profile', '/cert': 'cert', '/auth': 'auth', '/quiz': 'quiz' };
-    // /course/<moduleSlug>/<lessonSlug> is the course view at a specific lesson.
-    if (pathname?.startsWith('/course/')) return 'course';
+    // '/quiz' is deliberately absent: the quiz now lives under its lesson, at
+    // /course/<m>/<l>/quiz, so that it reads its position from the URL instead
+    // of inferring one. A stale bookmark of the old path falls through to
+    // 'landing', and the auto-redirect effect below sends a signed-in reader
+    // on to /course rather than leaving them somewhere broken.
+    const map = { '/course': 'course', '/profile': 'profile', '/cert': 'cert', '/auth': 'auth' };
+    if (pathname?.startsWith('/course/')) {
+      return pathname.endsWith('/quiz') ? 'quiz' : 'course';
+    }
     return map[pathname] || 'landing';
   }, [pathname]);
 
@@ -221,7 +227,10 @@ export default function CourseApp({ initialM = null, initialL = null }) {
 
      A signed-in user deep-linking to a lesson is left where they are rather
      than being pushed to /course — the URL is an explicit request. */
-  const onPublicLesson = atLessonUrl && isPublicLesson(activeM, activeL);
+  // Reading Module 01 is free; its quizzes are not. The exemption is scoped to
+  // the lesson view, so /course/<m01>/<lesson>/quiz still bounces to /auth —
+  // the gate exists to capture an email, and the quiz is what it trades for.
+  const onPublicLesson = atLessonUrl && page === 'course' && isPublicLesson(activeM, activeL);
 
   useEffect(() => {
     if (!ready) return;
@@ -229,7 +238,7 @@ export default function CourseApp({ initialM = null, initialL = null }) {
       router.replace('/course');
     } else if (!user && !['landing', 'auth'].includes(page) && !onPublicLesson) {
       // Remember where they were headed so login can return them here (3a).
-      if (typeof window !== 'undefined' && page === 'course' && atLessonUrl) {
+      if (typeof window !== 'undefined' && atLessonUrl) {
         try { sessionStorage.setItem('pe_return_to', pathname); } catch { /* private mode */ }
       }
       router.replace('/auth');
@@ -299,6 +308,21 @@ export default function CourseApp({ initialM = null, initialL = null }) {
   const lessonUnlocked = user
     ? isLessonUnlocked(activeM, activeL, completed, quizScores)
     : isPublicLesson(activeM, activeL);
+
+  /* Giving the quiz its own URL made it directly addressable, and the quiz
+     branch returns before the lesson view's locked state is ever reached — so
+     without this a reader could type the quiz URL of lesson 26 and take it.
+     The old /quiz could not be abused this way only because it had no address
+     of its own, which is the same accident that made the unlock rule hold
+     before lessons had URLs.
+
+     Redirected to the lesson rather than shown a locked quiz: the lesson's own
+     address already renders a locked state that explains what is missing, so
+     this sends the reader to the explanation instead of duplicating it. */
+  useEffect(() => {
+    if (page !== 'quiz' || !ready || !user) return;
+    if (!lessonUnlocked) router.replace(lessonHref(activeM, activeL));
+  }, [page, ready, user, lessonUnlocked, activeM, activeL]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Furthest lesson they can actually open, for the "continue" action.
   const furthestOpen = useMemo(() => {
@@ -529,7 +553,10 @@ export default function CourseApp({ initialM = null, initialL = null }) {
     if (isNewCompletion && activeM === MODULES.length - 1 && activeL === mod.lessons.length - 1) {
       router.push('/cert');
     } else {
-      setPage('course');
+      // Back to the lesson's own URL. setPage('course') sent them to /course,
+      // which then had to re-derive which lesson that was from lastLesson —
+      // the same inference this route exists to remove.
+      router.push(lessonHref(activeM, activeL));
     }
   }
 
@@ -582,12 +609,16 @@ export default function CourseApp({ initialM = null, initialL = null }) {
     }} />
   );
 
+  // The redirect above is an effect, so it fires after this render. Without
+  // this the locked quiz would paint for a frame before it vanished.
+  if (page === 'quiz' && !lessonUnlocked) return <SplashScreen />;
+
   if (page === 'quiz') return (
     <QuizView
       mod={mod} lKey={lKey}
       prevScore={quizScores[lKey]}
       onDone={onQuizDone}
-      onBack={() => router.push('/course')}
+      onBack={() => router.push(lessonHref(activeM, activeL))}
     />
   );
 
@@ -760,7 +791,7 @@ export default function CourseApp({ initialM = null, initialL = null }) {
               >{isMobile ? 'Sign up →' : 'Create free account →'}</button>
             ) : !canAdvance ? (
               <button
-                onClick={() => setPage('quiz')}
+                onClick={() => router.push(quizHref(activeM, activeL))}
                 style={{
                   background: mod.color, border: 'none', color: '#fff',
                   cursor: 'pointer', padding: '7px 14px', borderRadius: 6,
@@ -835,7 +866,7 @@ export default function CourseApp({ initialM = null, initialL = null }) {
             quizPassed={quizPassed}
             quizPct={quizPct}
             activeL={activeL}
-            onQuiz={() => setPage('quiz')}
+            onQuiz={() => router.push(quizHref(activeM, activeL))}
             onMarkComplete={markComplete}
             goNext={goNext}
             isLastLesson={isLastLesson}

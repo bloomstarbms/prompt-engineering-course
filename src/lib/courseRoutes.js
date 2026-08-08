@@ -43,6 +43,18 @@ export function lessonHref(mi, li) {
   return `/course/${m.slug}/${l.slug}`;
 }
 
+/** Position -> that lesson's quiz URL.
+ *
+ *  The quiz lives under its lesson rather than at a top-level /quiz because
+ *  it WRITES to quiz_scores[`${m}-${l}`] and completed[`${m}-${l}`]. A route
+ *  that infers its own position can write to the wrong key; a route that
+ *  reads it from the URL cannot. Presentation only, same rule as lessonHref.
+ */
+export function quizHref(mi, li) {
+  const href = lessonHref(mi, li);
+  return href === '/course' ? '/course' : `${href}/quiz`;
+}
+
 /** Position -> the module's first lesson. Used by landing-page module cards. */
 export function moduleHref(mi) {
   return lessonHref(mi, 0);
