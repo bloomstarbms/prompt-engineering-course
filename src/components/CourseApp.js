@@ -16,6 +16,7 @@ import ProfilePage     from '@/components/profile/ProfilePage';
 import { getUserCert } from '@/lib/db';
 import { lessonHref, isPublicLesson } from '@/lib/courseRoutes';
 import LockedPanel from '@/components/course/LockedPanel';
+import { loadLessonBody, prefetchModuleBodies } from '@/data/lessonContent';
 import { LessonBody, ModPill } from '@/components/ui';
 
 /* ─── Pendulum Splash Screen ──────────────────────────────────────────── */
@@ -379,6 +380,36 @@ export default function CourseApp({ initialM = null, initialL = null }) {
     updateProgress(prev => ({ ...prev, lastLesson: { m: activeM, l: activeL } }));
   }, [activeM, activeL]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /* ── Lesson prose, loaded on demand ───────────────────────────────────
+     Bodies were 74% of courseData.js and are now per-module chunks. This
+     fetches the one body being read.
+
+     Task 4 note: this is a CLIENT effect, so the body arrives after hydration
+     and is not in the HTML source. That is correct for gated lessons, whose
+     content must stay out of the HTML — but the three PUBLIC lessons need
+     their body server-rendered to satisfy "full lesson text with JavaScript
+     disabled". Task 4 moves the public path to a server component; this
+     effect stays for the gated path. */
+  const [lessonBody, setLessonBody] = useState('');
+  useEffect(() => {
+    let cancelled = false;
+    setLessonBody('');
+    loadLessonBody(activeM, activeL).then(b => { if (!cancelled) setLessonBody(b); });
+    return () => { cancelled = true; };
+  }, [activeM, activeL]);
+
+  /* Warm the next lesson's chunk on arrival. Without this, every next/prev
+     click waits on a network fetch that used to be instant, which shows as a
+     flicker on each navigation. Prefetching on arrival means the chunk is
+     usually already cached by the time the reader clicks. */
+  useEffect(() => {
+    const m = MODULES[activeM];
+    if (!m) return;
+    const nextM = activeL < m.lessons.length - 1 ? activeM : activeM + 1;
+    const target = MODULES[nextM];
+    if (target) prefetchModuleBodies(target.slug);
+  }, [activeM, activeL]);
+
   const navigate = useCallback((mi, li) => {
     setActiveM(mi);
     setActiveL(li);
@@ -725,6 +756,7 @@ export default function CourseApp({ initialM = null, initialL = null }) {
             lesson={lesson}
             mod={mod}
             lKey={lKey}
+            lessonBody={lessonBody}
             completed={completed}
             quiz={quiz}
             quizScore={quizScore}
@@ -750,7 +782,7 @@ export default function CourseApp({ initialM = null, initialL = null }) {
 }
 
 /* ── Combined Lesson View: video + notes in single scroll ──────────────── */
-function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed, quizPct, activeL, onQuiz, onMarkComplete, goNext, isLastLesson, canSeeCert, onCert, signedOut = false, onSignUp, isLastPublicLesson = false }) {
+function LessonView({ lesson, mod, lKey, lessonBody, completed, quiz, quizScore, quizPassed, quizPct, activeL, onQuiz, onMarkComplete, goNext, isLastLesson, canSeeCert, onCert, signedOut = false, onSignUp, isLastPublicLesson = false }) {
   const isComplete = completed[lKey];
   const [mi, li] = lKey.split('-').map(Number);
   const isCourseStart = mi === 0 && li === 0;
@@ -891,7 +923,7 @@ function LessonView({ lesson, mod, lKey, completed, quiz, quizScore, quizPassed,
         </div>
 
         {/* ── Lesson body (notes) ── */}
-        <LessonBody text={lesson.body} color={mod.color} />
+        <LessonBody text={lessonBody || ''} color={mod.color} />
 
         {/* ── Quiz card OR completion / mark-complete actions ── */}
         <div style={{ marginTop: 40, paddingTop: 24, borderTop: `1px solid ${T.border}` }}>
