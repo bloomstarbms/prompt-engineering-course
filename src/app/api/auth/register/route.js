@@ -78,13 +78,43 @@ export async function POST(req) {
 
   // ── Create profile row while we have the admin client ─────────────────
   // This runs before the client signs in, so RLS restrictions don't apply.
-  if (data.user) {
-    await admin
-      .from('profiles')
-      .upsert(
-        { id: data.user.id, name: name.trim(), bio: '', avatar_url: '', consented_at: consentedAt },
-        { onConflict: 'id', ignoreDuplicates: true },
-      );
+  //
+  // THE RESULT IS CHECKED. It previously was not: a failed write returned
+  // ok:true and the caller signed in to an account with no profile row, so no
+  // name and no consent record, with nothing anywhere saying so. Migration 006
+  // made that concrete — deploy the code before the column exists and every
+  // registration half-succeeds — but the defect is independent of it. Any
+  // write can fail.
+  if (!data.user) {
+    console.error('[register] createUser returned no user');
+    return NextResponse.json({ error: 'Registration failed. Please try again.' }, { status: 500 });
+  }
+
+  const { error: profileError } = await admin
+    .from('profiles')
+    .upsert(
+      { id: data.user.id, name: name.trim(), bio: '', avatar_url: '', consented_at: consentedAt },
+      { onConflict: 'id', ignoreDuplicates: true },
+    );
+
+  if (profileError) {
+    /* The auth user already exists at this point, so returning an error and
+       stopping would strand the address: the caller cannot register again
+       ("already exists") and has no usable account. Undo it, so retrying is a
+       real option rather than a dead end. */
+    const { error: cleanupError } = await admin.auth.admin.deleteUser(data.user.id);
+    console.error(
+      '[register] profile write failed:', profileError.message,
+      cleanupError ? `| ROLLBACK FAILED: ${cleanupError.message}` : '| auth user removed',
+    );
+    return NextResponse.json(
+      {
+        error: cleanupError
+          ? 'Your account was partly created and we could not undo it. Please get in touch before trying this email address again.'
+          : 'Could not finish creating your account. Nothing was saved — please try again.',
+      },
+      { status: 500 },
+    );
   }
 
   return NextResponse.json({ ok: true });
