@@ -459,8 +459,18 @@ export default function CourseApp({ initialM = null, initialL = null }) {
   if ((!ready && !forceReady) || !splashDone) return <SplashScreen />;
 
   /* ── URL-driven routing ─────────────────────────────────────────────
-     Each section has its own path; the auto-redirect effect above handles
-     auth guards so we never reach a protected branch with user === null. */
+     Each section has its own path.
+
+     The `!user` term below is the real auth guard, not the redirect effect.
+     router.replace() is asynchronous, so a signed-out visitor to a protected
+     path renders at least one frame before it fires; without this term that
+     frame would run the course branch with user === null. Keep it.
+
+     It must carry the same public-lesson exemption as the redirect, or the two
+     disagree and the redirect's exemption is dead code — which is exactly the
+     bug this fixes: 3b exempted public lessons from the redirect but not from
+     this branch, so signed-out readers of Module 01 got the login page and the
+     ungating never actually reached anyone. */
   if (page === 'landing') return (
     <Landing
       onStart={() => router.push(user ? '/course' : '/auth')}
@@ -469,7 +479,7 @@ export default function CourseApp({ initialM = null, initialL = null }) {
     />
   );
 
-  if (page === 'auth' || !user) return (
+  if (page === 'auth' || (!user && !onPublicLesson)) return (
     <AuthPage onAuth={async (mode, name, email, password) => {
       const result = await handleAuth(mode, name, email, password);
       if (result.ok && !result.needsConfirm) {
