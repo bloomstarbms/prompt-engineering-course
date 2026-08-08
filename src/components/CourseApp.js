@@ -371,14 +371,24 @@ export default function CourseApp({ initialM = null, initialL = null }) {
     // write rather than one per lesson. Skipped when the position already
     // matches, so an ordinary page load writes nothing, and skipped entirely
     // when signed out (updateProgress also no-ops without a userId).
+    // user?.id is in the deps and must stay there. On a cold load of a lesson
+    // URL, auth has not resolved yet when this first runs, so without it the
+    // effect returned here and never ran again — the position never changed,
+    // so nothing retriggered it. The resume point was silently never recorded
+    // for anyone arriving by URL, which is exactly what lesson URLs made the
+    // common case. It also fed a worse bug: /quiz re-derives its position from
+    // lastLesson, so a stale value served the quiz for a different lesson and
+    // wrote its result to that lesson's key.
     if (!user) return;
     // LOAD-BEARING: second of the two cycle brakes (see the resume effect).
     // The resume effect sets position FROM lastLesson, so without this equality
-    // check that write would bounce straight back as a new write.
+    // check that write would bounce straight back as a new write. It is also
+    // what makes user?.id safe to depend on: re-running after auth resolves
+    // writes at most once, then the equality check stops it.
     const stored = progress?.lastLesson;
     if (stored?.m === activeM && stored?.l === activeL) return;
     updateProgress(prev => ({ ...prev, lastLesson: { m: activeM, l: activeL } }));
-  }, [activeM, activeL]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeM, activeL, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Lesson prose, loaded on demand ───────────────────────────────────
      Bodies were 74% of courseData.js and are now per-module chunks. This
