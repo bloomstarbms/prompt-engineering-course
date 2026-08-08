@@ -489,6 +489,21 @@ export default function CourseApp({ initialM = null, initialL = null }) {
     }
   }
 
+  /* Every deliberate "create an account" CTA routes through here.
+
+     The redirect effect also writes pe_return_to, but only when a signed-out
+     visitor is bounced off a protected page. A reader who finishes the free
+     preview and *chooses* to sign up never trips that branch, so before this
+     existed all eight signup CTAs dropped them on /course afterwards rather
+     than back at the lesson that convinced them. Same key, same one-shot read
+     in handleAuth, so the two paths cannot both fire and disagree. */
+  const goSignUp = useCallback(() => {
+    try {
+      if (pathname?.startsWith('/course/')) sessionStorage.setItem('pe_return_to', pathname);
+    } catch { /* private mode — fall back to /course */ }
+    router.push('/auth');
+  }, [pathname, router]);
+
   function onQuizDone(result) {
     /* Only mark lesson complete when quiz is PASSED; never un-complete a prior pass */
     // immediate=true: quiz scores are critical data — save right away.
@@ -635,7 +650,7 @@ export default function CourseApp({ initialM = null, initialL = null }) {
           onLogout={() => { logout(); router.replace('/'); }}
           isMobile={isMobile}
           completed={completed}
-          onSignUp={() => router.push('/auth')}
+          onSignUp={goSignUp}
         />
       </div>
 
@@ -715,8 +730,25 @@ export default function CourseApp({ initialM = null, initialL = null }) {
               }}
             >‹</button>
 
-            {/* Quiz button OR Next button OR Certificate button */}
-            {!canAdvance ? (
+            {/* Signup CTA (signed out) OR Quiz OR Next OR Certificate */}
+            {!user ? (
+              /* canAdvance is `!quiz || quizPassed`, and every lesson has a
+                 quiz a signed-out reader cannot take — so without this branch
+                 the pager showed "Quiz →" on all three preview lessons and
+                 every click dead-ended on the login page. The locked card
+                 below already explains the quiz; this asks for the account. */
+              <button
+                onClick={goSignUp}
+                style={{
+                  background: mod.color, border: 'none', color: '#fff',
+                  cursor: 'pointer', padding: '7px 14px', borderRadius: 6,
+                  fontSize: 12, fontWeight: 700, fontFamily: T.font,
+                  transition: 'all 0.15s', whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+              >{isMobile ? 'Sign up →' : 'Create free account →'}</button>
+            ) : !canAdvance ? (
               <button
                 onClick={() => setPage('quiz')}
                 style={{
@@ -800,7 +832,7 @@ export default function CourseApp({ initialM = null, initialL = null }) {
             canSeeCert={canSeeCert}
             onCert={() => router.push('/cert')}
             signedOut={!user}
-            onSignUp={() => router.push('/auth')}
+            onSignUp={goSignUp}
             isLastPublicLesson={!user && isPublicLesson(activeM, activeL)
               && !isPublicLesson(activeM, activeL + 1)}
           />
