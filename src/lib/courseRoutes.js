@@ -60,6 +60,32 @@ export function moduleHref(mi) {
   return lessonHref(mi, 0);
 }
 
+/**
+ * A stored resume position, clamped to something that exists.
+ *
+ * `progress` is user-writable by design — that is the accepted limit we live
+ * with on quiz scores — so `last_lesson` is untrusted input, not app-authored
+ * data. The build guard freezes the shape of MODULES; it says nothing about
+ * what is in a row. Anyone can PATCH their own row to {m:99,l:99}.
+ *
+ * That matters because CourseApp computes `MODULES[activeM].lessons[activeL]`
+ * before any branch runs, on every route that does not carry a position in the
+ * URL — `/`, `/course`, `/profile`, `/cert`, `/auth`. An unresolvable position
+ * throws there, so the reader is locked out of every one of those routes at
+ * once, with no in-app way back: the only surfaces that could fix the value
+ * are the ones that crash. Recovery would mean editing the database by hand.
+ *
+ * Clamping on read costs a lookup and removes that entirely. Self-inflicted or
+ * not, a user should not be able to brick their own account.
+ */
+export function clampPosition(pos) {
+  const m = Number(pos?.m);
+  const l = Number(pos?.l);
+  if (!Number.isInteger(m) || !Number.isInteger(l)) return { m: 0, l: 0 };
+  if (!MODULES[m]?.lessons?.[l]) return { m: 0, l: 0 };
+  return { m, l };
+}
+
 /** True when a lesson is readable without an account (Task 3b). */
 export function isPublicLesson(mi, li) {
   return MODULES[mi]?.lessons?.[li]?.isPublic === true;

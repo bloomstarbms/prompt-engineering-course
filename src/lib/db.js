@@ -4,6 +4,7 @@
 
 import { createClient as _createClient } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { clampPosition } from '@/lib/courseRoutes';
 
 // ── Pre-authed client factory ─────────────────────────────────────────────
 // Creates a lightweight Supabase client that sends `accessToken` directly in
@@ -94,7 +95,9 @@ export async function loadProgress(userId, accessToken) {
   return {
     completed:  data.completed   || {},
     quizScores: data.quiz_scores || {},
-    lastLesson: data.last_lesson || { m: 0, l: 0 },
+    // Clamped here, at the boundary where untrusted row data becomes app state,
+    // so no consumer has to remember that last_lesson is user-writable.
+    lastLesson: clampPosition(data.last_lesson),
   };
 }
 

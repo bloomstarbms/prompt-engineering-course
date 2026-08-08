@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getProfile, upsertProfile, loadProgress, saveProgress, issueCertificateViaApi } from '@/lib/db';
+import { clampPosition } from '@/lib/courseRoutes';
 
 // ── Legacy localStorage helpers (migration only — read but never write) ───
 const LS_USERS    = 'pe_users';
@@ -49,7 +50,8 @@ async function migrateLegacyUser(supabaseUserId, legacyUser, accessToken) {
       await saveProgress(supabaseUserId, {
         completed:  legacyProgress.completed  || {},
         quizScores: legacyProgress.quizScores || {},
-        lastLesson: legacyProgress.lastLesson || { m: 0, l: 0 },
+        // Same clamp as loadProgress: localStorage is user-writable too.
+        lastLesson: clampPosition(legacyProgress.lastLesson),
       }, accessToken);
     }
 
