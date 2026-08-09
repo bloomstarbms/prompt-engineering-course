@@ -257,7 +257,7 @@ export default function AuthPage({ onAuth }) {
           <h1 style={{
             fontFamily: T.display, fontWeight: 700, fontSize: 28,
             letterSpacing: '-0.04em', color: T.text, lineHeight: 1.1, marginBottom: 6,
-          }}>Zero to Mastery</h1>
+          }}>PromptMastery</h1>
         </div>
 
         <div style={{ width: '100%', maxWidth: 400 }}>

@@ -17,11 +17,13 @@ export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.prompt
 /**
  * One name, used everywhere in metadata.
  *
- * FLAGGED, NOT ACTED ON: the default page title is "Prompt Engineering — Zero
- * to Mastery", and "Zero to Mastery" is an established brand (zerotomastery.io).
- * That title is unchanged here because renaming is a brand decision, not an SEO
- * one. Everything this file feeds says PromptMastery and nothing else, so the
- * second name is confined to that single string when the decision is made.
+ * RESOLVED. This used to record that the default page title said "Prompt
+ * Engineering — Zero to Mastery" — an established brand (zerotomastery.io)
+ * with no relationship to this site — and that renaming was a brand decision
+ * rather than an SEO one. The decision was taken: that name is gone from every
+ * surface, including the certificate, the LinkedIn credential and the /verify
+ * page. PromptMastery is the site name; "Prompt Engineering" is the course
+ * name on credential surfaces; "Prompten" is the issuer.
  */
 export const SITE_NAME = 'PromptMastery';
 

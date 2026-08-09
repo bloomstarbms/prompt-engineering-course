@@ -13,10 +13,11 @@ import { TOTAL_LESSONS, MODULES } from '@/data/courseData';
  * with more than one child needs an explicit `display: flex`. It fails loudly
  * at build rather than silently mis-rendering, but the rule is easy to trip.
  *
- * Deliberately says "PromptMastery" only. The default page title still reads
- * "Prompt Engineering — Zero to Mastery", which collides with an established
- * brand (zerotomastery.io); that is flagged for a decision, so this new asset
- * stays out of it rather than spreading the second name further.
+ * Says "PromptMastery" only, which is now the whole story rather than a
+ * deliberate abstention. This file used to note that the default page title
+ * read "Prompt Engineering — Zero to Mastery" and that this asset was staying
+ * out of the collision; that name has since been removed from the codebase
+ * entirely, so there is nothing left to stay out of.
  */
 export const alt = 'PromptMastery — a free, career-grade prompt engineering course';
 export const size = { width: 1200, height: 630 };

@@ -21,7 +21,17 @@ function LinkedInBtn({ cert, verifyUrl }) {
   const origin = getSiteOrigin();
   const params = new URLSearchParams({
     startTask:        'CERTIFICATION_NAME',
-    name:             'Prompt Engineering Mastery — Zero to Mastery',
+    // The course name, and nothing else. This string lands on someone's
+    // LinkedIn profile as a credential, so it has to read as the name of a
+    // thing they completed rather than as a marketing headline. It must also
+    // match the certificate face and the /verify page exactly — a recruiter
+    // comparing the three is the entire point of the verification link.
+    name:             'Prompt Engineering',
+    // NOT changed to PromptMastery. See the naming note in the commit body:
+    // "Prompten" is the issuer everywhere else, including the crest, the seal,
+    // the /verify issuer line and all three legal documents. Changing it here
+    // alone would put a different issuer on LinkedIn than on the certificate
+    // it links to.
     organizationName: 'Prompten',
     issueYear:        String(issued.getFullYear()),
     issueMonth:       String(issued.getMonth() + 1),
@@ -697,7 +707,7 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
               background: `linear-gradient(135deg, #ffffff 0%, ${ACCENT2} 55%, #c4b5fd 100%)`,
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             }}>
-              Prompt Engineering Mastery
+              Prompt Engineering
             </div>
 
             <div className="cert-course-sub" style={{
@@ -705,7 +715,7 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
               fontSize: 13, color: 'rgba(255,255,255,0.32)', marginBottom: 18,
               letterSpacing: '0.02em',
             }}>
-              Zero to Mastery &nbsp;·&nbsp; {TOTAL_LESSONS} Lessons &nbsp;·&nbsp; {MODULES.length} Modules &nbsp;·&nbsp; Full Programme
+              {TOTAL_LESSONS} Lessons &nbsp;·&nbsp; {MODULES.length} Modules &nbsp;·&nbsp; Full Programme
             </div>
 
             {/* ── Ornament divider ── */}
@@ -749,7 +759,11 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
               maxWidth: 560,
             }}>
               has completed the{' '}
-              <em style={{ color: 'rgba(255,255,255,0.55)' }}>Prompt Engineering Mastery</em>{' '}
+              {/* Must match the course title above it, the LinkedIn credential
+                  name and the /verify page. It is the same certificate naming
+                  itself twice; the two saying different things is the one
+                  inconsistency a reader is guaranteed to notice. */}
+              <em style={{ color: 'rgba(255,255,255,0.55)' }}>Prompt Engineering</em>{' '}
               programme, covering the design, evaluation and deployment of prompts
               across current AI language models. Prompten is an independent
               educational provider and is not affiliated with, endorsed by, or

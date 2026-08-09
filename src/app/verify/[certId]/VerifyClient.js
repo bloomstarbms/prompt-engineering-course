@@ -155,7 +155,7 @@ export default function VerifyClient({ certId }) {
                 marginBottom: 20, textAlign: 'center',
               }}>
                 <div style={{ fontFamily: T.font, fontWeight: 700, fontSize: 14, color: T.text, marginBottom: 3 }}>
-                  Prompt Engineering: Zero to Mastery
+                  Prompt Engineering
                 </div>
                 <div style={{ fontFamily: T.font, fontSize: 13, color: T.muted }}>
                   Full course completion · All {TOTAL_LESSONS} lessons
