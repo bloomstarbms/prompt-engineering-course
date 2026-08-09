@@ -303,7 +303,10 @@ export default function Landing({ onStart, onLogin, onOpenModule }) {
             {[
               [String(MODULES.length), 'Modules'],
               [String(TOTAL_LESSONS), 'Lessons'],
-              [`${TOTAL_QUIZ_Q}+`, 'Quiz Questions'],
+              /* No "+" suffix. The value is computed from QUIZZES, so it is
+                 the exact count (81), not an approximation to round up from.
+                 "81+" claimed more questions than the course contains. */
+              [String(TOTAL_QUIZ_Q), 'Quiz Questions'],
               ['1', 'Certificate'],
             ].map(([n, l]) => (
               <div key={l}>
