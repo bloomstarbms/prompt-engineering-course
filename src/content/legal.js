@@ -18,8 +18,15 @@
  *     includes the note in Security about a past exposure of certificate holder
  *     names and emails. Publishing an internal note about a possible breach
  *     inside a live privacy policy is a legal decision and not a wiring one.
- *     VALUE placeholders are kept and remain visible: [DATE], the controller
- *     name, the Supabase region, the retention period, contact addresses.
+ *     VALUE placeholders were kept visible. All are now filled — controller
+ *     name, dates, retention period, contact address — EXCEPT ONE:
+ *     the Supabase project region in section 5, which is the last thing
+ *     standing between these documents and being published.
+ *
+ *     Contact address is the owner's personal address rather than
+ *     privacy@prompten.xyz, at the owner's instruction. Noted because a
+ *     personal address published on a live page will be scraped; swapping it
+ *     for a forwarding address on the domain is a one-line change here.
  *
  *  3. In Terms section 11 the Privacy Policy linked to https://claude.ai/privacy
  *     — a paste artifact. Repointed at /privacy.
@@ -34,8 +41,8 @@ export const PRIVACY_MD = `## 1. Who we are
 
 Prompten ("we", "us") operates the website at [www.prompten.xyz](https://www.prompten.xyz), a free self-paced course in prompt engineering.
 
-- **Data controller:** [TODO — your name or registered entity]
-- **Contact for privacy matters:** privacy@prompten.xyz
+- **Data controller:** Daniels Bloom
+- **Contact for privacy matters:** bloomstar042@gmail.com
 - **Location:** Nigeria
 
 If you have a question about this policy or about your data, email the address above. We aim to respond within 30 days.
@@ -82,7 +89,7 @@ Every certificate has a verification page at \`www.prompten.xyz/verify/<credenti
 - Verification pages are marked \`noindex\`, so search engines are instructed not to list them.
 - The link is not secret. If you share it — for example on LinkedIn — anyone with the link can view it.
 
-If you would prefer your certificate not to be publicly verifiable, email privacy@prompten.xyz and we will remove it.
+If you would prefer your certificate not to be publicly verifiable, email bloomstar042@gmail.com and we will remove it.
 
 ---
 
@@ -118,7 +125,7 @@ We use no analytics cookies, no advertising cookies, and no third-party trackers
 
 - **Account, profile and progress** — until you delete your account.
 - **Certificates** — indefinitely, unless you ask us to remove yours, because a certificate that stops verifying is worthless.
-- **Usage events** — [TODO — retention period]
+- **Usage events** — kept for 24 months, then deleted.
 
 When you ask us to delete your account, we delete your profile, progress and usage events. Tell us if you also want your certificate removed.
 
@@ -136,7 +143,7 @@ Under the NDPA you have the right to:
 - **Withdraw consent** at any time, where we rely on consent
 - **Not be subject** to solely automated decisions with legal or similarly significant effects. We make none.
 
-To exercise any of these, email **privacy@prompten.xyz**. We will respond within 30 days and will not charge you.
+To exercise any of these, email **bloomstar042@gmail.com**. We will respond within 30 days and will not charge you.
 
 **If you are unhappy with how we handle your data,** you may complain to the Nigeria Data Protection Commission (NDPC) at [ndpc.gov.ng](https://ndpc.gov.ng).
 
@@ -165,7 +172,7 @@ No system is perfectly secure. If we discover a personal data breach we will rep
 
 This course is intended for adults. You must be **18 or older** to create an account.
 
-Under the NDPA, processing a child's data requires verifiable parental consent, which we are not set up to obtain. If you believe someone under 18 has created an account, email privacy@prompten.xyz and we will delete it.
+Under the NDPA, processing a child's data requires verifiable parental consent, which we are not set up to obtain. If you believe someone under 18 has created an account, email bloomstar042@gmail.com and we will delete it.
 
 ---
 
@@ -177,14 +184,14 @@ If we change this policy we will update the date at the top. If the change mater
 
 ## 13. Contact
 
-**privacy@prompten.xyz**
+**bloomstar042@gmail.com**
 `;
 
 export const TERMS_MD = `## 1. Agreement
 
 By using [www.prompten.xyz](https://www.prompten.xyz) you agree to these terms. If you don't agree, please don't use the site.
 
-The site is operated by [TODO — your name or registered entity], based in Nigeria.
+The site is operated by Daniels Bloom, based in Nigeria.
 
 ---
 
@@ -200,7 +207,7 @@ There is no fee, no subscription, and no payment details are ever collected. We 
 - Give us an email address you actually control — it's how you recover access.
 - Keep your password to yourself. You're responsible for what happens under your account.
 - One account per person.
-- Tell us at [TODO — contact address] if you think someone else is using your account.
+- Tell us at bloomstar042@gmail.com if you think someone else is using your account.
 
 We may suspend or remove an account that abuses the service, attempts to interfere with it, or is used to harass others.
 
@@ -273,7 +280,7 @@ Nothing in these terms excludes liability that cannot lawfully be excluded — i
 
 ## 10. Ending it
 
-You can delete your account at any time — email [TODO — contact address]. See the Privacy Policy for what happens to your data.
+You can delete your account at any time — email bloomstar042@gmail.com. See the Privacy Policy for what happens to your data.
 
 We may suspend or end your access if you break these terms. We'll tell you why unless there's a good reason not to.
 
@@ -299,5 +306,5 @@ These terms are governed by the laws of the Federal Republic of Nigeria, and the
 
 ## 14. Contact
 
-[TODO — contact address, e.g. hello@prompten.xyz]
+bloomstar042@gmail.com
 `;

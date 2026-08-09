@@ -21,7 +21,7 @@ export default function TermsPage() {
   return (
     <DocPage
       title="Terms of Use"
-      updated="[DATE]"
+      updated="9 August 2026"
       markdown={TERMS_MD}
       links={[{ href: '/privacy', label: 'Privacy Policy' }, { href: '/about', label: 'About' }]}
     />
