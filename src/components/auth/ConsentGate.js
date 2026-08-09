@@ -21,6 +21,12 @@ import { T } from '@/lib/theme';
  * out is always available: someone who does not accept must be able to leave
  * rather than be trapped in a modal. Both documents open in a new tab, so
  * reading them does not dismiss this.
+ *
+ * THREE EXITS, and the third is a legal requirement rather than a nicety.
+ * Accept, sign out, or request erasure — because this screen blocks every
+ * other route to a contact address, and under the NDPA nobody should have to
+ * agree to new terms in order to have their data deleted. Do not remove the
+ * erasure line while this gate blocks the app.
  */
 export default function ConsentGate({ userName, onAccept, onSignOut }) {
   const [checked, setChecked] = useState(false);
@@ -130,6 +136,27 @@ export default function ConsentGate({ userName, onAccept, onSignOut }) {
         >
           Sign out instead
         </button>
+
+        {/* ERASURE ROUTE — load-bearing, not a courtesy.
+            Under the NDPA a person must not have to accept new terms in order
+            to exercise their right to erasure. This screen blocks every other
+            surface: no footer, no profile page, no way to reach a contact
+            address without first agreeing. Without this line the only options
+            are "accept" or "leave and stay in the database", which makes
+            consent a condition of deletion. */}
+        <div
+          style={{
+            marginTop: 18, paddingTop: 14, borderTop: `1px solid ${T.border}`,
+            fontSize: 12, color: T.dim, lineHeight: 1.6, fontFamily: T.font, textAlign: 'center',
+          }}
+        >
+          Don&apos;t want to accept? Email{' '}
+          <a href="mailto:privacy@prompten.xyz?subject=Account%20deletion%20request" style={link}>
+            privacy@prompten.xyz
+          </a>{' '}
+          to delete your account and the data we hold. You do not have to accept
+          these terms to do that.
+        </div>
       </div>
     </div>
   );
