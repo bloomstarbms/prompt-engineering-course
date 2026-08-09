@@ -139,7 +139,7 @@ export default function Landing({ onStart, onLogin, onOpenModule }) {
             fontFamily: T.mono, fontSize: 13, color: T.accent, fontWeight: 700,
           }}>PE</div>
           <span style={{ fontFamily: T.font, fontWeight: 700, fontSize: 14, color: T.text }}>
-            PromptMastery
+            Prompten
           </span>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>

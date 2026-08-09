@@ -71,7 +71,7 @@ export default function VerifyClient({ certId }) {
             The certificate verification service is temporarily unavailable. Please try again later.
           </p>
           <Link href="/" style={{ fontFamily: T.font, fontSize: 13, color: T.accent, textDecoration: 'none', fontWeight: 600, marginTop: 24, display: 'inline-block' }}>
-            ← Back to PromptMastery
+            ← Back to Prompten
           </Link>
         </div>
       </div>
@@ -103,7 +103,7 @@ export default function VerifyClient({ certId }) {
             </span>
           </div>
           <div style={{ fontFamily: T.font, fontWeight: 800, fontSize: 22, color: T.text, letterSpacing: '-0.03em' }}>
-            PromptMastery
+            Prompten
           </div>
         </div>
 
@@ -276,7 +276,7 @@ export default function VerifyClient({ certId }) {
             fontFamily: T.font, fontSize: 13, color: T.accent,
             textDecoration: 'none', fontWeight: 600,
           }}>
-            ← Back to PromptMastery
+            ← Back to Prompten
           </Link>
         </div>
       </div>

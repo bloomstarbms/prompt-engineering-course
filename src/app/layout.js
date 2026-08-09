@@ -13,7 +13,7 @@ import { SITE_URL, SITE_NAME } from '@/lib/seo';
  *
  * WAS 'Prompt Engineering — Zero to Mastery'. Dropped because "Zero to
  * Mastery" is an established brand (zerotomastery.io) and this site has no
- * relationship to it. The site name is PromptMastery — see SITE_NAME — and
+ * relationship to it. The site name is Prompten — see SITE_NAME — and
  * title.template below still appends it, so nothing about identity changes.
  */
 const DEFAULT_TITLE = 'Prompt Engineering — Master the Art of Prompting AI';

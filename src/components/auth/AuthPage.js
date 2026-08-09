@@ -168,7 +168,7 @@ export default function AuthPage({ onAuth }) {
               fontFamily: T.mono, fontSize: 12, color: T.accent, fontWeight: 700,
             }}>PE</div>
             <span style={{ fontFamily: T.display, fontWeight: 800, fontSize: 17, color: T.text, letterSpacing: '-0.02em' }}>
-              PromptMastery
+              Prompten
             </span>
           </div>
           <div style={{
@@ -257,7 +257,7 @@ export default function AuthPage({ onAuth }) {
           <h1 style={{
             fontFamily: T.display, fontWeight: 700, fontSize: 28,
             letterSpacing: '-0.04em', color: T.text, lineHeight: 1.1, marginBottom: 6,
-          }}>PromptMastery</h1>
+          }}>Prompten</h1>
         </div>
 
         <div style={{ width: '100%', maxWidth: 400 }}>

@@ -15,17 +15,38 @@ import { DOCS_PUBLISHED, DOC_PAGES } from '@/lib/docs';
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.prompten.xyz').replace(/\/$/, '');
 
 /**
- * One name, used everywhere in metadata.
+ * ─── THE NAME. THERE IS ONE. ─────────────────────────────────────────────
  *
- * RESOLVED. This used to record that the default page title said "Prompt
- * Engineering — Zero to Mastery" — an established brand (zerotomastery.io)
- * with no relationship to this site — and that renaming was a brand decision
- * rather than an SEO one. The decision was taken: that name is gone from every
- * surface, including the certificate, the LinkedIn credential and the /verify
- * page. PromptMastery is the site name; "Prompt Engineering" is the course
- * name on credential surfaces; "Prompten" is the issuer.
+ * Two exactly, and they mean different things:
+ *
+ *   Prompten             the site, the issuer, the thing you are on.
+ *                        Everything: metadata, headers, 404, OG card,
+ *                        certificate crest and seal, /verify, the legal
+ *                        documents. This constant feeds all the metadata.
+ *
+ *   "Prompt Engineering" the course, used only where something is being
+ *                        named as a credential — the certificate face, the
+ *                        LinkedIn CERTIFICATION_NAME, the /verify course
+ *                        block, and jsonld's Course.name. It is what the
+ *                        certificate is *of*, not who issued it.
+ *
+ * HOW IT GOT MESSY, so it does not happen again. This shipped with three
+ * names at once: "PromptMastery" in the metadata and page headers,
+ * "Prompten" on the certificate and in the legal documents, and "Prompt
+ * Engineering — Zero to Mastery" as the page title — the last of which
+ * collided with an unrelated established brand (zerotomastery.io). None of
+ * them was wrong in isolation, which is why it survived: no single file
+ * looked inconsistent.
+ *
+ * CONSOLIDATED ONTO PROMPTEN, not the other way round. It matches the
+ * domain, and it is the name already written into the published privacy
+ * policy, terms and about page. Renaming towards it therefore never edits a
+ * document a user has agreed to; renaming away from it would have.
+ *
+ * If a third name is ever wanted, change it here and grep the whole tree —
+ * hardcoded copies exist on the certificate and in the docs by necessity.
  */
-export const SITE_NAME = 'PromptMastery';
+export const SITE_NAME = 'Prompten';
 
 /** Absolute URL for a site-relative path. */
 export function absolute(path) {

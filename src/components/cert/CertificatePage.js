@@ -27,11 +27,12 @@ function LinkedInBtn({ cert, verifyUrl }) {
     // match the certificate face and the /verify page exactly — a recruiter
     // comparing the three is the entire point of the verification link.
     name:             'Prompt Engineering',
-    // NOT changed to PromptMastery. See the naming note in the commit body:
-    // "Prompten" is the issuer everywhere else, including the crest, the seal,
-    // the /verify issuer line and all three legal documents. Changing it here
-    // alone would put a different issuer on LinkedIn than on the certificate
-    // it links to.
+    // The issuer, which is now the site name too — the codebase previously ran
+    // two names in parallel, Prompten here and on the legal documents,
+    // PromptMastery in the metadata and headers. Consolidated onto Prompten:
+    // it matches the domain, and it is the name in the published privacy
+    // policy, terms and about page, so consolidating in this direction never
+    // edits a document users have already agreed to.
     organizationName: 'Prompten',
     issueYear:        String(issued.getFullYear()),
     issueMonth:       String(issued.getMonth() + 1),

@@ -45,7 +45,7 @@ export default function NotFound() {
         fontWeight: 700, fontSize: 14,
         boxShadow: '0 4px 16px rgba(99,102,241,0.35)',
       }}>
-        ← Back to PromptMastery
+        ← Back to Prompten
       </Link>
     </div>
   );

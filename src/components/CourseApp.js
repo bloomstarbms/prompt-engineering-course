@@ -119,7 +119,7 @@ function SplashScreen() {
           <span style={{
             fontFamily: T.font, fontWeight: 800, fontSize: 19,
             color: T.text, letterSpacing: '-0.03em',
-          }}>PromptMastery</span>
+          }}>Prompten</span>
         </div>
         <div style={{
           fontFamily: T.mono, fontSize: 10, color: T.dim, letterSpacing: '0.16em',
@@ -1036,7 +1036,7 @@ function LessonView({ lesson, mod, lKey, lessonBody, bodyError, onRetryBody, com
               fontFamily: T.display, fontWeight: 800, fontSize: 'clamp(20px,3vw,28px)',
               color: T.text, margin: '0 0 12px', letterSpacing: '-0.03em', lineHeight: 1.2,
             }}>
-              Welcome to Prompt Engineering Mastery
+              Welcome to Prompten
             </h2>
             <p style={{
               fontFamily: T.font, fontSize: 'clamp(13px,1.8vw,15px)', color: T.muted,
@@ -1275,7 +1275,7 @@ function LessonView({ lesson, mod, lKey, lessonBody, bodyError, onRetryBody, com
                   fontFamily: T.font, fontSize: 13, color: T.muted,
                   lineHeight: 1.7, margin: '0 auto 20px', maxWidth: 400,
                 }}>
-                  You&apos;ve finished every lesson in Prompt Engineering Mastery.
+                  You&apos;ve finished every lesson in Prompt Engineering.
                   Your certificate is ready to download and share.
                 </p>
                 <button

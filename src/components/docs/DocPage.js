@@ -45,7 +45,7 @@ export default function DocPage({ title, updated, markdown, links = [] }) {
           >
             PE
           </span>
-          PromptMastery
+          Prompten
         </Link>
       </header>
 
