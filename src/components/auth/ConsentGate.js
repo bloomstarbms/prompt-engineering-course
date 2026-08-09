@@ -9,11 +9,12 @@ import { T } from '@/lib/theme';
  * accounts created before those documents existed, plus anything migrated from
  * a legacy localStorage account. NULL means never asked, not refused.
  *
- * DORMANT UNTIL DOCS_PUBLISHED. The caller gates on that flag. Asking someone
- * to accept documents that still read "[TODO — your name]" would record
- * consent to nothing, and it is a one-shot prompt: whoever sees the
- * placeholder version is never asked again. consented_at IS NULL identifies
- * the same people whenever it runs, so there is no cost to waiting.
+ * DORMANT UNTIL CONSENT_PROMPT_ENABLED — its own flag, not DOCS_PUBLISHED.
+ * The documents being live is invisible to existing users; this screen is not,
+ * and it blocks all 814 of them on next sign-in. It is also one-shot: whoever
+ * sees it is never asked again, so it must never fire as a side effect of an
+ * unrelated change. consented_at IS NULL identifies the same people whenever
+ * it runs, so waiting costs nothing.
  *
  * Deliberately NOT dismissable, and deliberately escapable. There is no close
  * button, because a prompt that can be waved away records nothing. But Sign

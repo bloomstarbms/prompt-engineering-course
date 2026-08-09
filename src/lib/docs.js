@@ -20,11 +20,45 @@
  *      documents say [TODO] asks people to agree to a placeholder. The 18+
  *      confirmation still stands on its own and is still required.
  *
- * TO PUBLISH: fill the placeholders in src/content/legal.js and
- * src/content/about.js, stand up the privacy@ address so section 8 is
- * actionable, then set this true. All three surfaces move together.
+ * NOW TRUE. Everything the documents depend on is settled and verified:
+ *
+ *   placeholders   all filled — controller name, dates, retention period,
+ *                  Supabase region (eu-west-1, read from the dashboard)
+ *   contact        privacy@prompten.xyz and hello@prompten.xyz, both on the
+ *                  domain, so they can be redirected later. A personal address
+ *                  once published and scraped cannot be taken back.
+ *   delivery       CONFIRMED, not assumed. Two test messages sent from a
+ *                  separate account, both landed in the destination inbox —
+ *                  and in the Inbox rather than Spam. The DNS records
+ *                  resolving was NOT treated as sufficient: records existing
+ *                  is not mail arriving, and an earlier round of tests sent
+ *                  before the forwarding account existed produced exactly the
+ *                  silence that a broken route would have.
+ *
+ * Both addresses were tested, not just one. They share a catch-all so they
+ * should behave identically — but "should behave identically" is an argument,
+ * and the failure mode here is somebody writing to you and concluding they
+ * were ignored.
  */
-export const DOCS_PUBLISHED = false;
+export const DOCS_PUBLISHED = true;
+
+/**
+ * ─── THE ONE-TIME ACCEPTANCE PROMPT, HELD SEPARATELY ─────────────────────
+ *
+ * Deliberately NOT the same flag as DOCS_PUBLISHED, and this is the whole
+ * reason it exists as its own constant.
+ *
+ * Publishing the documents is invisible to existing users. Switching on the
+ * acceptance prompt is not: it puts a blocking screen in front of all 814
+ * accounts the next time each one signs in. Those are different sized
+ * decisions and they should not be taken by the same edit — least of all by
+ * accident, as a side effect of filling in a privacy policy.
+ *
+ * Set this true when you actually want people prompted. consented_at IS NULL
+ * identifies the same population whenever it runs, so there is no deadline and
+ * nothing degrades by waiting.
+ */
+export const CONSENT_PROMPT_ENABLED = false;
 
 /** The document pages, in footer order. Single source for links and sitemap. */
 export const DOC_PAGES = [

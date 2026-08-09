@@ -15,7 +15,7 @@ import CertificatePage from '@/components/cert/CertificatePage';
 import ProfilePage     from '@/components/profile/ProfilePage';
 import { getUserCert } from '@/lib/db';
 import { lessonHref, quizHref, isPublicLesson } from '@/lib/courseRoutes';
-import { DOCS_PUBLISHED } from '@/lib/docs';
+import { CONSENT_PROMPT_ENABLED } from '@/lib/docs';
 import ConsentGate from '@/components/auth/ConsentGate';
 import LockedPanel from '@/components/course/LockedPanel';
 import { loadLessonBody, prefetchModuleBodies } from '@/data/lessonContent';
@@ -717,11 +717,14 @@ export default function CourseApp({ initialM = null, initialL = null, serverBody
      stepped around by going straight to a URL. /privacy and /terms are their
      own routes outside CourseApp, so the documents stay readable from here.
 
-     Gated on DOCS_PUBLISHED: this is a one-shot prompt, and anyone shown it
-     while the documents still read [TODO] would be recording consent to
-     nothing and would never be asked again. consented_at IS NULL finds the
-     same people whenever it runs. */
-  if (DOCS_PUBLISHED && user && user.consentedAt == null) {
+     Gated on CONSENT_PROMPT_ENABLED, which is separate from DOCS_PUBLISHED on
+     purpose. Publishing the documents is invisible to existing users; putting
+     a blocking screen in front of all 814 accounts is not. Those decisions
+     should not share an edit. It is also a one-shot prompt — whoever sees it
+     is never asked again — so it should never fire as a side effect of
+     something else. consented_at IS NULL finds the same people whenever it
+     runs. */
+  if (CONSENT_PROMPT_ENABLED && user && user.consentedAt == null) {
     return (
       <ConsentGate
         userName={user.nameIsDefault ? '' : user.name}

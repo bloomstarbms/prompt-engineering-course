@@ -18,15 +18,15 @@
  *     includes the note in Security about a past exposure of certificate holder
  *     names and emails. Publishing an internal note about a possible breach
  *     inside a live privacy policy is a legal decision and not a wiring one.
- *     VALUE placeholders were kept visible. All are now filled — controller
- *     name, dates, retention period, contact address — EXCEPT ONE:
- *     the Supabase project region in section 5, which is the last thing
- *     standing between these documents and being published.
+ *     VALUE placeholders were kept visible. All are now filled: controller
+ *     name, dates, retention period, contact address, and the Supabase region
+ *     (read from the project dashboard: eu-west-1, West EU (Ireland)).
  *
- *     Contact address is the owner's personal address rather than
- *     privacy@prompten.xyz, at the owner's instruction. Noted because a
- *     personal address published on a live page will be scraped; swapping it
- *     for a forwarding address on the domain is a one-line change here.
+ *     Contact addresses are on the domain: privacy@prompten.xyz in the
+ *     privacy policy, hello@prompten.xyz in the terms. Both forward to the
+ *     owner's inbox via ImprovMX, and both were confirmed delivering before
+ *     these documents were allowed to publish. A domain address can be
+ *     redirected later; a personal one, once published and scraped, cannot.
  *
  *  3. In Terms section 11 the Privacy Policy linked to https://claude.ai/privacy
  *     — a paste artifact. Repointed at /privacy.
@@ -42,7 +42,7 @@ export const PRIVACY_MD = `## 1. Who we are
 Prompten ("we", "us") operates the website at [www.prompten.xyz](https://www.prompten.xyz), a free self-paced course in prompt engineering.
 
 - **Data controller:** Daniels Bloom
-- **Contact for privacy matters:** bloomstar042@gmail.com
+- **Contact for privacy matters:** privacy@prompten.xyz
 - **Location:** Nigeria
 
 If you have a question about this policy or about your data, email the address above. We aim to respond within 30 days.
@@ -89,7 +89,7 @@ Every certificate has a verification page at \`www.prompten.xyz/verify/<credenti
 - Verification pages are marked \`noindex\`, so search engines are instructed not to list them.
 - The link is not secret. If you share it — for example on LinkedIn — anyone with the link can view it.
 
-If you would prefer your certificate not to be publicly verifiable, email bloomstar042@gmail.com and we will remove it.
+If you would prefer your certificate not to be publicly verifiable, email privacy@prompten.xyz and we will remove it.
 
 ---
 
@@ -105,7 +105,7 @@ Under section 25 of the NDPA, we rely on:
 
 ## 5. Where your data is stored, and cross-border transfer
 
-Our database and authentication are provided by **Supabase**, and the site is hosted by **Vercel**. Both are outside Nigeria; our database is located in **[TODO — Supabase project region]**.
+Our database and authentication are provided by **Supabase**, and the site is hosted by **Vercel**. Both are outside Nigeria; our database is located in **West EU (Ireland), AWS region eu-west-1**.
 
 This means your personal data is transferred outside Nigeria. Under sections 41–43 of the NDPA we rely on the contractual protections in our agreements with these providers, which require them to protect your data to a standard comparable to the NDPA.
 
@@ -143,7 +143,7 @@ Under the NDPA you have the right to:
 - **Withdraw consent** at any time, where we rely on consent
 - **Not be subject** to solely automated decisions with legal or similarly significant effects. We make none.
 
-To exercise any of these, email **bloomstar042@gmail.com**. We will respond within 30 days and will not charge you.
+To exercise any of these, email **privacy@prompten.xyz**. We will respond within 30 days and will not charge you.
 
 **If you are unhappy with how we handle your data,** you may complain to the Nigeria Data Protection Commission (NDPC) at [ndpc.gov.ng](https://ndpc.gov.ng).
 
@@ -172,7 +172,7 @@ No system is perfectly secure. If we discover a personal data breach we will rep
 
 This course is intended for adults. You must be **18 or older** to create an account.
 
-Under the NDPA, processing a child's data requires verifiable parental consent, which we are not set up to obtain. If you believe someone under 18 has created an account, email bloomstar042@gmail.com and we will delete it.
+Under the NDPA, processing a child's data requires verifiable parental consent, which we are not set up to obtain. If you believe someone under 18 has created an account, email privacy@prompten.xyz and we will delete it.
 
 ---
 
@@ -184,7 +184,7 @@ If we change this policy we will update the date at the top. If the change mater
 
 ## 13. Contact
 
-**bloomstar042@gmail.com**
+**privacy@prompten.xyz**
 `;
 
 export const TERMS_MD = `## 1. Agreement
@@ -207,7 +207,7 @@ There is no fee, no subscription, and no payment details are ever collected. We 
 - Give us an email address you actually control — it's how you recover access.
 - Keep your password to yourself. You're responsible for what happens under your account.
 - One account per person.
-- Tell us at bloomstar042@gmail.com if you think someone else is using your account.
+- Tell us at hello@prompten.xyz if you think someone else is using your account.
 
 We may suspend or remove an account that abuses the service, attempts to interfere with it, or is used to harass others.
 
@@ -280,7 +280,7 @@ Nothing in these terms excludes liability that cannot lawfully be excluded — i
 
 ## 10. Ending it
 
-You can delete your account at any time — email bloomstar042@gmail.com. See the Privacy Policy for what happens to your data.
+You can delete your account at any time — email hello@prompten.xyz. See the Privacy Policy for what happens to your data.
 
 We may suspend or end your access if you break these terms. We'll tell you why unless there's a good reason not to.
 
@@ -306,5 +306,5 @@ These terms are governed by the laws of the Federal Republic of Nigeria, and the
 
 ## 14. Contact
 
-bloomstar042@gmail.com
+hello@prompten.xyz
 `;

@@ -37,7 +37,7 @@ I'm not affiliated with Anthropic, OpenAI, Google, or any other AI company, and 
 
 ## Get in touch
 
-Corrections, questions, or something that reads wrong: bloomstar042@gmail.com
+Corrections, questions, or something that reads wrong: hello@prompten.xyz
 
 If you spot an error in a lesson I'd genuinely like to know. The material gets revised.
 `;
