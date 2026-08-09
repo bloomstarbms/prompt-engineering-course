@@ -57,13 +57,28 @@ create trigger profiles_pin_consented_at
   for each row
   execute function public.pin_consented_at();
 
--- Verification.
+-- ─── VERIFIED ON PRODUCTION, SIGNED IN AS A REAL USER ────────────────────
+-- The privilege check is NOT the test — has_column_privilege still says true,
+-- because the grant genuinely is still there. The trigger is what stops the
+-- write, so the only meaningful test is attempting the write and watching it
+-- fail. Run against the live database from a signed-in browser session:
 --
--- The privilege check is NOT the test — has_column_privilege will still say
--- true, because the grant genuinely is still there. The trigger is what stops
--- the write, so the only meaningful test is to attempt the write as a browser
--- user and watch it fail with 42501. That is done from the app, signed in,
--- against the live database.
+--   1. PATCH profiles SET consented_at = '2020-01-01'
+--        -> 403 · 42501 · "consented_at is not user-writable"
+--
+--   2. Same forgery via UPSERT, the shape the app itself uses, in case
+--      PostgREST composes the two differently
+--        -> 403 · 42501 · "consented_at is not user-writable"
+--
+--   3. Legitimate save: PATCH profiles SET bio = '...'
+--        -> 200, value written and read back
+--      This is the one that matters for not having broken anything. A
+--      badly-written trigger would reject ordinary profile saves too.
+--
+--   4. consented_at after both forgery attempts
+--        -> still NULL
+--
+-- Test data restored afterwards: bio back to its original value.
 --
 -- Confirm the trigger exists:
 --   select tgname, tgenabled
