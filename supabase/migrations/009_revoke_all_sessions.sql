@@ -94,6 +94,34 @@
 -- auth.refresh_tokens rows are removed by the FK cascade from auth.sessions,
 -- which is the point — a captured refresh token is the thing that outlives the
 -- configuration fix.
+--
+-- ─── THIS IS NOT INSTANTANEOUS, AND THAT IS ACCEPTABLE ───────────────────
+-- Deleting sessions kills refresh tokens immediately. It does NOT invalidate
+-- access tokens already issued: those are self-contained JWTs, validated by
+-- signature rather than by a database lookup, and they remain valid until they
+-- expire — one hour by default. So a captured token still works for up to a
+-- JWT lifetime after this runs. The window closes within the hour, not at the
+-- moment you press Run.
+--
+-- That is fine, because the long-lived credential is the refresh token, and
+-- that is what this removes. An access token expires on its own; a refresh
+-- token survives password changes, configuration fixes and everything else
+-- until the session backing it is destroyed.
+--
+-- THE INSTANT VERSION IS ROTATING THE PROJECT JWT SECRET, and it is not
+-- proportionate here. The anon and service-role keys are signed with that same
+-- secret, so rotating it means updating NEXT_PUBLIC_SUPABASE_ANON_KEY and
+-- SUPABASE_SERVICE_ROLE_KEY in Vercel and briefly breaking the site. Reserve
+-- that for a confirmed compromise, not a possible one.
+--
+-- ─── THIS BYPASSES GoTrue, DELIBERATELY AND ONCE ─────────────────────────
+-- The supported path is the admin API (auth.admin.signOut with global scope),
+-- which goes through GoTrue. Deleting from auth.sessions directly reaches the
+-- same outcome via the FK cascade, and it is what the SQL editor can do — but
+-- `auth` is schema this project does not own, and Supabase may change it.
+-- Acceptable for a documented one-off incident response. Do not build this
+-- into anything routine; use the admin API if session revocation ever becomes
+-- a recurring need.
 
 begin;
 
