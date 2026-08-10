@@ -409,9 +409,15 @@ export function useAuth() {
 
   /* ── ACCEPT THE DOCUMENTS ─────────────────────────────────────────────
      For accounts that predate the Terms and Privacy Policy. The client cannot
-     write consented_at — 006 revokes that column from authenticated on
-     purpose — so this goes through /api/consent, which verifies a bearer token
-     and writes with the service role. */
+     write consented_at — the migration 007 trigger raises 42501 on any write
+     as authenticated or anon, on purpose (006's column REVOKE is a no-op; do
+     not cite it as the protection) — so this goes through /api/consent, which
+     verifies a bearer token and writes with the service role.
+
+     `ok` from that route now means a timestamp exists. It used to be able to
+     return ok with consentedAt null when the caller had no profiles row, which
+     set consentedAt back to null here and left the notice on screen with no
+     error — a failure invisible on both sides. */
   const acceptTerms = useCallback(async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();

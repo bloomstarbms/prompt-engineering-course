@@ -5,13 +5,13 @@ import { T } from '@/lib/theme';
 /**
  * One-time acceptance for accounts that predate the Terms and Privacy Policy.
  *
- * Shown after sign-in when consented_at IS NULL — which is exactly the 814
+ * Shown after sign-in when consented_at IS NULL — which is exactly the 763
  * accounts created before those documents existed, plus anything migrated from
  * a legacy localStorage account. NULL means never asked, not refused.
  *
  * DORMANT UNTIL CONSENT_PROMPT_ENABLED — its own flag, not DOCS_PUBLISHED.
  * The documents being live is invisible to existing users; this screen is not,
- * and it blocks all 814 of them on next sign-in. It is also one-shot: whoever
+ * and it blocks all 763 of them on next sign-in. It is also one-shot: whoever
  * sees it is never asked again, so it must never fire as a side effect of an
  * unrelated change. consented_at IS NULL identifies the same people whenever
  * it runs, so waiting costs nothing.

@@ -43,7 +43,7 @@
 export const DOCS_PUBLISHED = true;
 
 /**
- * ─── HOW WE ASK THE 814 PRE-DOCUMENT ACCOUNTS TO ACCEPT ──────────────────
+ * ─── HOW WE ASK THE 763 PRE-DOCUMENT ACCOUNTS TO ACCEPT ──────────────────
  *
  * ONE VARIABLE, THREE VALUES — not two booleans. Two booleans can both be
  * true; a single variable cannot hold two values at once. That is the whole
@@ -69,7 +69,7 @@ export const DOCS_PUBLISHED = true;
  * consent: nobody has to grant permission for the service they signed up for.
  * What the prompt buys is *evidence* of terms acceptance from the accounts
  * that predate the documents. Evidence is worth having. It is not worth a
- * blocking screen on a free course, and it is not worth every one of 814
+ * blocking screen on a free course, and it is not worth every one of 763
  * people being locked out simultaneously if /api/consent misbehaves.
  *
  * The blocking gate stays in the tree because the legal advice could change

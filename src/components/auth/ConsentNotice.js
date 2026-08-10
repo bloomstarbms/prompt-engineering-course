@@ -14,7 +14,7 @@ import { T } from '@/lib/theme';
  * course is contract, not consent. Nobody needs to grant permission for the
  * service they signed up for. What this buys is *evidence* of acceptance,
  * which is worth having but is not worth blocking a free course over — and
- * not worth 814 people being locked out at once if /api/consent misbehaves.
+ * not worth 763 people being locked out at once if /api/consent misbehaves.
  * The blocking version still exists as ConsentGate; see CONSENT_MODE.
  *
  * ─── THE ONE INVARIANT ───────────────────────────────────────────────────

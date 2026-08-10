@@ -63,9 +63,11 @@ export async function getProfile(userId, accessToken) {
   const client = accessToken ? makeTokenClient(accessToken) : supabase;
   const { data, error } = await client
     .from('profiles')
-    // consented_at is read-only to the client by design (migration 006 revokes
-    // column UPDATE from authenticated). It is selected so the UI can tell who
-    // has never been asked; only /api/consent can write it.
+    // consented_at is read-only to the client by design: the migration 007
+    // trigger raises 42501 on any write attempt as authenticated or anon.
+    // (006's column REVOKE is a no-op — it cannot subtract from a table grant.)
+    // It is selected so the UI can tell who has never been asked; only
+    // /api/consent can write it.
     .select('name, bio, avatar_url, consented_at')
     .eq('id', userId)
     .maybeSingle();

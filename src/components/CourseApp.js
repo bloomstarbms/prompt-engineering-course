@@ -719,7 +719,7 @@ export default function CourseApp({ initialM = null, initialL = null, serverBody
 
      Gated on CONSENT_PROMPT_ENABLED, which is separate from DOCS_PUBLISHED on
      purpose. Publishing the documents is invisible to existing users; putting
-     a blocking screen in front of all 814 accounts is not. Those decisions
+     a blocking screen in front of all 763 accounts is not. Those decisions
      should not share an edit. It is also a one-shot prompt — whoever sees it
      is never asked again — so it should never fire as a side effect of
      something else. consented_at IS NULL finds the same people whenever it

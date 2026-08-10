@@ -10,7 +10,7 @@
  *
  *  1. The "DRAFT — not legal advice, have a practitioner review" banner at the
  *     top of each document was removed. It is addressed to the site owner, not
- *     to the reader; publishing it would tell 814 users their privacy policy is
+ *     to the reader; publishing it would tell 763 users their privacy policy is
  *     unfinished.
  *
  *  2. Author-instruction TODOs were removed — the ones that tell the owner to
