@@ -1,5 +1,6 @@
 import './globals.css';
 import { AuthProvider } from '@/providers/AuthProvider';
+import ConsentNotice from '@/components/auth/ConsentNotice';
 import { SITE_URL, SITE_NAME } from '@/lib/seo';
 
 /**
@@ -55,7 +56,23 @@ export default function RootLayout({ children }) {
       <body>
         {/* AuthProvider lives at root so auth state is loaded once and
             shared across all routes — no re-auth, no splash on navigation */}
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          {/* Mounted here rather than inside CourseApp deliberately. CourseApp
+              has five separate return sites (quiz, cert, profile, lesson,
+              landing); threading a banner through all of them invites the one
+              that gets missed. As a sibling of {children} it renders on every
+              route under the root layout — including /privacy and /terms, so
+              reading the documents does not make it vanish — and it renders
+              nothing at all when signed out, because it needs a user.
+
+              It is also structurally incapable of blocking a route: it is not
+              in the render path of any page, so it cannot early-return in
+              place of one. ConsentGate, by contrast, IS an early return
+              inside CourseApp. That difference is the non-blocking guarantee,
+              and it is architectural rather than a matter of CSS. */}
+          <ConsentNotice />
+        </AuthProvider>
       </body>
     </html>
   );

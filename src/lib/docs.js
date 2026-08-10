@@ -43,22 +43,43 @@
 export const DOCS_PUBLISHED = true;
 
 /**
- * ─── THE ONE-TIME ACCEPTANCE PROMPT, HELD SEPARATELY ─────────────────────
+ * ─── HOW WE ASK THE 814 PRE-DOCUMENT ACCOUNTS TO ACCEPT ──────────────────
  *
- * Deliberately NOT the same flag as DOCS_PUBLISHED, and this is the whole
- * reason it exists as its own constant.
+ * ONE VARIABLE, THREE VALUES — not two booleans. Two booleans can both be
+ * true; a single variable cannot hold two values at once. That is the whole
+ * reason this is a string rather than the pair of flags it started as. There
+ * is no edit, no merge and no misreading that can put a blocking modal and a
+ * dismissible banner on screen together, because there is nowhere to write it
+ * down. The build also asserts it — see scripts/check-course-integrity.mjs.
  *
- * Publishing the documents is invisible to existing users. Switching on the
- * acceptance prompt is not: it puts a blocking screen in front of all 814
- * accounts the next time each one signs in. Those are different sized
- * decisions and they should not be taken by the same edit — least of all by
- * accident, as a side effect of filling in a privacy policy.
+ *   'off'       Nobody is asked. consented_at stays NULL for anyone who
+ *               predates the documents. This is the resting state and it
+ *               costs nothing: consented_at IS NULL identifies the same
+ *               population whenever it runs, so there is no deadline.
  *
- * Set this true when you actually want people prompted. consented_at IS NULL
- * identifies the same population whenever it runs, so there is no deadline and
- * nothing degrades by waiting.
+ *   'notice'    A dismissible banner. Non-blocking: the site stays fully
+ *               usable, navigation is not gated, focus is not trapped.
+ *               Accept writes consented_at through /api/consent. Dismiss
+ *               writes NOTHING to the database. THIS IS THE INTENDED MODE.
+ *
+ *   'blocking'  The full-screen ConsentGate. Built, tested, and deliberately
+ *               kept — but not shipped. See below.
+ *
+ * WHY NOT BLOCKING. The lawful basis for running the course is contract, not
+ * consent: nobody has to grant permission for the service they signed up for.
+ * What the prompt buys is *evidence* of terms acceptance from the accounts
+ * that predate the documents. Evidence is worth having. It is not worth a
+ * blocking screen on a free course, and it is not worth every one of 814
+ * people being locked out simultaneously if /api/consent misbehaves.
+ *
+ * The blocking gate stays in the tree because the legal advice could change
+ * and rebuilding a tested screen from a git history is worse than keeping it.
  */
-export const CONSENT_PROMPT_ENABLED = false;
+export const CONSENT_MODE = 'off';   // 'off' | 'notice' | 'blocking'
+
+/** Derived, never assigned. Mutually exclusive by construction. */
+export const CONSENT_PROMPT_ENABLED = CONSENT_MODE === 'blocking';
+export const CONSENT_NOTICE_ENABLED = CONSENT_MODE === 'notice';
 
 /** The document pages, in footer order. Single source for links and sitemap. */
 export const DOC_PAGES = [

@@ -182,6 +182,40 @@ for (const rel of ['src/components/CourseApp.js', 'src/hooks/useAuth.js', 'src/p
   });
 }
 
+// ── Check 8: exactly one consent mechanism can be active ─────────────────
+// The blocking ConsentGate and the dismissible ConsentNotice must never be on
+// screen together. lib/docs.js makes that structurally true by deriving both
+// booleans from a single CONSENT_MODE string — one variable cannot hold two
+// values. This check exists for the case where somebody "simplifies" it back
+// into two independent booleans, which is exactly the shape it started as.
+//
+// It asserts three things: CONSENT_MODE exists and is one of the three known
+// values, the two exported booleans are derived rather than assigned literals,
+// and the derivation cannot make both true.
+{
+  const rel = 'src/lib/docs.js';
+  const src = readFileSync(join(root, rel), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '))
+    .replace(/\/\/[^\n]*/g, '');
+
+  const mode = src.match(/export\s+const\s+CONSENT_MODE\s*=\s*'([^']*)'/);
+  if (!mode) {
+    fail(`${rel}: CONSENT_MODE is missing — the two consent mechanisms are no longer mutually exclusive by construction`);
+  } else if (!['off', 'notice', 'blocking'].includes(mode[1])) {
+    fail(`${rel}: CONSENT_MODE is '${mode[1]}' — must be 'off', 'notice' or 'blocking'`);
+  }
+
+  for (const [name, expected] of [
+    ['CONSENT_PROMPT_ENABLED', 'blocking'],
+    ['CONSENT_NOTICE_ENABLED', 'notice'],
+  ]) {
+    const re = new RegExp(`export\\s+const\\s+${name}\\s*=\\s*CONSENT_MODE\\s*===\\s*'${expected}'`);
+    if (!re.test(src)) {
+      fail(`${rel}: ${name} is not derived as \`CONSENT_MODE === '${expected}'\` — a literal or an independent flag lets both mechanisms be true at once`);
+    }
+  }
+}
+
 // ── Report ───────────────────────────────────────────────────────────────
 if (problems.length) {
   console.error('\n  COURSE INTEGRITY CHECK FAILED\n');
