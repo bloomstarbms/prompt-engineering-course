@@ -61,45 +61,96 @@
 --
 -- consented_at stays NULL. They have not consented. NULL means never asked.
 
+-- ─── HOW TO RUN THIS ─────────────────────────────────────────────────────
+-- Paste the whole file into the Supabase SQL editor and Run once. It executes
+-- straight through to COMMIT in a single go — the editor pools connections and
+-- will not hold a transaction open across two Run clicks.
+--
+-- THAT IS WHY THE CHECKS RAISE RATHER THAN ASK. An earlier draft printed
+-- before/after counts with a comment saying "read these before committing".
+-- Run as one block that is worthless: COMMIT executes regardless of what the
+-- numbers say, and the instruction describes a decision point that does not
+-- exist. The DO block below asserts the same conditions and raises on any
+-- failure, which aborts the transaction and turns the COMMIT into a rollback.
+-- The safety is enforced by the database, not by the reader.
+--
+-- Nothing here is a mid-transaction decision. If it commits, it was correct.
+-- If it was not correct, nothing was written and you will see the exception.
+-- The rollback at the bottom is for undoing a SUCCESSFUL run later.
+
 begin;
 
--- ── BEFORE ───────────────────────────────────────────────────────────────
--- Expect: auth_users 818, profile_rows 764, missing 54
-select 'BEFORE' as stage,
-       (select count(*) from auth.users)                              as auth_users,
-       (select count(*) from public.profiles)                         as profile_rows,
+-- Captured before the insert so the assertions have something to compare to.
+create temp table _bf_before on commit drop as
+select (select count(*) from auth.users)                        as auth_users,
+       (select count(*) from public.profiles)                   as profile_rows,
        (select count(*) from auth.users u
           left join public.profiles p on p.id = u.id
-         where p.id is null)                                          as missing;
+         where p.id is null)                                    as missing,
+       (select count(*) from public.profiles
+         where consented_at is not null)                        as consented;
 
 -- ── THE BACKFILL ─────────────────────────────────────────────────────────
 -- Insert-only. No UPDATE, no upsert, no ON CONFLICT DO UPDATE: an existing
 -- row must not be touched by this, and the NOT EXISTS makes that structural
--- rather than a promise. Re-running it inserts nothing.
+-- rather than a promise. Re-running it inserts nothing, so it is safe to run
+-- again after creating a test account.
 insert into public.profiles (id, name, bio, avatar_url, created_at, consented_at)
 select u.id, '', '', '', u.created_at, null
   from auth.users u
  where not exists (select 1 from public.profiles p where p.id = u.id);
 
--- ── AFTER ────────────────────────────────────────────────────────────────
--- Expect: profile_rows 818, missing 0, backfilled 54, and consented UNCHANGED
--- at whatever it was before. If `consented` moved, something wrote a consent
--- timestamp and this must be rolled back.
-select 'AFTER' as stage,
-       (select count(*) from auth.users)                              as auth_users,
-       (select count(*) from public.profiles)                         as profile_rows,
+-- ── THE ASSERTIONS ───────────────────────────────────────────────────────
+do $$
+declare b record; a record;
+begin
+  select * into b from _bf_before;
+  select (select count(*) from auth.users)                      as auth_users,
+         (select count(*) from public.profiles)                 as profile_rows,
+         (select count(*) from auth.users u
+            left join public.profiles p on p.id = u.id
+           where p.id is null)                                  as missing,
+         (select count(*) from public.profiles
+           where consented_at is not null)                      as consented
+    into a;
+
+  if a.missing <> 0 then
+    raise exception 'ABORT: % auth users still have no profiles row', a.missing;
+  end if;
+
+  if a.profile_rows <> a.auth_users then
+    raise exception 'ABORT: profiles (%) does not equal auth.users (%)',
+      a.profile_rows, a.auth_users;
+  end if;
+
+  -- The one that matters. This migration must not create consent evidence.
+  if a.consented <> b.consented then
+    raise exception 'ABORT: consented count moved from % to % — this migration must never write consent',
+      b.consented, a.consented;
+  end if;
+
+  -- Exactly the missing rows were added and nothing else.
+  if a.profile_rows <> b.profile_rows + b.missing then
+    raise exception 'ABORT: expected % rows after insert, found %',
+      b.profile_rows + b.missing, a.profile_rows;
+  end if;
+end $$;
+
+-- ── THE REPORT ───────────────────────────────────────────────────────────
+-- Only reached if every assertion passed. This is the result set the editor
+-- displays; keep it for the record.
+select b.auth_users     as before_auth_users,
+       b.profile_rows   as before_profiles,
+       b.missing        as before_missing,
+       b.consented      as before_consented,
+       (select count(*) from public.profiles)                   as after_profiles,
        (select count(*) from auth.users u
           left join public.profiles p on p.id = u.id
-         where p.id is null)                                          as missing,
-       (select count(*) from public.profiles where name = '')         as blank_names,
+         where p.id is null)                                    as after_missing,
+       (select count(*) from public.profiles where name = '')   as blank_names,
        (select count(*) from public.profiles
-         where consented_at is not null)                              as consented;
-
--- READ THE TWO ROWS ABOVE BEFORE COMMITTING.
---   missing must be 0
---   profile_rows must be exactly auth_users
---   consented must equal the baseline (1 as measured 2026-08-09)
--- If any of those is wrong, run ROLLBACK; instead of COMMIT;
+         where consented_at is not null)                        as after_consented
+  from _bf_before b;
 
 commit;
 
