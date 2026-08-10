@@ -75,7 +75,7 @@ export const DOCS_PUBLISHED = true;
  * The blocking gate stays in the tree because the legal advice could change
  * and rebuilding a tested screen from a git history is worse than keeping it.
  */
-export const CONSENT_MODE = 'off';   // 'off' | 'notice' | 'blocking'
+export const CONSENT_MODE = 'notice';   // 'off' | 'notice' | 'blocking'
 
 /** Derived, never assigned. Mutually exclusive by construction. */
 export const CONSENT_PROMPT_ENABLED = CONSENT_MODE === 'blocking';
