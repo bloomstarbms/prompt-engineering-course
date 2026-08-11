@@ -251,6 +251,42 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
     return { tag: m.tag, title: m.title, color: m.color || MOD_COLORS[mi], pct: t > 0 ? Math.round(c / t * 100) : null };
   });
 
+  /* ── PDF FILENAME ────────────────────────────────────────────────────
+     Chrome, Edge and Safari name a "Save as PDF" file after document.title.
+     Without this the certificate saves as
+     "Prompt Engineering — Master the Art of Prompting AI.pdf" — the landing
+     page's marketing headline, on a file someone will attach to a job
+     application. Swap the title for the duration of the print dialog and put
+     it back afterwards.
+
+     Restoring in afterprint is not optional: the dialog can be cancelled, and
+     a title left rewritten would leak into the tab, the history entry and any
+     bookmark made afterwards. The cleanup also runs on unmount, so navigating
+     away mid-dialog cannot strand it either.
+
+     Characters illegal in Windows filenames are stripped rather than replaced,
+     because a name is user-supplied text and Chrome will silently mangle or
+     truncate around them. The em dash is deliberate and safe. */
+  useEffect(() => {
+    if (!cert) return;
+    const original = document.title;
+    const safeName = String(cert.name || '').replace(/[\\/:*?"<>|]/g, '').trim();
+    const printTitle = safeName
+      ? `Prompten Certificate — ${safeName}`
+      : 'Prompten Certificate';
+
+    const before = () => { document.title = printTitle; };
+    const after  = () => { document.title = original; };
+
+    window.addEventListener('beforeprint', before);
+    window.addEventListener('afterprint', after);
+    return () => {
+      window.removeEventListener('beforeprint', before);
+      window.removeEventListener('afterprint', after);
+      document.title = original;   // unmount mid-dialog must not strand it
+    };
+  }, [cert]);
+
   useEffect(() => {
     if (!userId || !nameConfirmed) return;
     setCertLoading(true);
@@ -407,6 +443,15 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
           50%       { transform: translateY(-2px) rotate(0.5deg); }
         }
 
+        /* The course name inside the disclaimer sentence. Screen appearance is
+           unchanged from when this was an inline style — white at 55% on the
+           dark card — but it now lives in the stylesheet where the print block
+           can override it. See the comment at the markup. */
+        .cert-body-em {
+          color: rgba(255,255,255,0.55);
+          font-style: italic;
+        }
+
         /* ────────────────── PRINT / SAVE AS PDF ────────────────── */
         @media print {
           @page { size: A4 landscape; margin: 0; }
@@ -497,6 +542,15 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
           .cert-score-label    { color: #4f46e5 !important; }
 
           .cert-body-text      { color: #374151 !important; }
+          /* The course name in the disclaimer. Two rules deliberately:
+             the class is the fix, matching how every other element here is
+             handled; the descendant selector is a net for any <em> added to
+             this paragraph later by someone who forgets the class. Neither
+             alone is enough — the class can be omitted, and a bare descendant
+             rule would leave the element outside the convention that made
+             every other element printable. */
+          .cert-body-em        { color: #4338ca !important; }
+          .cert-body-text em   { color: #4338ca !important; }
           .cert-divider        { background: #e5e7eb !important; }
           .cert-ornament-line  { stroke: #a5b4fc !important; }
 
@@ -763,8 +817,23 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
               {/* Must match the course title above it, the LinkedIn credential
                   name and the /verify page. It is the same certificate naming
                   itself twice; the two saying different things is the one
-                  inconsistency a reader is guaranteed to notice. */}
-              <em style={{ color: 'rgba(255,255,255,0.55)' }}>Prompt Engineering</em>{' '}
+                  inconsistency a reader is guaranteed to notice.
+
+                  CLASSED, NOT INLINE-STYLED, and that is the fix for a real
+                  bug rather than a preference. This element used to carry
+                  `style={{ color: 'rgba(255,255,255,0.55)' }}` and no class.
+                  The print sheet turns the card white and overrides the parent
+                  paragraph via .cert-body-text — but `color` does not cascade
+                  into a child that sets its own, and no print selector could
+                  reach an unclassed element. Result: white text at 55% opacity
+                  on white paper. The course name was in the PDF's text layer
+                  and never painted, so the certificate read "has completed the
+                  ⟨blank⟩ programme" and looked like an unfilled template.
+
+                  Every other styled element in this card carries a cert-* class
+                  precisely so the print block can reach it. This one opted out.
+                  Do not put a colour in an inline style here. */}
+              <em className="cert-body-em">Prompt Engineering</em>{' '}
               programme, covering the design, evaluation and deployment of prompts
               across current AI language models. Prompten is an independent
               educational provider and is not affiliated with, endorsed by, or
