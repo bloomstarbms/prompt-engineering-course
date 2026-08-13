@@ -164,6 +164,22 @@ create table if not exists public.course_events (
   created_at timestamptz default now()
 );
 
+--  LOAD-BEARING, AND IT WAS MISSING FROM PRODUCTION UNTIL 2026-08-13.
+--  /api/track upserts with onConflict: 'email,event'. Postgres rejects that
+--  statement outright when no matching unique constraint exists — not at
+--  write time, at PLANNING time:
+--
+--    there is no unique or exclusion constraint matching the
+--    ON CONFLICT specification
+--
+--  This file declared the index. The database never had it. Every analytics
+--  write failed with a 500 from 2026-04-25 until migration 010 created it,
+--  and because both call sites are fire-and-forget (`.catch(() => {})`) the
+--  failure was invisible for 110 days while the admin dashboard kept showing
+--  April's numbers.
+--
+--  That is the same defect this file's header warns about: a declaration here
+--  is not evidence of an object there. Verify, do not assume.
 create unique index if not exists course_events_email_event_idx
   on public.course_events (email, event);
 
