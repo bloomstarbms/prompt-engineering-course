@@ -9,6 +9,36 @@ ignore it. Both are wrong.
 
 ---
 
+## Open: `SUPABASE_SETUP.sql` should be regenerated, not patched again
+
+That file has now been **wrong about `course_events` three separate times**:
+
+| What it said | What production has | Found |
+|---|---|---|
+| policy `course_events: insert` | policy `allow inserts` | during the RLS audit |
+| `create unique index … (email, event)` | no such index existed | 13 Aug 2026, after a 110-day outage |
+| `id uuid default gen_random_uuid()` | `id` is an **integer** | 13 Aug 2026 |
+
+The third was found incidentally while reading a result grid, which is the
+problem: nobody is checking, and each divergence is discovered only when it
+causes an outage or someone happens to look.
+
+The missing index is the expensive one. `/api/track` upserts with
+`onConflict: 'email,event'`; Postgres rejects that at planning time without a
+matching constraint, so **every analytics write failed with a 500 for 110 days**
+while the file confidently declared the index existed. Anyone reasoning from the
+repo would have concluded the write path was sound.
+
+**Regenerate it from the live schema** — `pg_dump --schema-only`, or Supabase's
+schema export — rather than patching the next discrepancy by hand. Patching has
+been tried three times and has produced a file that is right in most places,
+which is worse than one that is obviously stale: it is trusted.
+
+The file's own header already says *"a confidently wrong map is worse than
+none"*. It is describing itself.
+
+---
+
 ## Open: `course_events` table grants are wide open
 
 **Every role holds every privilege**, confirmed 13 August 2026:

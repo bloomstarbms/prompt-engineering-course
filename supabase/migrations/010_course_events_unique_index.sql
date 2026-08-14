@@ -91,12 +91,60 @@
 
 begin;
 
+-- ── BACKUP FIRST, INSIDE THE TRANSACTION ─────────────────────────────────
+-- A full copy of the table before a single row is deleted. This replaces an
+-- earlier plan to export CSV, which failed for three separate reasons worth
+-- recording so nobody retries it: the SQL editor caps results at 100 rows and
+-- exports the GRID rather than the query (so the file would have held 100 of
+-- 874 and looked complete), the result grid virtualises cells so the data
+-- cannot be read out of the DOM either, and the download folder is not
+-- reachable from the agent's filesystem.
+--
+-- This is strictly better anyway. It is atomic with the delete — if anything
+-- below aborts, the backup rolls back too and no orphan table is left behind —
+-- and restoring is one statement rather than a CSV import.
+--
+-- SECURITY: RLS ON, GRANTS REVOKED, DELIBERATELY.
+-- A new table in `public` inherits Supabase's default privileges, which grant
+-- anon and authenticated access. This table holds 874 names and email
+-- addresses. Creating it without locking it down would reproduce the exact
+-- exposure that migration 000 was written to close — a safety measure that
+-- creates a PII leak is not a safety measure. RLS with no policies denies
+-- everything by default; the explicit revokes are belt and braces because
+-- default privileges are easy to misremember.
+create table public.course_events_backup_20260813 as
+  select * from public.course_events;
+
+alter table public.course_events_backup_20260813 enable row level security;
+revoke all on public.course_events_backup_20260813 from anon, authenticated;
+
 create temp table _ce_before on commit drop as
 select (select count(*) from public.course_events)                          as rows,
+       (select count(*) from public.course_events_backup_20260813)          as backup_rows,
        (select count(*) from (select distinct email, event
                                 from public.course_events) d)               as distinct_pairs,
        (select count(*) from public.profiles)                               as profiles,
        (select count(*) from auth.users)                                    as auth_users;
+
+-- ── THE BACKUP MUST BE COMPLETE BEFORE ANYTHING IS DELETED ───────────────
+-- Asserted as an equality against the live table rather than hardcoded to
+-- 874. 874 is what was measured on 2026-08-13 and is what you should expect,
+-- but the invariant that actually protects the data is "the backup holds
+-- everything the table holds" — and that stays true if a signup lands between
+-- the measurement and the run. Hardcoding the number would abort the
+-- migration for a reason that has nothing to do with its safety.
+do $$
+declare b record;
+begin
+  select * into b from _ce_before;
+  if b.backup_rows <> b.rows then
+    raise exception 'ABORT: backup holds % rows, live table holds % — refusing to delete',
+      b.backup_rows, b.rows;
+  end if;
+  if b.rows = 0 then
+    raise exception 'ABORT: course_events is empty — nothing to migrate, and the backup would be worthless';
+  end if;
+end $$;
 
 -- ── DEDUPLICATE ──────────────────────────────────────────────────────────
 -- Keep row rank 1 per (email, event): earliest created_at, id as tiebreak.
@@ -170,7 +218,8 @@ begin
 end $$;
 
 -- ── REPORT ───────────────────────────────────────────────────────────────
-select b.rows                                             as rows_before,
+select b.backup_rows                                      as backup_rows,
+       b.rows                                             as rows_before,
        (select count(*) from public.course_events)        as rows_after,
        b.rows - (select count(*) from public.course_events) as rows_removed,
        b.distinct_pairs                                   as pairs_before,
@@ -184,6 +233,7 @@ select b.rows                                             as rows_before,
 commit;
 
 -- ── EXPECTED ─────────────────────────────────────────────────────────────
+--   backup_rows   874   ← must equal rows_before
 --   rows_before   874
 --   rows_after    792
 --   rows_removed   82
@@ -195,10 +245,33 @@ commit;
 -- aborted and nothing was written.
 --
 -- ── ROLLBACK ─────────────────────────────────────────────────────────────
--- The deleted rows are not recoverable from here — take a Supabase backup
--- before running this. The index alone is trivially reversible:
+-- The deleted rows ARE recoverable: public.course_events_backup_20260813 holds
+-- all 874 as they were immediately before the delete.
 --
---   drop index if exists public.course_events_email_event_idx;
+-- To restore the duplicates you must drop the index first — it is what stops
+-- them going back:
 --
--- Dropping it would return /api/track to failing on every call, so only do
--- that alongside reverting the route.
+--   begin;
+--     drop index if exists public.course_events_email_event_idx;
+--     insert into public.course_events
+--       select * from public.course_events_backup_20260813
+--        on conflict (id) do nothing;
+--   commit;
+--
+-- That returns /api/track to failing on every call, so only do it alongside
+-- reverting the route.
+--
+-- ── THE BACKUP TABLE IS TEMPORARY. DROP IT. ──────────────────────────────
+-- Once /api/track has been observed returning 200 with a row landing in
+-- production, this table has served its purpose and should go:
+--
+--   drop table if exists public.course_events_backup_20260813;
+--
+-- Left in place it becomes permanent clutter that nobody dares remove because
+-- nobody remembers what it was for — and it holds 874 email addresses, so it
+-- is a copy of personal data with no purpose and no retention justification.
+-- The privacy policy commits to keeping usage events for 24 months; it does
+-- not contemplate an indefinite duplicate of them sitting beside the original.
+--
+-- If you are reading this in 2027 and the table still exists: the fix was
+-- verified long ago. Drop it.
