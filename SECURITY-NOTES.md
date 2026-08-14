@@ -1,11 +1,46 @@
-# Security notes — dependency posture
+# Security notes
 
-Last reviewed: 9 August 2026, against `next@14.2.35`.
+Last reviewed: 13 August 2026. Dependencies against `next@14.2.35`.
 
-This file exists because `npm audit` reports findings that are **not fixed**, and
-the reason they are acceptable is not visible from the audit output. Anyone
-reading `8 high severity vulnerabilities` without this note has two options:
-panic, or ignore it. Both are wrong.
+This file exists because tooling reports findings that are **not fixed**, and the
+reason they are acceptable is not visible from the tooling output. Anyone reading
+`8 high severity vulnerabilities` without this note has two options: panic, or
+ignore it. Both are wrong.
+
+---
+
+## Open: `course_events` table grants are wide open
+
+**Every role holds every privilege**, confirmed 13 August 2026:
+
+| grantee | privileges |
+|---|---|
+| `anon` | DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE |
+| `authenticated` | same |
+| `postgres` | same |
+| `service_role` | same |
+
+**`anon` can DELETE and TRUNCATE this table.** Reads are blocked by a
+`select using (false)` policy and the `allow inserts` policy only covers INSERT
+— but RLS does not restrain `TRUNCATE`, which is a table-level operation checked
+against the grant, not the policy. An unauthenticated caller holding only the
+public anon key could empty the analytics table.
+
+Nothing exploits this today, and there is no evidence anyone has tried. But
+"unreachable because nobody has looked" is the weakest form of safe, and this
+table's lockdown has now been deferred twice — once during the original RLS work
+and again during the 110-day tracking outage.
+
+**What it would take:** revoke the surplus from `anon` and `authenticated`,
+leaving `anon` with INSERT only (which `/api/track` no longer needs either, since
+it now uses the service role) and `service_role` with everything. That is a small
+migration, and it should be verified by *attempting* a delete as `anon` and
+watching it fail — not by re-reading the grant table, which is the mistake
+migration 006 made.
+
+**Why it is not urgent:** the table holds analytics events, not user data. Its
+worst case is losing funnel history, which is annoying rather than harmful — and
+as of 13 August the dashboard no longer derives its figures from it.
 
 ---
 
