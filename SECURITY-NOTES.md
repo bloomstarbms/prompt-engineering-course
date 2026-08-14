@@ -20,16 +20,34 @@ ignore it. Both are wrong.
 | `postgres` | same |
 | `service_role` | same |
 
-**`anon` can DELETE and TRUNCATE this table.** Reads are blocked by a
-`select using (false)` policy and the `allow inserts` policy only covers INSERT
-— but RLS does not restrain `TRUNCATE`, which is a table-level operation checked
-against the grant, not the policy. An unauthenticated caller holding only the
-public anon key could empty the analytics table.
+**This is a surplus privilege, not an open door. Rank it accordingly.**
 
-Nothing exploits this today, and there is no evidence anyone has tried. But
-"unreachable because nobody has looked" is the weakest form of safe, and this
-table's lockdown has now been deferred twice — once during the original RLS work
-and again during the 110-day tracking outage.
+The `anon` role holds DELETE and TRUNCATE on paper, and it is true that RLS does
+not restrain `TRUNCATE` — that is a table-level operation checked against the
+grant rather than per-row against a policy, so the `select using (false)` policy
+that makes this table feel locked down does nothing against it.
+
+**But the grant is not reachable through the public API:**
+
+- **PostgREST exposes no TRUNCATE verb at all.** There is no request that
+  reaches it.
+- **The anon key is a JWT for PostgREST, not database credentials.** Exercising
+  the `anon` role's grants directly requires a Postgres connection, which
+  requires the database password — a different secret, not the public one.
+- **DELETE is refused by default-deny.** The grant exists, but there is no
+  DELETE policy, and RLS denies what no policy permits.
+
+So an attacker holding the public anon key cannot empty this table. Someone
+holding the database password could — but they could do considerably worse, and
+the grant is not what would be protecting you.
+
+This is hygiene: a privilege that serves no purpose and should not exist.
+Worth an hour, not an evening, and not ahead of anything else in this file.
+
+The reason it is written down rather than left in a conversation is that this
+table's lockdown has been deferred twice — once during the original RLS work,
+again during the 110-day tracking outage — and each deferral loses the reasoning
+about *why* it was safe to defer.
 
 **What it would take:** revoke the surplus from `anon` and `authenticated`,
 leaving `anon` with INSERT only (which `/api/track` no longer needs either, since
@@ -38,9 +56,17 @@ migration, and it should be verified by *attempting* a delete as `anon` and
 watching it fail — not by re-reading the grant table, which is the mistake
 migration 006 made.
 
-**Why it is not urgent:** the table holds analytics events, not user data. Its
-worst case is losing funnel history, which is annoying rather than harmful — and
-as of 13 August the dashboard no longer derives its figures from it.
+**Why it is not urgent:** the grant is unreachable from the public API (above),
+and the table holds analytics events rather than user data. Its worst case is
+losing funnel history, which is annoying rather than harmful — and as of
+13 August the dashboard no longer derives its figures from it.
+
+**A note on how this entry was written**, because it is instructive. The first
+draft said an unauthenticated caller with the anon key "could empty the analytics
+table". That was wrong in the way that matters: technically defensible about the
+grant, wrong about reachability, and phrased urgently enough to send the next
+reader down a two-hour path for a ten-minute problem. Overstating a finding costs
+attention that a real one will need later.
 
 ---
 
