@@ -249,9 +249,43 @@ export default function AdminDashboard() {
 
         {/* User tables */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
-          <UserTable title="Recent Enrollments"  rows={stats.recentEnrollments}  color="#818cf8" />
-          <UserTable title="Course Completions"  rows={stats.recentCompletions}  color="#34d399" />
+          <UserTable title="Recent Registrations" rows={stats.recentEnrollments}  color="#818cf8" />
+          {/* NOT "Course Completions". These are certificates, which have a real
+              issued_at. progress has no completion timestamp — updated_at is
+              rewritten on every save — so a "recently completed" list would be
+              ordered by last activity while claiming to be ordered by finishing.
+              The COURSE COMPLETED card above counts a different, larger group:
+              everyone who has finished the syllabus, whether or not they ever
+              claimed a certificate. */}
+          <UserTable title="Certificates Issued"  rows={stats.recentCertificates} color="#34d399" />
         </div>
+
+        {/* ── DIAGNOSTICS ──────────────────────────────────────────────────
+            Here because of how the last two failures were found: both were
+            invisible on this screen and were discovered by hand-written SQL
+            months late. A number that only exists in someone's ad-hoc query is
+            a number nobody is watching. */}
+        {stats.diagnostics && (
+          <div style={{
+            marginTop: 28, padding: '14px 18px',
+            background: T.bg, border: `1px solid ${T.border}`, borderRadius: 12,
+            fontFamily: T.mono, fontSize: 11, color: T.dim,
+            display: 'flex', flexWrap: 'wrap', gap: 18,
+          }}>
+            <span>auth.users {enrolled}</span>
+            <span>profiles {stats.diagnostics.profiles}</span>
+            <span>progress {stats.diagnostics.progressRows}</span>
+            <span>certificates {stats.diagnostics.certificates}</span>
+            <span>lessons required {stats.diagnostics.requiredLessons}</span>
+            {/* A non-zero gap means accounts exist with no profile row. That was
+                true of 54 accounts for months and cost a migration to repair. */}
+            {stats.diagnostics.profileGap !== 0 && (
+              <span style={{ color: '#f87171', fontWeight: 700 }}>
+                ⚠ {stats.diagnostics.profileGap} account(s) missing a profile row
+              </span>
+            )}
+          </div>
+        )}
 
         {!stats.totalEnrollments && (
           <div style={{
