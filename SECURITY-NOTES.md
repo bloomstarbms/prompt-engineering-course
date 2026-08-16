@@ -9,6 +9,153 @@ ignore it. Both are wrong.
 
 ---
 
+## Open — HIGHEST PRIORITY: `course_events` does not cascade on deletion, and the Privacy Policy says it does
+
+**This is a published commitment we are not meeting. It outranks everything
+else in this file, because everything else is a risk and this one has already
+happened.**
+
+The Privacy Policy states, in `src/content/legal.js`:
+
+> When you ask us to delete your account, we delete your profile, progress and
+> usage events.
+
+`profiles`, `progress` and `certificates` all carry
+`references auth.users on delete cascade`, so those three are true
+automatically. **`course_events` has no foreign key to `auth.users` at all.**
+
+**Consequence: every account deletion performed so far has left the person's
+name and email address behind in `course_events`.** Not archived, not
+anonymised — the same two fields, in a table nobody reads, with no deletion
+path and no retention clock running against them. The policy also promises
+usage events are "kept for 24 months, then deleted"; there is no job that does
+that either.
+
+### Until the table is retired, erasure has a fifth step
+
+Account deletion is not complete without it. Add to whatever the erasure
+procedure is, and do it every time:
+
+```sql
+delete from public.course_events where email = 'THE-ADDRESS';
+```
+
+Lowercase the address before running it — `/api/track` normalises with
+`toLowerCase().trim()` on the way in, so a mixed-case address will match
+nothing and the delete will silently affect zero rows. **Check the row count.**
+A `DELETE 0` here means either the person never had an event or you typed the
+address in the wrong case, and those two look identical from the outside.
+
+### This is the argument that moves retirement up the list
+
+Retiring `course_events` is the only open item in this file with a **published
+promise already running against it**. Every other entry is a risk that has not
+bitten; this one is a commitment that is being broken today, and each new
+deletion adds a row to the pile.
+
+Dropping the table discharges the obligation completely and permanently — no
+cascade to add, no retention job to write, no fifth step to remember. Repairing
+it instead would mean adding a foreign key, backfilling deletions that can no
+longer be identified (the accounts are gone; there is nothing left to join
+against), and building a 24-month expiry — all to preserve a table that, after
+15 August 2026, **nothing reads**.
+
+See the retirement plan in the entry below.
+
+---
+
+## Open: the `enroll` event has never fired in production — and after 15 Aug, nothing looks at it
+
+**Found 15 August 2026, immediately after migration 010 was believed to have
+fixed analytics. It did not fix this half.**
+
+Migration 010 created the missing unique index on `course_events (email, event)`
+and `/api/track` began working — verified by a direct POST returning `200` with
+a row landing, and by a genuine `complete` event arriving unaided. The natural
+conclusion was that the 110-day outage was over. **For `enroll` it was not, and
+it never had been about the index at all.**
+
+### The measurement
+
+| day | new `auth.users` | `enroll` rows written | `complete` rows |
+|---|---|---|---|
+| 11 Aug | 355 | 0 | 0 |
+| 12 Aug | 135 | 0 | 0 |
+| 13 Aug | 47 | 0 | 0 |
+| **14 Aug** (index exists) | **39** | **0** | 0 |
+| **15 Aug** (index exists) | **9** | **0** | 1 |
+
+Forty-eight registrations after the index existed produced **zero** enrollment
+rows. Those 48 are real people, not bots: every one has a `profiles` row, a
+non-empty name, a confirmed email, a completed sign-in, and 18 of them have
+`progress` rows.
+
+### The sequence is what proves it, and the technique is worth keeping
+
+Row counts alone cannot distinguish *"the request never arrived"* from
+*"it arrived and was discarded as a duplicate"*. The id sequence can.
+
+`ON CONFLICT DO NOTHING` **evaluates column defaults — including `nextval` —
+when it builds the candidate row, before it detects the conflict and throws the
+row away.** Sequence values are also non-transactional, so a discarded insert
+still burns an id permanently. **A gap in the ids is therefore a count of
+statements that reached execution but wrote nothing.**
+
+Measured 15 Aug: `course_events_id_seq.last_value` = **900**, `max(id)` = **893**,
+`count(*)` = **793**. Since the index was created, **26 statements reached
+execution and produced exactly 2 rows.**
+
+A new user's `enroll` cannot conflict — there is nothing for it to collide
+with — so an arriving enroll must produce a row. None did. The ~24 discarded
+statements are `complete` re-fires from people who finished long ago
+(`trackedComplete` in `CourseApp.js` is a per-mount ref, so it re-posts once per
+session, forever). **The enroll calls are not reaching the server at all.**
+
+### What has been ruled out, by measurement rather than reading
+
+* **The route and the insert work** — a direct POST with a fresh address
+  returned `200 {"ok":true}` and the row landed.
+* **The index works** — same test.
+* **The code ships** — the production bundle chunk `554-*.js` contains
+  `/api/track` with `event:"enroll"` adjacent to it. It is not being tree-shaken
+  or stripped.
+* **It is not a form navigation aborting the fetch** — `AuthPage.handleSubmit`
+  calls `preventDefault`, and there is no `window.location` assignment anywhere
+  in the auth path.
+
+**The cause is still unknown.** The one path that skips the call silently is
+`supabase.auth.signInWithPassword` returning an error in `handleRegister`
+(`src/hooks/useAuth.js`), which returns before reaching line 371 — users would
+then sign in manually, which still sets `last_sign_in_at` and would look exactly
+like the data above. That is a hypothesis, not a finding. Do not repeat it as
+though it were established.
+
+### Why this is written down here rather than left to be noticed
+
+**As of 15 August the admin dashboard reads `auth.users`, `profiles` and
+`progress` instead of `course_events`** — which is correct, and which means
+**nothing in the application reads `course_events` any more.** A write path that
+fails silently, feeding a table with no readers, produces no symptom of any
+kind. Without this note the next person meets a table that stopped growing in
+April, no explanation, and no way to tell whether that was deliberate.
+
+**The open decision is not "fix enroll" but "should enroll exist".** `enroll`
+carries `email`, `name`, `created_at` — all three already held, more reliably,
+in `auth.users` and `profiles`. `complete` carries one datum that is genuinely
+not derivable: *when* someone finished, since `progress.updated_at` is rewritten
+on every save and records last activity rather than completion. Even that is
+better served by `certificates.issued_at` for the 53 people who claimed one, and
+`course_events` holds only 14 completions against those 53. Retiring the table
+is the leading option; see the recommendation in the engagement report.
+
+If it is retired, note that `course_events` has **no foreign key to
+`auth.users`**, so it does not cascade on account deletion: 779 names and email
+addresses would survive the erasure of the accounts they belong to. That is a
+retention problem the privacy policy does not contemplate, and it is an argument
+for dropping the table rather than merely abandoning it.
+
+---
+
 ## Open: `SUPABASE_SETUP.sql` should be regenerated, not patched again
 
 That file has now been **wrong about `course_events` three separate times**:

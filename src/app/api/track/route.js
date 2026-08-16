@@ -58,7 +58,17 @@ export async function POST(req) {
        CONFLICT specification" — a 500 on every write, not a silent no-op. That
        is what happened from 2026-04-25 to 2026-08-13, unnoticed for 110 days
        because both callers are fire-and-forget. If you drop the index, this
-       route stops working entirely. */
+       route stops working entirely.
+
+       THE INDEX FIXED `complete`. IT DID NOT FIX `enroll`, AND `enroll` IS
+       STILL BROKEN. Measured 15 Aug 2026: 48 registrations since the index was
+       created produced zero enrollment rows, while a direct POST to this route
+       with a fresh address returns 200 and writes. The requests are not
+       arriving; the fault is upstream of this file, in or before
+       handleRegister (src/hooks/useAuth.js). Do not read the fix below, or the
+       migration 010 comments, as evidence that analytics is healthy — half of
+       it is not. Full evidence, including the sequence-gap technique that
+       proved arrival counts, is in SECURITY-NOTES.md. */
     const { error } = await supabase
       .from('course_events')
       .upsert(
