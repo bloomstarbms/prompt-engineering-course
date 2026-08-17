@@ -140,22 +140,63 @@ Ruled out so far:
 |---|---|
 | Variable scoped to a subset of Vercel environments | **Cannot produce a build/runtime split** — a production build and production runtime read the same set |
 | Different runtime for that route (Edge vs Node) | **Ruled out** — no `export const runtime` anywhere in `src/`, no edge config in `next.config.js`. `/api/consent` and `/api/certificates/issue` run the same way and read `NEXT_PUBLIC_SUPABASE_URL` successfully |
-| Something other than a missing key producing the no-op | **Still open. This is where it stands.** |
+| Anon key missing from the server runtime | **Ruled out by measurement, 17 Aug — see below** |
+| Something else, upstream of or inside the route | **Open, and unnamed. This is where it ends.** |
 
-Note the second row also weakens the missing-key theory independently:
+Note the second row also weakened the missing-key theory independently:
 `supabaseAdmin.js` reads `NEXT_PUBLIC_SUPABASE_URL` and works in production, so
 at least one `NEXT_PUBLIC_` value is definitely readable in the server runtime.
 
-**Do not close this by reasoning.** It is closed by looking: check whether
-`NEXT_PUBLIC_SUPABASE_ANON_KEY` is set for Production in Vercel's environment
-variables. If it is present, the missing-key theory is dead and the cause is
-something else entirely — most likely upstream of the function, since a request
-that never reaches it leaves exactly the same trace.
+### The measurement that closed the missing-key theory
 
-**Why it is worth resolving even though `/api/track` is fixed and the table is
-being retired:** whatever caused it was invisible from inside the application
-for two days while every dashboard, log and status check said healthy. The
-mechanism can recur on a route that matters more.
+A temporary route, `/api/diag-config`, returned three booleans from the
+production server runtime — presence of each variable, plus `SUPABASE_CONFIGURED`
+as computed by `src/lib/supabase.js` itself, which is the exact expression the
+old `/api/track` branched on:
+
+```json
+{"url":true,"anon":true,"configured":true,"at":"2026-08-17T21:28:58.937Z"}
+```
+
+**The anon key is present and the client is configured in the server runtime.**
+The route has been deleted; it existed to answer this and nothing else.
+
+**The limit of that measurement, stated plainly because the two errors in this
+file came from overstating exactly this kind of thing:** it describes
+17 August, not 14 August. A runtime that is correct today does not prove it was
+correct then.
+
+What makes the theory untenable anyway is a separate fact — **the 500 on
+13 August at 20:07**. That status means execution got *past* the `!supabase`
+branch and reached the `ON CONFLICT` planning error, so the anon client was
+configured and working in production that evening. For a missing key to explain
+the 14th, the environment would have had to break after the 13th and be repaired
+before the 17th, without any deployment in between shipping the empty value into
+the browser bundle — where it would have taken the site down for everyone. It
+never went down.
+
+### Terminal state: cause not established
+
+**Both surviving hypotheses — an unconfigured client, and the client not sending
+the request — require something to have changed between 13 and 14 August, and
+neither names it.** The 13th proves the client called and the server was
+configured. The 14th shows 39 registrations, zero rows and zero burned sequence
+values *with the index already in place*, which means the statement that failed
+at planning the previous evening should have succeeded. Nothing reached Postgres
+and nobody knows why.
+
+**This is deliberately where it stops, and that is a conclusion rather than an
+abandonment.** The component is being retired; nothing reads it; and the failure
+class now announces itself, because `lib/supabase.js` throws on use instead of
+returning `null`. Three of the four reasons to care are closed. The fourth is
+curiosity.
+
+Two plausible, well-argued explanations were written down during this
+investigation and both were wrong: that the sequence gap proved the requests
+never arrived, and that `{ ok: true, configured: false }` had been observed when
+it had only been inferred. A third would have been believed by the next reader
+for the same reason the first two were. **An unexplained gap, recorded as
+unexplained, cannot mislead anyone.**
 
 **What remains true and still matters:** `enroll` duplicates
 `auth.users.created_at` and carries nothing that is not held more reliably
