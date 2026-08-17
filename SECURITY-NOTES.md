@@ -64,7 +64,65 @@ See the retirement plan in the entry below.
 
 ---
 
-## Open: the `enroll` event has never fired in production — and after 15 Aug, nothing looks at it
+## RESOLVED 17 Aug 2026 — `enroll` is working. This entry is kept because the diagnosis in it was WRONG, and the way it was wrong is the useful part.
+
+**READ THIS CORRECTION BEFORE THE ENTRY BELOW.**
+
+On 15 August this was written up as *"the enroll calls are not reaching the
+server at all"*, with a confident mechanism and a sequence-gap proof. Measured
+again on 17 August:
+
+| day | new `auth.users` | `enroll` rows |
+|---|---|---|
+| 13 Aug | 47 | 0 |
+| 14 Aug | 39 | 0 |
+| **15 Aug** | 15 | **5** |
+| **16 Aug** | 11 | **11** |
+| **17 Aug** (partial) | 7 | **6** |
+
+Eleven of eleven on the 16th. It works.
+
+**What actually fixed it was the change this repository explicitly told you was
+not a fix.** `/api/track` was switched from the anon client to
+`createAdminClient()` in commit `9487923`, and the route's own comment says, in
+capitals, *"SERVICE ROLE, ON PRINCIPLE — NOT AS A BUGFIX … Do not read it as the
+fix for the 110-day outage."* The enroll rows begin appearing within hours of
+that deployment being promoted, after 48 registrations across the two preceding
+days produced none. That comment was reasoning from a grant table — anon holds
+INSERT, the policy allows it, therefore permissions cannot be the problem —
+which is exactly the style of argument this file keeps catching.
+
+**It is a correlation, not a proof.** What would settle it is the promotion
+timestamp of that deployment against the timestamp of the first enroll row on
+15 Aug. Anyone with a reason to care should check that rather than trust this
+paragraph.
+
+**Why the sequence-gap proof failed, and this is the lesson worth keeping.**
+The technique was sound and the arithmetic was right. The inference was not.
+`ON CONFLICT DO NOTHING` burns a `nextval` only for statements that reach
+execution — so a small gap means few statements arrived. That correctly ruled
+out *"the request arrives and is discarded"*. It did **not** rule out *"the
+request arrives, and the route returns 200 without ever reaching the
+database"*, which is precisely what the previous version of that route did: it
+returned `{ ok: true, configured: false }` when the client was unavailable.
+**A success-shaped failure leaves no trace in the sequence, so the evidence
+that looked conclusive was blind to the one cause that was actually operating.**
+A measurement can be correct, and its scope still smaller than the conclusion
+drawn from it.
+
+**What remains true and still matters:** `enroll` duplicates
+`auth.users.created_at` and carries nothing that is not held more reliably
+elsewhere; nothing in the application reads `course_events` any more; and the
+no-cascade privacy gap above is unaffected by any of this. **Retirement is still
+the right call** — it is just no longer being recommended for a broken table,
+which makes the argument stronger rather than weaker.
+
+The original entry follows, uncorrected, because a note that quietly rewrites
+itself teaches nobody anything.
+
+---
+
+### Original entry, 15 August 2026 — superseded, and wrong in its conclusion
 
 **Found 15 August 2026, immediately after migration 010 was believed to have
 fixed analytics. It did not fix this half.**

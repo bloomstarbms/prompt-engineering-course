@@ -60,15 +60,23 @@ export async function POST(req) {
        because both callers are fire-and-forget. If you drop the index, this
        route stops working entirely.
 
-       THE INDEX FIXED `complete`. IT DID NOT FIX `enroll`, AND `enroll` IS
-       STILL BROKEN. Measured 15 Aug 2026: 48 registrations since the index was
-       created produced zero enrollment rows, while a direct POST to this route
-       with a fresh address returns 200 and writes. The requests are not
-       arriving; the fault is upstream of this file, in or before
-       handleRegister (src/hooks/useAuth.js). Do not read the fix below, or the
-       migration 010 comments, as evidence that analytics is healthy — half of
-       it is not. Full evidence, including the sequence-gap technique that
-       proved arrival counts, is in SECURITY-NOTES.md. */
+       THE INDEX FIXED `complete`. `enroll` NEEDED THE SERVICE-ROLE CHANGE
+       BELOW AS WELL, WHICH THE HEADER OF THIS FILE WRONGLY DISCLAIMS.
+       Measured 15 Aug 2026: 48 registrations across the two days after the
+       index was created produced zero enrollment rows. Measured 17 Aug, after
+       the createAdminClient deployment was promoted: 11 registrations, 11
+       enroll rows. It works.
+
+       So the header's claim — "SERVICE ROLE, ON PRINCIPLE — NOT AS A BUGFIX …
+       Do not read it as the fix for the 110-day outage" — is wrong, and it is
+       left in place with this correction beside it rather than quietly edited,
+       because the reasoning that produced it is instructive: it argued from a
+       grant table (anon holds INSERT, the policy permits it, therefore
+       permissions cannot be the cause) instead of from a measurement. The old
+       route returned `{ ok: true, configured: false }` when the anon client was
+       unavailable — a success-shaped failure that wrote nothing, logged
+       nothing, and did not even burn a sequence value. See SECURITY-NOTES.md
+       for why the sequence-gap evidence looked conclusive and was not. */
     const { error } = await supabase
       .from('course_events')
       .upsert(
