@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { getCertificateById } from '@/lib/db';
-import { supabase } from '@/lib/supabase';
+import { supabase, SUPABASE_CONFIGURED } from '@/lib/supabase';
 import { getGrade, MOD_COLORS, T } from '@/lib/theme';
 import { TOTAL_LESSONS } from '@/data/courseData';
 import Link from 'next/link';
@@ -15,7 +15,7 @@ export default function VerifyClient({ certId }) {
     async function fetchCert() {
       /* Supabase not configured — show a clear "service unavailable" state
          instead of silently falling through to "Certificate Not Found".     */
-      if (!supabase) {
+      if (!SUPABASE_CONFIGURED) {
         setUnavailable(true);
         setReady(true);
         return;

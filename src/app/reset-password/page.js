@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, SUPABASE_CONFIGURED } from '@/lib/supabase';
 import { T } from '@/lib/theme';
 
 /* ── Eye icons ── */
@@ -72,7 +72,7 @@ export default function ResetPasswordPage() {
      clicks the reset link. onAuthStateChange fires a PASSWORD_RECOVERY
      event which sets a temporary session — after that updateUser() works. */
   useEffect(() => {
-    if (!supabase) return;
+    if (!SUPABASE_CONFIGURED) return;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setSessionOk(true);

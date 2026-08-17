@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { T } from '@/lib/theme';
 import { DOCS_PUBLISHED } from '@/lib/docs';
 import { MODULES, TOTAL_LESSONS } from '@/data/courseData';
-import { supabase } from '@/lib/supabase';
+import { supabase, SUPABASE_CONFIGURED } from '@/lib/supabase';
 
 /* ── Eye icons ── */
 const EyeIcon = () => (
@@ -96,7 +96,7 @@ export default function AuthPage({ onAuth }) {
     e.preventDefault();
     setForgotError('');
     if (!forgotEmail.trim()) { setForgotError('Please enter your email address.'); return; }
-    if (!supabase) { setForgotError('Service unavailable. Please try again later.'); return; }
+    if (!SUPABASE_CONFIGURED) { setForgotError('Service unavailable. Please try again later.'); return; }
     setForgotLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
       redirectTo: `${window.location.origin}/reset-password`,

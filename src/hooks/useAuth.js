@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, SUPABASE_CONFIGURED } from '@/lib/supabase';
 import { getProfile, upsertProfile, loadProgress, saveProgress, issueCertificateViaApi } from '@/lib/db';
 import { clampPosition } from '@/lib/courseRoutes';
 
@@ -213,7 +213,7 @@ export function useAuth() {
   // ── Session listener ─────────────────────────────────────────────────
   useEffect(() => {
     // Guard: Supabase not configured (missing env vars) — mark ready immediately.
-    if (!supabase) { setReady(true); return; }
+    if (!SUPABASE_CONFIGURED) { setReady(true); return; }
 
     // Use onAuthStateChange exclusively (no separate getSession() call).
     //
@@ -293,7 +293,7 @@ export function useAuth() {
 
   // ── LOGIN ────────────────────────────────────────────────────────────
   const handleLogin = useCallback(async (email, password) => {
-    if (!supabase) return { ok: false, error: 'Service unavailable. Please try again later.' };
+    if (!SUPABASE_CONFIGURED) return { ok: false, error: 'Service unavailable. Please try again later.' };
     // 1. Try Supabase auth first (normal path for all new accounts)
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error) return { ok: true };
@@ -346,7 +346,7 @@ export function useAuth() {
   // email_confirm:true — so no confirmation email is sent and the user
   // can sign in immediately after registration.
   const handleRegister = useCallback(async (name, email, password) => {
-    if (!supabase) return { ok: false, error: 'Service unavailable. Please try again later.' };
+    if (!SUPABASE_CONFIGURED) return { ok: false, error: 'Service unavailable. Please try again later.' };
 
     // 1. Create the user via our admin API route (no email confirmation needed)
     let res, json;
@@ -380,7 +380,7 @@ export function useAuth() {
   // ── LOGOUT ───────────────────────────────────────────────────────────
   const handleLogout = useCallback(async () => {
     clearTimeout(saveTimer.current);
-    if (supabase) await supabase.auth.signOut();
+    if (SUPABASE_CONFIGURED) await supabase.auth.signOut();
   }, []);
 
   // ── PROGRESS ─────────────────────────────────────────────────────────
@@ -455,7 +455,7 @@ export function useAuth() {
 
   const refreshingRef = useRef(null);
   const forceRefresh = useCallback(async () => {
-    if (!supabase) return null;
+    if (!SUPABASE_CONFIGURED) return null;
     if (refreshingRef.current) return refreshingRef.current; // single flight
     const p = (async () => {
       try {
