@@ -110,6 +110,53 @@ that looked conclusive was blind to the one cause that was actually operating.**
 A measurement can be correct, and its scope still smaller than the conclusion
 drawn from it.
 
+### Open: WHY the old route wrote nothing is NOT established
+
+Recorded deliberately as unresolved, because the first two explanations offered
+for it were both wrong and both sounded finished.
+
+**What is measured:** 48 registrations across 14 Aug and the morning of 15 Aug
+produced zero `course_events` rows and burned zero sequence values, with the
+unique index already in place since 13 Aug. After the deployment on 15 Aug at
+~14:21 UTC, 11 registrations on 16 Aug produced 11 rows.
+
+**What is NOT measured, and was wrongly written up as if it were:** nobody ever
+observed the old route return `{ ok: true, configured: false }`. That branch was
+*inferred* from "no rows, no burned sequence values". **"The client never sent
+the request" and "the route returned 400 early" produce identical evidence.**
+The inference is reasonable — the client code was unchanged across the boundary,
+so a client that calls now was calling then — but it is an inference.
+
+**A missing anon key was proposed as the cause and does not survive scrutiny.**
+`NEXT_PUBLIC_*` values are inlined into the browser bundle at build time, from
+the same Vercel environment the server runtime reads. Had the key been absent,
+the bundle would have been built without it and the site would have been dead
+for everyone. It was not. "Present at build, absent at runtime" needs a
+mechanism, and no mechanism has been produced.
+
+Ruled out so far:
+
+| Candidate | Status |
+|---|---|
+| Variable scoped to a subset of Vercel environments | **Cannot produce a build/runtime split** — a production build and production runtime read the same set |
+| Different runtime for that route (Edge vs Node) | **Ruled out** — no `export const runtime` anywhere in `src/`, no edge config in `next.config.js`. `/api/consent` and `/api/certificates/issue` run the same way and read `NEXT_PUBLIC_SUPABASE_URL` successfully |
+| Something other than a missing key producing the no-op | **Still open. This is where it stands.** |
+
+Note the second row also weakens the missing-key theory independently:
+`supabaseAdmin.js` reads `NEXT_PUBLIC_SUPABASE_URL` and works in production, so
+at least one `NEXT_PUBLIC_` value is definitely readable in the server runtime.
+
+**Do not close this by reasoning.** It is closed by looking: check whether
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` is set for Production in Vercel's environment
+variables. If it is present, the missing-key theory is dead and the cause is
+something else entirely — most likely upstream of the function, since a request
+that never reaches it leaves exactly the same trace.
+
+**Why it is worth resolving even though `/api/track` is fixed and the table is
+being retired:** whatever caused it was invisible from inside the application
+for two days while every dashboard, log and status check said healthy. The
+mechanism can recur on a route that matters more.
+
 **What remains true and still matters:** `enroll` duplicates
 `auth.users.created_at` and carries nothing that is not held more reliably
 elsewhere; nothing in the application reads `course_events` any more; and the
