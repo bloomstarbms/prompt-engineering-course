@@ -46,6 +46,13 @@ const SOURCES = [
   { publisher: 'Anthropic',
     title: 'Prompt engineering overview',
     url: 'https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview' },
+  // Not subject to the note above: this page is cited inline for the
+  // long-context ordering guidance (20k+ tokens: document first, query last)
+  // in "How LLMs Actually Work" and "Instruction Clarity & Constraints". The
+  // overview above does not contain that guidance; this page does.
+  { publisher: 'Anthropic',
+    title: 'Prompting best practices',
+    url: 'https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices' },
   { publisher: 'OpenAI',
     title: 'Prompt engineering',
     url: 'https://developers.openai.com/api/docs/guides/prompt-engineering' },

@@ -17,10 +17,13 @@ The AI doesn't read word by word — it reads in small chunks called **tokens** 
 The AI can only see what's in the current conversation — there's no memory between sessions unless you build it in. Everything the AI needs to answer your question must be in the prompt you send. Think of it like talking to someone who forgets everything the moment the call ends.
 
 **Creativity dial (Temperature)**
-You can control how predictable or creative the AI's answers are. At temperature = 0, it always picks the most likely next word — same input, same output every time. At temperature = 1 or higher, it picks less predictably, producing more varied or creative responses. Use low temperature (0–0.3) for factual tasks, higher (0.7–1) for creative work.
+You can control how predictable or creative the AI's answers are. At temperature = 0, it picks the most likely next word at every step, so the same input nearly always gives the same output. Nearly, not always: hosted models process many requests together on shared hardware, and tiny rounding differences in that arithmetic can change which word comes out on top when two are almost tied. Once one word differs, everything after it can differ too. At temperature = 1 or higher, it picks less predictably, producing more varied or creative responses. Use low temperature (0–0.3) for factual tasks, higher (0.7–1) for creative work.
 
 **How the AI connects words (Attention)**
-Inside the AI, every word in your prompt gets compared to every other word to figure out which ones are related. This is why the AI understands that "bank" in "river bank" means water, not money. Instructions placed toward the end of a prompt often get more weight than those at the start.
+Inside the AI, every word in your prompt gets compared to every other word to figure out which ones are related. This is why the AI understands that "bank" in "river bank" means water, not money.
+
+**Order matters for long inputs**
+When your prompt includes a lot of material — Anthropic's guidance puts the threshold at roughly 20,000 tokens and up — put the long document at the top and your question at the end. In Anthropic's own testing, ending with the query improved response quality by up to 30%, especially with complex, multi-document inputs ([Prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices)). This is specific advice for long inputs, not a general rule that the end of every prompt counts more.
 
 **From text predictor to helpful assistant (RLHF)**
 A base AI model just predicts text. Models like Claude and ChatGPT went through an extra training step called **RLHF (Reinforcement Learning from Human Feedback)**: thousands of human raters chose which AI responses were helpful, safe, and honest. The model learned to prefer those patterns. This is what makes it feel like an assistant rather than a random text generator.
@@ -36,11 +39,11 @@ The AI organizes words and concepts in a kind of invisible map — words that me
 
 The core loop is simple: take all the text so far → predict the single most likely next word → add it → repeat. That loop is what generates an entire paragraph.
 
-When the AI processes your prompt, it converts every word chunk into a number (a vector). It then runs an "attention" calculation that scores how related every word chunk is to every other word chunk. This is what lets it track that the word "it" in "Maria told Sofia that she liked her" refers back correctly.
+When the AI processes your prompt, it converts every word chunk into a number (a vector). It then runs an "attention" calculation that scores how related every word chunk is to every other word chunk. This is what lets it work out what a word like "it" refers to, even several words back. In "The trophy didn't fit in the suitcase because it was too big," attention links "it" to "trophy" — change "big" to "small" and "it" now means the suitcase.
 
 Pre-training on internet-scale text gives the AI its broad knowledge. But the RLHF training step is what made it helpful — it learned that answers humans rate highly tend to be accurate, organized, and directly responsive to the question asked.
 
-The memory limit (context window) is a hard technical boundary. GPT-4 can handle roughly 128,000 word chunks at once; Claude can handle about 200,000. Once you exceed that limit, the AI literally cannot see what came before it. Memory tricks — like summarizing earlier parts of a conversation — must be built on top.
+The memory limit (context window) is a hard technical boundary. Its size varies by model and grows with nearly every new release, so check the provider's documentation for the model you're using rather than relying on a remembered figure. Once you exceed that limit, the AI literally cannot see what came before it. Memory tricks — like summarizing earlier parts of a conversation — must be built on top.
 
 ---
 

@@ -247,9 +247,10 @@ export function LessonBody({ text, color }) {
 }
 
 function inlineMarkup(text, color) {
-  // Links added for the legal pages. Purely additive: no lesson body contains a
-  // markdown link or any [text](...) sequence, checked before this went in, so
-  // the 26 lessons render byte-identically.
+  // Links added for the legal pages. When they went in, no lesson body
+  // contained a [text](...) sequence, so the 26 lessons rendered
+  // byte-identically. Lesson bodies now use them for inline citations
+  // (foundations-of-llms, core-techniques).
   return text.split(/(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/).map((p, i) => {
     const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(p);
     if (link) {

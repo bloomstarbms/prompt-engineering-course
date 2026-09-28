@@ -249,8 +249,8 @@ Respond using EXACTLY this format:
 \`\`\`
 The AI will fill in the blanks. This is more reliable than asking for JSON in plain language.
 
-**Put the Most Important Instructions Last**
-Instructions near the end of a prompt carry more weight than those at the start. Put your most critical requirements — especially format and length — at the very end, just before where the AI begins its response.
+**With Long Inputs, Put the Question Last**
+When a prompt carries a lot of material — roughly 20,000 tokens and up — put the long documents at the top and your question and instructions at the end. Anthropic reports that ending with the query improved response quality by up to 30% in its testing, especially with complex, multi-document inputs ([Prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices)). For short prompts there's no rule that the end counts more; what matters there is that every requirement is stated clearly and none is buried.
 
 ---
 
@@ -260,7 +260,7 @@ Instructions near the end of a prompt carry more weight than those at the start.
 - Positive instructions outperform negative ones — tell the AI what to do, not what to avoid
 - Use numbers, not adjectives: "under 100 words" beats "be brief"
 - Always tell the AI which constraint takes priority when they conflict
-- Put critical constraints last — they carry more weight there
+- With long inputs (roughly 20k+ tokens), put the documents first and the question last
 - The Completion Trick is one of the most reliable format enforcement techniques
 
 ---

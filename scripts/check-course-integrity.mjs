@@ -216,6 +216,42 @@ for (const rel of ['src/components/CourseApp.js', 'src/hooks/useAuth.js', 'src/p
   }
 }
 
+// ── Check 9: every stored `dur` matches the formula ──────────────────────
+// `dur` was typed by hand for videos that were later removed, and stayed wrong
+// for three months because nothing compared it with anything: 501 minutes
+// claimed against about 84 of reading. It feeds the visible lesson time, the
+// per-lesson `timeRequired` and the course `courseWorkload` in structured data.
+// The formula and its constants live in src/lib/lessonDuration.js; this check
+// is what makes the stored value a derived one rather than a description.
+//
+// A missing body is a failure, not a zero: counting an absent body as 0 words
+// would produce a plausible-looking short duration and pass.
+const D = await import(pathToFileURL(join(root, 'src/lib/lessonDuration.js')).href);
+let computedTotal = 0;
+for (const [mi, m] of MODULES.entries()) {
+  let bodies;
+  try {
+    ({ bodies } = await import(pathToFileURL(join(root, `src/data/modules/${m.slug}.js`)).href));
+  } catch (e) {
+    fail(`dur: could not load lesson bodies for module ${mi} (${m.slug}): ${e.message}`);
+    continue;
+  }
+  for (const [li, l] of m.lessons.entries()) {
+    const body = bodies?.[l.slug];
+    if (typeof body !== 'string' || !body.trim()) {
+      fail(`dur: no lesson body for ${mi}-${li} (${m.slug}/${l.slug}) — cannot compute its duration`);
+      continue;
+    }
+    const questions = QUIZZES?.[`${mi}-${li}`]?.questions?.length ?? 0;
+    const minutes = D.lessonMinutes(D.countWords(l.intro) + D.countWords(body), questions);
+    computedTotal += minutes;
+    const expected = D.durLabel(minutes);
+    if (l.dur !== expected) {
+      fail(`dur: ${mi}-${li} (${l.slug}) stores ${JSON.stringify(l.dur)} but the formula gives "${expected}" — set dur: "${expected}" in courseData.js (see src/lib/lessonDuration.js)`);
+    }
+  }
+}
+
 // ── Report ───────────────────────────────────────────────────────────────
 if (problems.length) {
   console.error('\n  COURSE INTEGRITY CHECK FAILED\n');
@@ -225,4 +261,4 @@ if (problems.length) {
   console.error('  scripts/check-course-integrity.mjs before regenerating the manifest.\n');
   process.exit(1);
 }
-console.log(`  course integrity OK — ${MODULES.length} modules, ${realTotal} lessons, ${seenPath.size} unique paths, all frozen positions intact`);
+console.log(`  course integrity OK — ${MODULES.length} modules, ${realTotal} lessons, ${seenPath.size} unique paths, all frozen positions intact, all durations match the formula (${computedTotal} min)`);
