@@ -271,5 +271,7 @@ Each technique file contains: description, template, example, when to use, known
 
 ## Conclusion
 
-You've completed Prompt Engineering. But completing the course is just the beginning. The techniques here are foundational — the real expertise comes from applying them repeatedly to real problems, building a prompt library that captures your insights, and developing T-shaped depth in both prompting and a domain you care about. The compounding advantage is real: every prompt you write teaches you something the next prompt benefits from. After 100 prompts you'll have intuition. After 1,000 you'll have expertise. Start today — pick one real problem, apply CRISP, build a test set, and iterate. The practitioners who build systematic expertise now will have a durable advantage for years to come.`,
+A personal practice is what turns what you've learned into lasting skill: a prompt journal that captures every insight, a library organized by technique, and real depth in one domain you care about. Start it now — pick one real problem, apply CRISP, build a test set, and iterate.
+
+**That completes Module 07 — not the course.** The course continues with **Module 08, Advanced Frontiers**: multimodal and vision prompting, hallucination detection, conversational memory, and meta-prompting. Each builds on the practice you've just set up. Continue to the next lesson to begin it.`,
 };

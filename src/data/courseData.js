@@ -258,7 +258,7 @@ export const MODULES = [
         slug: "building-your-prompt-engineering-practice",
         dur: "6 min",
         vid: "KrRD7r7y7NY",
-        intro: "You've now covered the full map of prompt engineering. In this final lesson, you'll bring it all together — building a personal practice: a regular workflow for improving your prompts, staying current with new techniques, and applying what you've learned to the specific domain where you need it most.",
+        intro: "You've now covered the core of prompt engineering. In this lesson, the last of Module 07, you'll bring it together — building a personal practice: a regular workflow for improving your prompts, staying current with new techniques, and applying what you've learned to the specific domain where you need it most.",
       },
     ],
   },
@@ -296,7 +296,7 @@ export const MODULES = [
       {
         title: "Meta-Prompting: AI-Assisted Prompt Design",
         slug: "meta-prompting",
-        dur: "7 min",
+        dur: "8 min",
         vid: "0JZisMktcbA",
         intro: "Meta-prompting is using AI to help you write better prompts — and it's one of the most powerful, most underused skills in the field. In this lesson, you'll build a complete workflow for using AI as your prompting co-pilot: to generate, critique, stress-test, and compress your prompts. This is how professional prompt engineers maintain quality at scale.",
       },

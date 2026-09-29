@@ -571,5 +571,7 @@ Meta-prompts benefit from the same optimization process as the prompts they impr
 
 ## Conclusion
 
-Meta-prompting is how expert prompt engineers maintain quality at scale. Rather than writing prompts in isolation, you collaborate with the AI itself to critique, generate, test, and compress — turning the entire prompt design process into a compounding feedback loop. Every round of AI-assisted iteration builds your intuition faster than solo work alone, while producing documented, tested, production-ready prompts. This is the final layer of the craft.`,
+Meta-prompting is how expert prompt engineers maintain quality at scale. Rather than writing prompts in isolation, you collaborate with the AI itself to critique, generate, test, and compress — turning the entire prompt design process into a compounding feedback loop. Every round of AI-assisted iteration builds your intuition faster than solo work alone, while producing documented, tested, production-ready prompts. This is the final layer of the craft.
+
+**That's the end of the course.** You've completed Prompt Engineering. But completing the course is just the beginning. The techniques here are foundational — the real expertise comes from applying them repeatedly to real problems, building a prompt library that captures your insights, and developing T-shaped depth in both prompting and a domain you care about. The compounding advantage is real: every prompt you write teaches you something the next prompt benefits from. After 100 prompts you'll have intuition. After 1,000 you'll have expertise. Start today — pick one real problem, apply CRISP, build a test set, and iterate. The practitioners who build systematic expertise now will have a durable advantage for years to come.`,
 };
