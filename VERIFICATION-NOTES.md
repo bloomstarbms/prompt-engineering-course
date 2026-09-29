@@ -87,3 +87,54 @@ will never be complete, which is why the procedure above doesn't depend on it.
 landing page has its module cards": each is a search too. A zero-paragraph
 result on a gated lesson means something only when the same selector finds the
 paragraphs on a public lesson in the same run.
+
+---
+
+## Configuration: verify the behaviour, not the declaration
+
+**A declaration in a config file, migration or schema file is not evidence of
+an effect. Only the behaviour is.** Read what the system does (the response
+code, the query plan, the refused write), not what a file says it will do.
+
+The same shape has now happened three times, each in a different kind of file:
+
+1. **Migration `006`.** `revoke update (consented_at) … from authenticated`
+   ran without error and changed nothing: a column-level REVOKE can't subtract
+   from Supabase's table-level grant. Its verification query read
+   `information_schema.column_privileges`, which reports the same thing
+   either way. The real protection is `007`'s trigger, proved by attempting the
+   forgery. (REPORT-2026-08-10.md §2.)
+2. **`SUPABASE_SETUP.sql`.** It declared `create unique index … (email, event)`
+   on `course_events`. Production never had it. Every `/api/track` upsert
+   failed with a 500 for 110 days while the file said the write path was sound.
+   (SECURITY-NOTES.md, "SUPABASE_SETUP.sql should be regenerated".)
+3. **`vercel.json`'s apex redirect.** Commit `6835eb5` added a 301 from
+   `prompten.xyz` to www and explained why it belonged in config. It never
+   fired. The Vercel project's domain settings already redirected the apex,
+   with no status code set (Vercel's default is 307), and domain redirects run
+   before `vercel.json`. For seven weeks the apex sent a *temporary* redirect,
+   and the repo said permanent. Found in September 2026 by
+   `curl.exe -I https://prompten.xyz/quiz`. The domain setting is now 308, and
+   the dead rule was deleted rather than commented: a live config file that
+   states a rule which can't fire is a false statement about the system, and
+   that is exactly what misled here.
+
+**The next one won't look like these.** It will be another file that is
+believed because it is in the repo. Treat every declared effect as unverified
+until something has observed it.
+
+### Where the apex redirect actually lives
+
+Not in the repo. It is the Vercel project's domain setting for `prompten.xyz`:
+redirect to `www.prompten.xyz`, status **308**. To read it:
+
+```
+vercel api /v9/projects/prompt-engineering-course/domains
+```
+
+To verify it, check the behaviour, not that setting:
+
+```
+curl.exe -I https://prompten.xyz/some/path?q=1
+# expect: 308, Location: https://www.prompten.xyz/some/path?q=1
+```
