@@ -436,7 +436,7 @@ export default function ProfilePage({
                   Certificate of Completion
                 </div>
                 <div style={{ fontFamily:T.font, fontSize:12, color:T.muted }}>
-                  {isCourseComplete(completed, user?.createdAt)
+                  {isCourseComplete(completed)
                     ? 'Course complete — view and download your certificate of completion.'
                     : 'You have a certificate — view it any time.'}
                 </div>

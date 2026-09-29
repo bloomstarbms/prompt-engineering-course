@@ -69,7 +69,7 @@ process.emitWarning = (warning, ...rest) => {
 // way in". Removed rather than documented.
 const {
   MODULES, QUIZZES, TOTAL_LESSONS,
-  isCourseComplete, LEGACY_SYLLABUS_LESSONS, SYLLABUS_EXPANDED_AT,
+  isCourseComplete,
 } = await import(
   pathToFileURL(join(root, 'src/data/courseData.js')).href
 );
@@ -136,38 +136,37 @@ if (!artBlock) {
 }
 
 // ── 5. SILENT-FAILURE SITE 2: the certificate route's completion count ───
-//  /api/certificates/issue compares completed-key count against TOTAL_LESSONS
-//  (or LEGACY_SYLLABUS_LESSONS). If TOTAL_LESSONS drifts from the real array
-//  length, issuance breaks or grandfathers the wrong cohort — server-side, so
-//  no browser error is ever seen.
+//  /api/certificates/issue compares the completed count against
+//  TOTAL_LESSONS. If TOTAL_LESSONS drifts from the real array length, issuance
+//  breaks — server-side, so no browser error is ever seen.
 const realTotal = MODULES.reduce((a, m) => a + m.lessons.length, 0);
 if (TOTAL_LESSONS !== realTotal) {
   fail(`TOTAL_LESSONS (${TOTAL_LESSONS}) != actual lesson count (${realTotal}) — the certificate route counts against this`);
 }
-// The grandfather clause, checked by BEHAVIOUR, not by grepping for its
-// constants. It used to test that the route's source mentioned
-// LEGACY_SYLLABUS_LESSONS — a declaration, which passes as long as the word is
-// present and says nothing about what the rule does. The rule now lives in
-// isCourseComplete() (courseData.js); run it at the boundaries instead.
+// The completion rule, checked by BEHAVIOUR rather than by grepping for it.
+// Every lesson in the syllabus, for everyone. The grandfather clause (22 for
+// accounts before 2026-04-20) was removed on 29 Sep 2026 because it matched
+// no account; see courseData.js and CERTIFICATE-CLAIMS.md.
 {
-  const cutoff = new Date(SYLLABUS_EXPANDED_AT).getTime();
-  const before = new Date(cutoff - 86_400_000).toISOString();
-  const after  = new Date(cutoff + 86_400_000).toISOString();
   const done = n => Object.fromEntries(Array.from({ length: n }, (_, i) => [`x-${i}`, true]));
   const cases = [
-    [before, LEGACY_SYLLABUS_LESSONS,     true,  'pre-expansion account at the legacy bar'],
-    [before, LEGACY_SYLLABUS_LESSONS - 1, false, 'pre-expansion account one short of the legacy bar'],
-    [after,  LEGACY_SYLLABUS_LESSONS,     false, 'post-expansion account at only the legacy bar'],
-    [after,  TOTAL_LESSONS,               true,  'post-expansion account at the full syllabus'],
-    [null,   LEGACY_SYLLABUS_LESSONS,     false, 'unknown creation date at only the legacy bar'],
+    [TOTAL_LESSONS,     true,  'the full syllabus'],
+    [TOTAL_LESSONS - 1, false, 'one lesson short'],
+    [22,                false, 'the old 22-lesson syllabus'],
   ];
-  for (const [created, n, want, label] of cases) {
-    if (isCourseComplete(done(n), created) !== want) {
-      fail(`isCourseComplete: ${label} (${n} lessons) should be ${want} — the completion rule or its grandfather clause has changed`);
+  for (const [n, want, label] of cases) {
+    if (isCourseComplete(done(n)) !== want) {
+      fail(`isCourseComplete: ${label} (${n} lessons) should be ${want} — the completion rule has changed`);
     }
   }
+  // Tripwire: a date-keyed exception must not come back unexamined. If a
+  // second argument ever makes 22 lessons plus a pre-expansion date count as
+  // complete, the clause is back. Check it matches real accounts first.
+  if (isCourseComplete(done(22), '2026-01-01T00:00:00Z')) {
+    fail('isCourseComplete treats 22 lessons plus a pre-2026-04-20 date as complete — a created_at grandfather clause has been reinstated. The last one matched 0 of 1,668 accounts; verify against real data before shipping it (VERIFICATION-NOTES item 4)');
+  }
   // Falsy entries are anomalies, not completions.
-  if (isCourseComplete({ ...done(TOTAL_LESSONS - 1), extra: false }, after)) {
+  if (isCourseComplete({ ...done(TOTAL_LESSONS - 1), extra: false })) {
     fail('isCourseComplete counts a falsy lesson entry as completed');
   }
   // Both deciders must use it — one definition, not two.

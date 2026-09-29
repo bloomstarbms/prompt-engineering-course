@@ -130,7 +130,9 @@ The same shape has now happened four times, each in a different kind of file:
    the cutoff, with no marker recording that they were migrated. The clause
    had a careful comment explaining why `created_at` was the right key, and a
    build-time check that it was still present. Nothing ever asked whether it
-   matched a single account.
+   matched a single account. It was removed on 29 September 2026; claims from
+   that cohort are now handled by hand (CERTIFICATE-CLAIMS.md), and the guard
+   now fails if a date-keyed exception reappears.
 
 This one is in code, not config, and that is the point: the shape isn't
 about file types. A rule that is correct about its inputs and wrong about the

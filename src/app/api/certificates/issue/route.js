@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabaseAdmin';
 import {
-  MODULES, TOTAL_LESSONS, isCourseComplete, requiredLessonsFor, completedLessonCount,
+  MODULES, TOTAL_LESSONS, isCourseComplete, completedLessonCount,
 } from '@/data/courseData';
 import { getGrade } from '@/lib/theme';
 
@@ -99,16 +99,15 @@ export async function POST(req) {
   const quizScores = progressRow?.quiz_scores || {};
 
   // Completion is decided by isCourseComplete() in courseData.js — the one
-  // definition, shared with CourseApp's /cert gate. It carries the grandfather
-  // clause (22 lessons for accounts predating the 2026-04-20 expansion, all
-  // TOTAL_LESSONS since). created_at comes from the verified token, so it
-  // cannot be spoofed by the caller — same trust boundary as the user id.
-  const accountCreatedAt = authData.user.created_at || null;
-  const requiredLessons  = requiredLessonsFor(accountCreatedAt);
+  // definition, shared with CourseApp's /cert gate: every lesson in the current
+  // syllabus. There is no grandfather clause; it was removed on 29 Sep 2026
+  // because it matched no account (see courseData.js). Claims from the
+  // pre-Supabase 22-lesson cohort are handled by hand: CERTIFICATE-CLAIMS.md.
+  const requiredLessons  = TOTAL_LESSONS;
   const completedKeys    = Object.keys(completed);
   const completedCount   = completedLessonCount(completed);
 
-  if (!isCourseComplete(completed, accountCreatedAt)) {
+  if (!isCourseComplete(completed)) {
     // Never render equal numbers. "26 of 26 lessons finished" alongside "course
     // not complete" is self-contradictory to a reader, and it cannot mean what
     // it says: if the counts matched, this branch would not have been entered.

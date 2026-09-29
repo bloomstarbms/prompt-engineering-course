@@ -1,6 +1,6 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { createAdminClient } from '@/lib/supabaseAdmin';
-import { TOTAL_LESSONS, LEGACY_SYLLABUS_LESSONS, SYLLABUS_EXPANDED_AT } from '@/data/courseData';
+import { TOTAL_LESSONS } from '@/data/courseData';
 
 /**
  * POST /api/stats — figures for the admin dashboard.
@@ -71,10 +71,17 @@ export async function POST(req) {
     return Response.json({ error: 'Supabase not configured' }, { status: 503 });
   }
 
+  // The grandfather clause is gone (courseData.js): completion is every lesson
+  // in the syllabus, for everyone. admin_dashboard_stats() (migration 011)
+  // still takes a legacy bar and a cutoff. Passing TOTAL_LESSONS as the legacy
+  // bar makes both branches of its CASE identical, so it counts exactly what
+  // isCourseComplete() counts, whatever the date. Migration 012 removes the
+  // two dead parameters; until it is applied to the database, this call must
+  // keep the three-argument signature or the dashboard breaks.
   const { data, error } = await db.rpc('admin_dashboard_stats', {
     p_total_lessons:  TOTAL_LESSONS,
-    p_legacy_lessons: LEGACY_SYLLABUS_LESSONS,
-    p_expanded_at:    SYLLABUS_EXPANDED_AT,
+    p_legacy_lessons: TOTAL_LESSONS,
+    p_expanded_at:    '1970-01-01T00:00:00Z',
   });
 
   if (error) {

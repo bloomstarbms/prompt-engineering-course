@@ -497,79 +497,53 @@ export const QUIZZES = {
 export const TOTAL_LESSONS = MODULES.reduce((a, m) => a + m.lessons.length, 0);
 
 /**
- * Grandfather clause for the syllabus expansion of 2026-04-20 (commit a86ad6f),
- * when the course grew from 22 lessons to 26.
- *
- * This is a TIME-BOUNDED exception, not a lowered requirement. Accounts created
- * before the cutoff qualify at LEGACY_SYLLABUS_LESSONS, because they signed up
- * to a 22-lesson course and finishing it was genuinely finishing it. Everyone
- * who joined afterwards must complete all TOTAL_LESSONS — otherwise the bar
- * would be permanently lowered and "Certificate of Completion" would be false
- * on its face for anyone registering today.
- *
- * Why account creation and not the progress row: public.progress has no
- * created_at column, only updated_at, and updated_at is rewritten on every save
- * — so it records the last time someone studied, not when they started, and is
- * useless as a cohort signal. auth.users.created_at is the only reliable
- * pre-existing timestamp, and it already arrives with the verified token, so no
- * extra query is needed.
- *
- * Do not derive the requirement from the live MODULES array again. Doing so is
- * what silently disqualified the earlier cohort in the first place: the course
- * grew, and their completions quietly stopped counting with no code change and
- * no decision recorded anywhere.
- */
-/*
- * ─── AS BUILT, THIS PROTECTS NO ONE. Read before relying on it. ───────────
- * Measured 29 Sep 2026: the earliest account in auth.users was created
- * 2026-04-25, the day Supabase accounts began (the localStorage migration
- * shipped then). 0 of 1,668 accounts predate SYLLABUS_EXPANDED_AT, so the
- * 22-lesson bar below has applied to nobody. The people it was written for
- * used the pre-Supabase app, and migrateLegacyUser gave them new accounts,
- * dated after the cutoff and carrying no migration marker, so created_at
- * cannot identify them. A lesson-key fingerprint cannot either: finishing the
- * old 22 lessons looks identical to a current learner who has not reached
- * Module 08 yet. What to do with the clause is an open decision; see
- * VERIFICATION-NOTES.md ("verify the behaviour, not the declaration", item 4).
- */
-export const SYLLABUS_EXPANDED_AT     = '2026-04-20T00:00:00Z';
-export const LEGACY_SYLLABUS_LESSONS  = 22;
-
-/**
- * THE definition of "has finished the course". There is one, and this is it.
+ * THE definition of "has finished the course". There is one, and this is it:
+ * every lesson in the current syllabus completed.
  *
  * Used by /api/certificates/issue (which decides) and by CourseApp (which
  * decides whether /cert is reachable), so the page and the server cannot
- * disagree. They did: the client used `Object.keys(completed).length ===
- * TOTAL_LESSONS`, which counted keys rather than completions, demanded exactly
- * 26, and had no grandfather clause. An account from before the expansion with
- * 22–25 lessons done qualified at the server and was bounced off /cert by the
- * page, so it could never reach the route that would have issued.
+ * disagree. They once did: the client used `Object.keys(completed).length ===
+ * TOTAL_LESSONS`, counting keys rather than completions.
  *
- * The one other copy is SQL: migration 011's admin_dashboard_stats() counts the
- * same thing and cannot import JavaScript. It takes these constants as
- * arguments from /api/stats; if this rule changes, change it there too.
+ *   completed  progress.completed — { "m-l": true, … }. Only truthy entries
+ *              count; the client only ever writes `true`, so a falsy one is an
+ *              anomaly, not an incomplete lesson.
  *
- *   completed         progress.completed — { "m-l": true, … }. Only truthy
- *                     entries count; the client only ever writes `true`, so a
- *                     falsy one is an anomaly, not an incomplete lesson.
- *   accountCreatedAt  auth.users.created_at (ISO string or Date). On the server
- *                     it comes from the verified token, so it cannot be spoofed.
- *                     Missing or unparseable → the full requirement applies.
+ * ─── THERE USED TO BE A GRANDFATHER CLAUSE. IT WAS REMOVED, ON PURPOSE. ────
+ * Until 29 Sep 2026, accounts created before the 2026-04-20 syllabus expansion
+ * (22 -> 26 lessons, a86ad6f) qualified at 22, keyed on auth.users.created_at.
+ * Measured that day: the earliest account was created 2026-04-25, the day
+ * Supabase accounts began, and 0 of 1,668 predated the cutoff. It protected no
+ * one and never could. The 22-lesson cohort used the pre-Supabase app, and
+ * migrateLegacyUser gave them new, post-cutoff accounts with no marker. A
+ * lesson-key fingerprint cannot find them either: finishing the old 22 looks
+ * identical to a current learner who hasn't reached Module 08. See
+ * VERIFICATION-NOTES.md ("verify the behaviour, not the declaration", item 4).
+ *
+ * Claims from that cohort are handled by hand: CERTIFICATE-CLAIMS.md. That is
+ * what keeps the terms' promise that "we don't move the finish line
+ * retroactively" now.
+ *
+ * ─── IF LESSONS ARE EVER ADDED ─────────────────────────────────────────────
+ * TOTAL_LESSONS is live, so appending a lesson (which the integrity guard
+ * allows) raises the bar for everyone not yet certified, at once and
+ * silently. People who already hold certificates keep them. Anyone who
+ * finished but never visited /cert does not, unless the change comes with a
+ * decision about them. Make that decision when the syllabus changes, not
+ * after. Do not reinstate a created_at cutoff without first checking that it
+ * matches the accounts it is meant for.
+ *
+ * The one other copy of this rule is SQL: admin_dashboard_stats() (migration
+ * 011) cannot import JavaScript. /api/stats passes it TOTAL_LESSONS as both
+ * the full and the legacy bar, so it applies no grandfathering either; see
+ * the note there.
  */
 export function completedLessonCount(completed) {
   return Object.values(completed || {}).filter(Boolean).length;
 }
 
-export function requiredLessonsFor(accountCreatedAt) {
-  const created = accountCreatedAt ? new Date(accountCreatedAt) : null;
-  const predatesExpansion =
-    created !== null && !Number.isNaN(created.getTime()) && created < new Date(SYLLABUS_EXPANDED_AT);
-  return predatesExpansion ? LEGACY_SYLLABUS_LESSONS : TOTAL_LESSONS;
-}
-
-export function isCourseComplete(completed, accountCreatedAt) {
-  return completedLessonCount(completed) >= requiredLessonsFor(accountCreatedAt);
+export function isCourseComplete(completed) {
+  return completedLessonCount(completed) >= TOTAL_LESSONS;
 }
 
 export const PASS_THRESHOLD = 70; // % score needed to pass a quiz and unlock the next lesson

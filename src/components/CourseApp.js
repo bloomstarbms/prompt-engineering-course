@@ -357,8 +357,8 @@ export default function CourseApp({ initialM = null, initialL = null, serverBody
   }, [user, completed, quizScores]);
   // The same predicate /api/certificates/issue uses — see isCourseComplete()
   // in courseData.js. Was `Object.keys(completed).length === TOTAL_LESSONS`,
-  // which locked grandfathered accounts (22–25 lessons) out of /cert.
-  const allDone = isCourseComplete(completed, user?.createdAt);
+  // a second definition that counted keys rather than completions.
+  const allDone = isCourseComplete(completed);
 
   /* Also unlock cert access for students who already have an issued cert
      (covers: course updated with new lessons after they graduated, or any
