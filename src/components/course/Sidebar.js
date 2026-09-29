@@ -367,7 +367,7 @@ function ModuleSection({ m, mi, isActive, isOpen, activeL, completed, quizScores
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>{l.title}</div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 1.5, alignItems: 'center' }}>
-                    <span style={{ fontFamily: T.mono, fontSize: 8.5, color: T.faint }}>{l.dur}</span>
+                    <span style={{ fontFamily: T.mono, fontSize: 8.5, color: T.faint }}>{l.dur} read</span>
                     {qs && !locked && qGrade && (
                       <span style={{
                         fontFamily: T.mono, fontSize: 8.5,

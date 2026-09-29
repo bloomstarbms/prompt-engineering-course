@@ -12,7 +12,8 @@ import { lessonHref, moduleHref } from '@/lib/courseRoutes';
  * duration is exactly the kind of thing that rots silently after an edit.
  */
 
-/** Total taught minutes, summed from the authored lesson durations. */
+/** Total minutes, summed from each lesson's `dur`: reading plus quiz time,
+ *  computed by the formula in src/lib/lessonDuration.js (not authored). */
 function courseWorkloadISO() {
   const minutes = MODULES.reduce(
     (total, m) => total + m.lessons.reduce((t, l) => {

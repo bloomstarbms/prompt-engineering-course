@@ -1112,7 +1112,7 @@ function LessonView({ lesson, mod, lKey, lessonBody, bodyError, onRetryBody, com
         </h1>
 
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center', marginBottom: 24 }}>
-          <span style={{ fontFamily: T.mono, fontSize: 11, color: T.dim }}>⏱ {lesson.dur}</span>
+          <span style={{ fontFamily: T.mono, fontSize: 11, color: T.dim }}>⏱ {lesson.dur} read</span>
           {isComplete && !quizScore && (
             <span style={{ fontFamily: T.mono, fontSize: 11, color: T.success }}>✓ COMPLETED</span>
           )}
