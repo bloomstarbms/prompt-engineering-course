@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabaseAdmin';
-import { MODULES, TOTAL_LESSONS, LEGACY_SYLLABUS_LESSONS, SYLLABUS_EXPANDED_AT } from '@/data/courseData';
+import {
+  MODULES, TOTAL_LESSONS, isCourseComplete, requiredLessonsFor, completedLessonCount,
+} from '@/data/courseData';
 import { getGrade } from '@/lib/theme';
 
 /**
@@ -96,24 +98,17 @@ export async function POST(req) {
   const completed  = progressRow?.completed   || {};
   const quizScores = progressRow?.quiz_scores || {};
 
-  // Grandfather clause, bounded to the cohort it exists for.
-  //
-  // Accounts predating the 2026-04-20 syllabus expansion qualify at the old
-  // 22-lesson bar; everyone since must complete all TOTAL_LESSONS. A blanket
-  // floor would permanently lower the requirement and make the certificate's
-  // own wording untrue for anyone registering today.
-  //
-  // created_at comes from the verified token, so this cannot be spoofed by the
-  // caller — same trust boundary as the user id itself.
-  const accountCreatedAt = authData.user.created_at ? new Date(authData.user.created_at) : null;
-  const predatesExpansion =
-    accountCreatedAt !== null && accountCreatedAt < new Date(SYLLABUS_EXPANDED_AT);
-  const requiredLessons = predatesExpansion ? LEGACY_SYLLABUS_LESSONS : TOTAL_LESSONS;
+  // Completion is decided by isCourseComplete() in courseData.js — the one
+  // definition, shared with CourseApp's /cert gate. It carries the grandfather
+  // clause (22 lessons for accounts predating the 2026-04-20 expansion, all
+  // TOTAL_LESSONS since). created_at comes from the verified token, so it
+  // cannot be spoofed by the caller — same trust boundary as the user id.
+  const accountCreatedAt = authData.user.created_at || null;
+  const requiredLessons  = requiredLessonsFor(accountCreatedAt);
+  const completedKeys    = Object.keys(completed);
+  const completedCount   = completedLessonCount(completed);
 
-  const completedKeys  = Object.keys(completed);
-  const completedCount = completedKeys.filter(k => completed[k]).length;
-
-  if (completedCount < requiredLessons) {
+  if (!isCourseComplete(completed, accountCreatedAt)) {
     // Never render equal numbers. "26 of 26 lessons finished" alongside "course
     // not complete" is self-contradictory to a reader, and it cannot mean what
     // it says: if the counts matched, this branch would not have been entered.

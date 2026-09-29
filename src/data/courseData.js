@@ -522,6 +522,43 @@ export const TOTAL_LESSONS = MODULES.reduce((a, m) => a + m.lessons.length, 0);
 export const SYLLABUS_EXPANDED_AT     = '2026-04-20T00:00:00Z';
 export const LEGACY_SYLLABUS_LESSONS  = 22;
 
+/**
+ * THE definition of "has finished the course". There is one, and this is it.
+ *
+ * Used by /api/certificates/issue (which decides) and by CourseApp (which
+ * decides whether /cert is reachable), so the page and the server cannot
+ * disagree. They did: the client used `Object.keys(completed).length ===
+ * TOTAL_LESSONS`, which counted keys rather than completions, demanded exactly
+ * 26, and had no grandfather clause. An account from before the expansion with
+ * 22–25 lessons done qualified at the server and was bounced off /cert by the
+ * page, so it could never reach the route that would have issued.
+ *
+ * The one other copy is SQL: migration 011's admin_dashboard_stats() counts the
+ * same thing and cannot import JavaScript. It takes these constants as
+ * arguments from /api/stats; if this rule changes, change it there too.
+ *
+ *   completed         progress.completed — { "m-l": true, … }. Only truthy
+ *                     entries count; the client only ever writes `true`, so a
+ *                     falsy one is an anomaly, not an incomplete lesson.
+ *   accountCreatedAt  auth.users.created_at (ISO string or Date). On the server
+ *                     it comes from the verified token, so it cannot be spoofed.
+ *                     Missing or unparseable → the full requirement applies.
+ */
+export function completedLessonCount(completed) {
+  return Object.values(completed || {}).filter(Boolean).length;
+}
+
+export function requiredLessonsFor(accountCreatedAt) {
+  const created = accountCreatedAt ? new Date(accountCreatedAt) : null;
+  const predatesExpansion =
+    created !== null && !Number.isNaN(created.getTime()) && created < new Date(SYLLABUS_EXPANDED_AT);
+  return predatesExpansion ? LEGACY_SYLLABUS_LESSONS : TOTAL_LESSONS;
+}
+
+export function isCourseComplete(completed, accountCreatedAt) {
+  return completedLessonCount(completed) >= requiredLessonsFor(accountCreatedAt);
+}
+
 export const PASS_THRESHOLD = 70; // % score needed to pass a quiz and unlock the next lesson
 
 /* getGrade lives in src/lib/theme.js — imported from there by all components */

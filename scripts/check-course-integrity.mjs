@@ -67,7 +67,10 @@ process.emitWarning = (warning, ...rest) => {
 // Depending on "this file happens to have no imports" is the same shape of
 // implicit invariant as "the unlock rule holds because the sidebar is the only
 // way in". Removed rather than documented.
-const { MODULES, QUIZZES, TOTAL_LESSONS } = await import(
+const {
+  MODULES, QUIZZES, TOTAL_LESSONS,
+  isCourseComplete, LEGACY_SYLLABUS_LESSONS, SYLLABUS_EXPANDED_AT,
+} = await import(
   pathToFileURL(join(root, 'src/data/courseData.js')).href
 );
 
@@ -141,9 +144,41 @@ const realTotal = MODULES.reduce((a, m) => a + m.lessons.length, 0);
 if (TOTAL_LESSONS !== realTotal) {
   fail(`TOTAL_LESSONS (${TOTAL_LESSONS}) != actual lesson count (${realTotal}) — the certificate route counts against this`);
 }
-const routeSrc = readFileSync(join(root, 'src/app/api/certificates/issue/route.js'), 'utf8');
-if (!routeSrc.includes('LEGACY_SYLLABUS_LESSONS') || !routeSrc.includes('TOTAL_LESSONS')) {
-  fail('certificates/issue no longer references both TOTAL_LESSONS and LEGACY_SYLLABUS_LESSONS — the grandfather clause may have been removed');
+// The grandfather clause, checked by BEHAVIOUR, not by grepping for its
+// constants. It used to test that the route's source mentioned
+// LEGACY_SYLLABUS_LESSONS — a declaration, which passes as long as the word is
+// present and says nothing about what the rule does. The rule now lives in
+// isCourseComplete() (courseData.js); run it at the boundaries instead.
+{
+  const cutoff = new Date(SYLLABUS_EXPANDED_AT).getTime();
+  const before = new Date(cutoff - 86_400_000).toISOString();
+  const after  = new Date(cutoff + 86_400_000).toISOString();
+  const done = n => Object.fromEntries(Array.from({ length: n }, (_, i) => [`x-${i}`, true]));
+  const cases = [
+    [before, LEGACY_SYLLABUS_LESSONS,     true,  'pre-expansion account at the legacy bar'],
+    [before, LEGACY_SYLLABUS_LESSONS - 1, false, 'pre-expansion account one short of the legacy bar'],
+    [after,  LEGACY_SYLLABUS_LESSONS,     false, 'post-expansion account at only the legacy bar'],
+    [after,  TOTAL_LESSONS,               true,  'post-expansion account at the full syllabus'],
+    [null,   LEGACY_SYLLABUS_LESSONS,     false, 'unknown creation date at only the legacy bar'],
+  ];
+  for (const [created, n, want, label] of cases) {
+    if (isCourseComplete(done(n), created) !== want) {
+      fail(`isCourseComplete: ${label} (${n} lessons) should be ${want} — the completion rule or its grandfather clause has changed`);
+    }
+  }
+  // Falsy entries are anomalies, not completions.
+  if (isCourseComplete({ ...done(TOTAL_LESSONS - 1), extra: false }, after)) {
+    fail('isCourseComplete counts a falsy lesson entry as completed');
+  }
+  // Both deciders must use it — one definition, not two.
+  for (const rel of ['src/app/api/certificates/issue/route.js', 'src/components/CourseApp.js']) {
+    const src = readFileSync(join(root, rel), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/[^\n]*/g, '');
+    if (!/\bisCourseComplete\s*\(/.test(src)) {
+      fail(`${rel} no longer calls isCourseComplete() — a second definition of "finished" can drift from the first`);
+    }
+  }
 }
 if (realTotal < manifest.totalLessons) {
   fail(`lesson count fell below the frozen total (${manifest.totalLessons} -> ${realTotal}); certificate completion checks would break`);

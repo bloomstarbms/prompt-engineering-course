@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthCtx } from '@/providers/AuthProvider';
 import { T, getGrade } from '@/lib/theme';
-import { MODULES, QUIZZES, TOTAL_LESSONS, PASS_THRESHOLD } from '@/data/courseData';
+import { MODULES, QUIZZES, TOTAL_LESSONS, PASS_THRESHOLD, isCourseComplete } from '@/data/courseData';
 import { isLessonUnlocked } from '@/lib/lessonUnlock';
 import AuthPage        from '@/components/auth/AuthPage';
 import Landing         from '@/components/course/Landing';
@@ -355,8 +355,10 @@ export default function CourseApp({ initialM = null, initialL = null, serverBody
     }));
     return best;
   }, [user, completed, quizScores]);
-  const completedCount = Object.keys(completed).length;
-  const allDone = completedCount === TOTAL_LESSONS;
+  // The same predicate /api/certificates/issue uses — see isCourseComplete()
+  // in courseData.js. Was `Object.keys(completed).length === TOTAL_LESSONS`,
+  // which locked grandfathered accounts (22–25 lessons) out of /cert.
+  const allDone = isCourseComplete(completed, user?.createdAt);
 
   /* Also unlock cert access for students who already have an issued cert
      (covers: course updated with new lessons after they graduated, or any

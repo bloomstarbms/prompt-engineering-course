@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { T, getGrade } from '@/lib/theme';
-import { MODULES, TOTAL_LESSONS, PASS_THRESHOLD } from '@/data/courseData';
+import { MODULES, TOTAL_LESSONS, PASS_THRESHOLD, isCourseComplete } from '@/data/courseData';
 
 /* ── Deterministic avatar gradient ─────────────────────────────────── */
 const AVATAR_GRADIENTS = [
@@ -436,7 +436,7 @@ export default function ProfilePage({
                   Certificate of Completion
                 </div>
                 <div style={{ fontFamily:T.font, fontSize:12, color:T.muted }}>
-                  {completedCount===TOTAL_LESSONS
+                  {isCourseComplete(completed, user?.createdAt)
                     ? 'Course complete — view and download your certificate of completion.'
                     : 'You have a certificate — view it any time.'}
                 </div>

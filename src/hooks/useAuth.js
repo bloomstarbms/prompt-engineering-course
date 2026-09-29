@@ -201,6 +201,10 @@ export function useAuth() {
         bio:         profile?.bio        ?? '',
         avatarUrl:   profile?.avatar_url ?? '',
         nameIsDefault,   // true when falling back to email prefix — UI shows a "set your name" prompt
+        // auth.users.created_at. isCourseComplete() needs it for the
+        // grandfather clause; without it the /cert gate applied the full
+        // 26-lesson bar to accounts the server certifies at 22.
+        createdAt:   authUser.created_at ?? null,
         // null means never asked — an account predating the documents, or one
         // migrated from localStorage. It does NOT mean refused. See 006.
         consentedAt: profile?.consented_at ?? null,

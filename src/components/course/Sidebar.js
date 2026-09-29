@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { T, getGrade } from '@/lib/theme';
-import { MODULES, TOTAL_LESSONS } from '@/data/courseData';
+import { MODULES, TOTAL_LESSONS, isCourseComplete } from '@/data/courseData';
 import { Ring } from '@/components/ui';
 
 /* ── Avatar ── */
@@ -209,7 +209,7 @@ export default function Sidebar({
             onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(99,102,241,0.45)'; }}
             onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(99,102,241,0.35)'; }}
           >
-            🎓 {completedCount === TOTAL_LESSONS ? 'Claim Certificate' : 'My Certificate'}
+            🎓 {isCourseComplete(completed, user?.createdAt) ? 'Claim Certificate' : 'My Certificate'}
           </button>
         )}
         <div style={{ display: 'flex', gap: 6 }}>
