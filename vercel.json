@@ -2,13 +2,18 @@
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
-  "installCommand": "npm install",
+  "installCommand": "npm ci",
   "regions": ["iad1"],
   "redirects": [
     {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "prompten.xyz" }],
       "destination": "https://www.prompten.xyz/:path*",
+      "statusCode": 301
+    },
+    {
+      "source": "/quiz",
+      "destination": "/course",
       "statusCode": 301
     }
   ]

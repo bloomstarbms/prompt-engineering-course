@@ -14,7 +14,7 @@ import QuizView        from '@/components/quiz/QuizView';
 import CertificatePage from '@/components/cert/CertificatePage';
 import ProfilePage     from '@/components/profile/ProfilePage';
 import { getUserCert } from '@/lib/db';
-import { lessonHref, quizHref, isPublicLesson } from '@/lib/courseRoutes';
+import { lessonHref, quizHref, isPublicLesson, APP_PAGES } from '@/lib/courseRoutes';
 import { CONSENT_PROMPT_ENABLED } from '@/lib/docs';
 import ConsentGate from '@/components/auth/ConsentGate';
 import LockedPanel from '@/components/course/LockedPanel';
@@ -148,10 +148,12 @@ export default function CourseApp({ initialM = null, initialL = null, serverBody
   const page = useMemo(() => {
     // '/quiz' is deliberately absent: the quiz now lives under its lesson, at
     // /course/<m>/<l>/quiz, so that it reads its position from the URL instead
-    // of inferring one. A stale bookmark of the old path falls through to
-    // 'landing', and the auto-redirect effect below sends a signed-in reader
-    // on to /course rather than leaving them somewhere broken.
-    const map = { '/course': 'course', '/profile': 'profile', '/cert': 'cert', '/auth': 'auth' };
+    // of inferring one. A stale bookmark of the old path is 301'd to /course
+    // by vercel.json and never reaches this component.
+    //
+    // Built from APP_PAGES, the same list src/app/[page]/page.js validates
+    // against, so a path that route serves always has a view here.
+    const map = Object.fromEntries(APP_PAGES.map(p => [`/${p}`, p]));
     if (pathname?.startsWith('/course/')) {
       return pathname.endsWith('/quiz') ? 'quiz' : 'course';
     }

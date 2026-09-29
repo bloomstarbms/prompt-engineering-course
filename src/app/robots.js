@@ -9,8 +9,10 @@ import { SITE_URL } from '@/lib/seo';
  * a crawler that cannot fetch the page can never read the noindex tag telling
  * it to drop the page. Disallowing the routes we want de-indexed would
  * permanently freeze them in the index. So the gated lessons, /course,
- * /profile, /cert, /auth, /quiz and the nested quiz routes are all crawlable
- * and all carry noindex, which is what actually removes them.
+ * /profile, /cert, /auth and the nested quiz routes are all crawlable and all
+ * carry noindex, which is what actually removes them. The retired /quiz is a
+ * 301 to /course (vercel.json), and unknown paths are real 404s, so neither
+ * needs a tag.
  *
  * /api/* is the one exception, and the distinction is the point: those
  * endpoints return JSON, nothing links to them, and we never need a noindex

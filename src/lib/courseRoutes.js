@@ -25,6 +25,17 @@ import { MODULES } from '@/data/courseData';
  * repointing stored progress.
  * ────────────────────────────────────────────────────────────────────────── */
 
+/**
+ * The single-segment app surfaces served by src/app/[page]/page.js. That
+ * route 404s anything else, and CourseApp maps exactly these paths to views,
+ * so both read this list rather than keeping their own.
+ *
+ * Other single-segment paths (/about, /privacy, /terms, /admin,
+ * /reset-password) have their own route files, which take precedence over
+ * [page]. /quiz is retired and 301s to /course from vercel.json.
+ */
+export const APP_PAGES = ['course', 'profile', 'cert', 'auth'];
+
 /** Slug pair -> { mi, li }, or null if either slug is unknown. */
 export function resolvePosition(moduleSlug, lessonSlug) {
   if (!moduleSlug || !lessonSlug) return null;
