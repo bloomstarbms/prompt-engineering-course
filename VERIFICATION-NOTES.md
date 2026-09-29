@@ -96,7 +96,7 @@ paragraphs on a public lesson in the same run.
 an effect. Only the behaviour is.** Read what the system does (the response
 code, the query plan, the refused write), not what a file says it will do.
 
-The same shape has now happened three times, each in a different kind of file:
+The same shape has now happened four times, each in a different kind of file:
 
 1. **Migration `006`.** `revoke update (consented_at) … from authenticated`
    ran without error and changed nothing: a column-level REVOKE can't subtract
@@ -118,6 +118,23 @@ The same shape has now happened three times, each in a different kind of file:
    the dead rule was deleted rather than commented: a live config file that
    states a rule which can't fire is a false statement about the system, and
    that is exactly what misled here.
+
+4. **The certificate grandfather clause.** Accounts created before the
+   2026-04-20 syllabus expansion were meant to qualify at 22 lessons instead of
+   26. The rule keys on `auth.users.created_at`. Measured on 29 September 2026,
+   the earliest account in the database was created on **2026-04-25**, the day
+   the localStorage-to-Supabase migration shipped. **0 of 1,668 accounts
+   predate the cutoff**, so the clause has protected no one, and as built never
+   could. The cohort it describes used the app before Supabase existed, and
+   `migrateLegacyUser` gave them new accounts at migration time, stamped after
+   the cutoff, with no marker recording that they were migrated. The clause
+   had a careful comment explaining why `created_at` was the right key, and a
+   build-time check that it was still present. Nothing ever asked whether it
+   matched a single account.
+
+This one is in code, not config, and that is the point: the shape isn't
+about file types. A rule that is correct about its inputs and wrong about the
+world passes review, passes tests written from the rule, and does nothing.
 
 **The next one won't look like these.** It will be another file that is
 believed because it is in the repo. Treat every declared effect as unverified

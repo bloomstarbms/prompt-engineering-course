@@ -519,6 +519,19 @@ export const TOTAL_LESSONS = MODULES.reduce((a, m) => a + m.lessons.length, 0);
  * grew, and their completions quietly stopped counting with no code change and
  * no decision recorded anywhere.
  */
+/*
+ * ─── AS BUILT, THIS PROTECTS NO ONE. Read before relying on it. ───────────
+ * Measured 29 Sep 2026: the earliest account in auth.users was created
+ * 2026-04-25, the day Supabase accounts began (the localStorage migration
+ * shipped then). 0 of 1,668 accounts predate SYLLABUS_EXPANDED_AT, so the
+ * 22-lesson bar below has applied to nobody. The people it was written for
+ * used the pre-Supabase app, and migrateLegacyUser gave them new accounts,
+ * dated after the cutoff and carrying no migration marker, so created_at
+ * cannot identify them. A lesson-key fingerprint cannot either: finishing the
+ * old 22 lessons looks identical to a current learner who has not reached
+ * Module 08 yet. What to do with the clause is an open decision; see
+ * VERIFICATION-NOTES.md ("verify the behaviour, not the declaration", item 4).
+ */
 export const SYLLABUS_EXPANDED_AT     = '2026-04-20T00:00:00Z';
 export const LEGACY_SYLLABUS_LESSONS  = 22;
 
