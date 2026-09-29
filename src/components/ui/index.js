@@ -1,5 +1,20 @@
 'use client';
+import Link from 'next/link';
 import { T } from '@/lib/theme';
+
+/**
+ * What a <button> gets from the browser and an <a> does not. Used when a
+ * button-styled control navigates and so is rendered as a link: without these
+ * the link inherits body's line-height (1.65) and text alignment and renders
+ * taller than the button it replaces — and inherits body's Inter character
+ * variants (cv02–cv11, e.g. the single-storey "a"), which buttons do not, so
+ * "Start Learning" would change glyph shape. Found by diffing every computed
+ * property of a button against its link replacement, not a chosen list.
+ */
+export const LINK_AS_BUTTON = {
+  display: 'inline-block', lineHeight: 'normal', textAlign: 'center',
+  textDecoration: 'none', verticalAlign: 'baseline', fontFeatureSettings: 'normal',
+};
 
 /* ── Progress Ring ─────────────────────────────────────────────────────── */
 export function Ring({ pct, color, size = 40, stroke = 3 }) {
@@ -43,13 +58,18 @@ export function Modal({ children, onClose }) {
 }
 
 /* ── Accent Button ─────────────────────────────────────────────────────── */
-export function AccentBtn({ children, onClick, disabled, fullWidth, size = 'md', style: extra = {} }) {
+// With `href` it renders a link, not a button: anything that navigates must
+// be an <a> so it is keyboard-focusable as a link, opens in a new tab, and can
+// be followed by a crawler. Styling is identical either way.
+export function AccentBtn({ children, onClick, disabled, fullWidth, size = 'md', href, style: extra = {} }) {
   const pad = size === 'sm' ? '8px 16px' : '12px 24px';
   const fs  = size === 'sm' ? 12 : 14;
+  const Tag = href ? Link : 'button';
   return (
-    <button
-      onClick={onClick} disabled={disabled}
+    <Tag
+      {...(href ? { href } : { onClick, disabled })}
       style={{
+        ...(href ? LINK_AS_BUTTON : null),
         background: disabled ? T.bg3 : T.accent, border: 'none',
         color: disabled ? T.dim : '#fff',
         padding: pad, borderRadius: 8, cursor: disabled ? 'default' : 'pointer',
@@ -63,7 +83,7 @@ export function AccentBtn({ children, onClick, disabled, fullWidth, size = 'md',
       onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = disabled ? 'none' : '0 4px 16px rgba(99,102,241,0.35)'; }}
     >
       {children}
-    </button>
+    </Tag>
   );
 }
 

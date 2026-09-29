@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { T } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS, QUIZZES } from '@/data/courseData';
-import { AccentBtn } from '@/components/ui';
+import { AccentBtn, LINK_AS_BUTTON } from '@/components/ui';
 import { moduleHref } from '@/lib/courseRoutes';
 import { DOCS_PUBLISHED, DOC_PAGES } from '@/lib/docs';
 
@@ -126,7 +126,13 @@ const MODULE_SVGS = [
   ),
 ];
 
-export default function Landing({ onStart, onLogin, onOpenModule }) {
+/**
+ * startHref / loginHref: where "Get Started" and "Log In" go — /course for a
+ * signed-in reader, /auth otherwise. Every control on this page that
+ * navigates is a real <a href>, so it is reachable and activatable from the
+ * keyboard and followable by a crawler; none is a button or a clickable div.
+ */
+export default function Landing({ startHref, loginHref }) {
   return (
     <div style={{ minHeight: '100vh', background: T.bg, overflowX: 'hidden' }}>
 
@@ -150,7 +156,8 @@ export default function Landing({ onStart, onLogin, onOpenModule }) {
           </span>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onLogin} style={{
+          <Link href={loginHref} style={{
+            ...LINK_AS_BUTTON,
             background: 'none', border: `1px solid ${T.border}`, color: T.muted,
             padding: '7px 16px', borderRadius: 7, cursor: 'pointer',
             fontFamily: T.font, fontWeight: 600, fontSize: 13, transition: 'all 0.15s',
@@ -159,8 +166,8 @@ export default function Landing({ onStart, onLogin, onOpenModule }) {
             onMouseLeave={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.color = T.muted; }}
           >
             Log In
-          </button>
-          <AccentBtn onClick={onStart} size="sm">Get Started</AccentBtn>
+          </Link>
+          <AccentBtn href={startHref} size="sm">Get Started</AccentBtn>
         </div>
       </nav>
 
@@ -272,15 +279,22 @@ export default function Landing({ onStart, onLogin, onOpenModule }) {
             </span>
           </div>
 
-          <h1 style={{
+          {/* One <h1> for the page. The two lines are block spans carrying
+              exactly the styles the two separate <h1>s had, so the visual
+              result is unchanged; the space between them gives the heading an
+              accessible name of "Master the Art of Prompting". */}
+          <h1>
+          <span style={{
+            display: 'block',
             fontFamily: T.display, fontWeight: 700,
             fontSize: 'clamp(40px,7.5vw,84px)', lineHeight: 0.95,
             letterSpacing: '-0.04em', color: T.text,
             marginBottom: 10, animation: 'fadeUp 0.5s 0.08s ease both', opacity: 0,
           }}>
             Master the Art of
-          </h1>
-          <h1 style={{
+          </span>{' '}
+          <span style={{
+            display: 'block',
             fontFamily: T.serif, fontStyle: 'italic', fontWeight: 400,
             fontSize: 'clamp(40px,7.5vw,84px)', lineHeight: 0.95,
             letterSpacing: '-0.02em', marginBottom: 28,
@@ -291,6 +305,7 @@ export default function Landing({ onStart, onLogin, onOpenModule }) {
             opacity: 0,
           }}>
             Prompting
+          </span>
           </h1>
 
           <p style={{
@@ -325,10 +340,11 @@ export default function Landing({ onStart, onLogin, onOpenModule }) {
 
           {/* CTAs */}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', animation: 'fadeUp 0.5s 0.38s ease both', opacity: 0 }}>
-            <AccentBtn onClick={onStart} style={{ fontSize: 15, padding: '14px 32px' }}>
+            <AccentBtn href={startHref} style={{ fontSize: 15, padding: '14px 32px' }}>
               Start Learning →
             </AccentBtn>
-            <button onClick={onLogin} style={{
+            <Link href={loginHref} style={{
+              ...LINK_AS_BUTTON,
               background: 'transparent', border: `1px solid ${T.border2}`,
               color: T.muted, padding: '14px 24px', borderRadius: 10, cursor: 'pointer',
               fontFamily: T.font, fontWeight: 600, fontSize: 15, transition: 'all 0.15s',
@@ -337,7 +353,7 @@ export default function Landing({ onStart, onLogin, onOpenModule }) {
               onMouseLeave={e => { e.currentTarget.style.color = T.muted; e.currentTarget.style.borderColor = T.border2; }}
             >
               Log In
-            </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -414,10 +430,16 @@ export default function Landing({ onStart, onLogin, onOpenModule }) {
               // route to /auth, but say so before the click rather than after.
               const isFree = m.lessons.some(l => l.isPublic);
               return (
-                <div key={m.id}
-                  onClick={() => (isFree ? onOpenModule(moduleHref(m.id)) : onStart())}
+                // Module 01: a crawlable link to its first lesson. Locked
+                // modules link to the same place as "Get Started" (/auth, or
+                // /course when signed in) — keyboard-reachable like any link.
+                // /auth is noindex and already linked from the nav, so these
+                // add nothing for a crawler and need no rel="nofollow".
+                <Link key={m.id}
+                  href={isFree ? moduleHref(m.id) : startHref}
                   title={isFree ? 'Read this module free — no account needed' : 'Create a free account to unlock'}
                   style={{
+                  display: 'block', color: 'inherit', textDecoration: 'none',
                   background: T.bg, border: `1px solid ${T.border}`,
                   borderRadius: 14, padding: '20px 22px', cursor: 'pointer',
                   transition: 'all 0.2s', boxShadow: T.shadowSm,
@@ -475,7 +497,7 @@ export default function Landing({ onStart, onLogin, onOpenModule }) {
                       </span>
                     )}
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
@@ -509,7 +531,7 @@ export default function Landing({ onStart, onLogin, onOpenModule }) {
           <p style={{ fontFamily: T.font, fontSize: 14, color: T.muted, marginBottom: 28, lineHeight: 1.6 }}>
             Free course. Create an account in 30 seconds. Start immediately.
           </p>
-          <AccentBtn onClick={onStart} style={{ fontSize: 15, padding: '14px 36px' }}>
+          <AccentBtn href={startHref} style={{ fontSize: 15, padding: '14px 36px' }}>
             Begin the Course →
           </AccentBtn>
         </div>

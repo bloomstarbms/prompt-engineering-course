@@ -686,9 +686,8 @@ export default function CourseApp({ initialM = null, initialL = null, serverBody
      ungating never actually reached anyone. */
   if (page === 'landing') return (
     <Landing
-      onStart={() => router.push(user ? '/course' : '/auth')}
-      onLogin={() => router.push(user ? '/course' : '/auth')}
-      onOpenModule={(href) => router.push(href)}
+      startHref={user ? '/course' : '/auth'}
+      loginHref={user ? '/course' : '/auth'}
     />
   );
 
