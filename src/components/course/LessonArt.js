@@ -903,7 +903,7 @@ export default function LessonArt({ mi, li, color, tag, title }) {
         {`FIG. ${tag}.${String(li + 1).padStart(2, '0')} — ${title.toUpperCase()}`}
       </text>
       <text x="876" y="384" textAnchor="end" fontFamily={MONO} fontSize="8.5"
-        letterSpacing="0.12em" fill="#52525b">PROMPTMASTERY · ILLUSTRATED GUIDE</text>
+        letterSpacing="0.12em" fill="#52525b">PROMPTEN · ILLUSTRATED GUIDE</text>
     </svg>
   );
 }

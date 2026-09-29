@@ -250,7 +250,7 @@ Once you have a live site on Vercel:
 
 1. Buy a domain (Namecheap, GoDaddy, Google Domains)
 2. In Vercel: Project → Settings → Domains → Add
-3. Type your domain name (e.g., `promptmastery.com`)
+3. Type your domain name (e.g., `prompten.xyz`)
 4. Vercel shows you DNS records to add
 5. Go to your domain registrar → DNS settings → add those records
 6. Wait 10–30 minutes → your custom domain is live ✅

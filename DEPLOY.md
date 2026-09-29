@@ -65,7 +65,7 @@ vercel --prod
 
 In Vercel dashboard:
 1. Go to your project → **Settings** → **Domains**
-2. Add your domain (e.g. `promptmastery.com`)
+2. Add your domain (e.g. `prompten.xyz`)
 3. Update your DNS with the records Vercel provides
 
 ---

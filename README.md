@@ -1,4 +1,4 @@
-# Prompt Engineering — Zero to Mastery
+# Prompten — Prompt Engineering Course
 
 A technically rigorous, career-grade prompt engineering course built with Next.js.
 
