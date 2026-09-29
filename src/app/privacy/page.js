@@ -24,7 +24,7 @@ export default function PrivacyPage() {
   return (
     <DocPage
       title="Privacy Policy"
-      updated="9 August 2026"
+      updated="29 September 2026"
       markdown={PRIVACY_MD}
       links={[{ href: '/terms', label: 'Terms of Use' }, { href: '/about', label: 'About' }]}
     />

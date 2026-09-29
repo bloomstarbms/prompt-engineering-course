@@ -33,8 +33,9 @@ that either.
 
 ### Until the table is retired, erasure has a fifth step
 
-Account deletion is not complete without it. Add to whatever the erasure
-procedure is, and do it every time:
+Account deletion is not complete without it. It is step 4 of
+[ERASURE-PROCEDURE.md](ERASURE-PROCEDURE.md) (written 29 Sep 2026; before
+that there was no written procedure), and it must be done every time:
 
 ```sql
 delete from public.course_events where email = 'THE-ADDRESS';

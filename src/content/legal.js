@@ -124,10 +124,10 @@ We use no analytics cookies, no advertising cookies, and no third-party trackers
 ## 7. How long we keep it
 
 - **Account, profile and progress** — until you delete your account.
-- **Certificates** — indefinitely, unless you ask us to remove yours, because a certificate that stops verifying is worthless.
+- **Certificates** — for as long as your account exists, unless you ask us to remove yours sooner.
 - **Usage events** — kept for 24 months, then deleted.
 
-When you ask us to delete your account, we delete your profile, progress and usage events. Tell us if you also want your certificate removed.
+When you ask us to delete your account, we delete your profile, progress, usage events and certificate. Your certificate's verification link stops working at that point, so if you've shared it — on a CV or LinkedIn, for example — save a copy of the certificate before you ask.
 
 ---
 
