@@ -9,6 +9,42 @@ ignore it. Both are wrong.
 
 ---
 
+## Standing rule: preview deployments never get production database credentials
+
+**Decided 29 September 2026. Not a gap to close. A boundary to keep.**
+
+Every Supabase and Postgres variable in the Vercel project is scoped to
+**Production only** (checked through the Vercel API, names and targets only):
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_SECRET_KEY`, `SUPABASE_JWT_SECRET`,
+the `POSTGRES_*` set and the rest. Only `ADMIN_SECRET` reaches Preview. So a
+preview deployment has no database: `/api/certificates/issue` returns 503 there,
+and nothing that reads or writes user data can be exercised on a preview.
+
+**Keep it that way.** Previews are built from every pushed branch. A preview
+holding the production service-role key could write to real people's
+progress, profiles and certificates from unreviewed code, and anyone with the
+preview link could drive it. A preview that can't test database behaviour is
+a limitation. A preview that can write to real user data is an incident
+waiting for a branch.
+
+What this means in practice:
+
+- **Preview checks cover** rendered content, routing, redirects, builds and
+  the integrity guard. Say so when reporting a preview check; don't let "the
+  preview passed" imply the database paths were tested.
+- **Database-backed behaviour is verified** locally against a stub or a
+  separate, non-production Supabase project, and on production where it can
+  be observed without writing (e.g. a 401 without a session).
+- **If previews ever need a database,** give them a separate Supabase project
+  with synthetic data and its own keys. Never the production variables, not
+  "temporarily", not for one branch.
+- **Check it after any change to Vercel environment variables:** list the
+  targets through the API and confirm that no Supabase or Postgres variable
+  includes `preview` or `development`.
+
+---
+
 ## Open — HIGHEST PRIORITY: `course_events` does not cascade on deletion, and the Privacy Policy says it does
 
 **This is a published commitment we are not meeting. It outranks everything

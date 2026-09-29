@@ -49,35 +49,55 @@ There is **no data that proves someone finished the 22-lesson course**:
 What you *can* look up is whether an account exists for their address, and
 what its progress row holds. Treat that as context, not proof.
 
-## Handling a claim
+## Handling a claim — decided approach (29 September 2026)
 
 1. **Reply, and ask what they have:** the date they finished, and any copy
    of the old certificate (PDF or screenshot). None of it is verifiable. Ask
    anyway; it's the only evidence there is.
-2. **Offer the route that needs no trust first.** Module 08 is four lessons
-   (28 minutes by the course's own reading-plus-quiz timing). Completing them issues a
-   normal 26-lesson certificate automatically, with nothing to judge.
-3. **If they'd rather not, the decision is yours, made by judgement.** Write
-   it down: date, address, what they provided, what you decided and why.
-4. **Don't honour a claim by hand until the displays are fixed** (below).
+2. **Offer Module 08 first.** Four lessons, 28 minutes by the course's own
+   reading-plus-quiz timing. Completing them issues a standard 26-lesson
+   certificate automatically, with nothing to judge.
+3. **If they decline, judge whether the claim is credible.** Write it down:
+   date, address, what they provided, what you decided and why.
+4. **If it is credible, issue a certificate with `syllabus_size = 22`**, and
+   only after the display change below is built and deployed.
+5. **Never issue a certificate stating 26 lessons to someone who completed
+   22.** Not as a shortcut, not "just this once". The certificate and its
+   public verification page would state something untrue.
 
-## Why a hand-issued 22-lesson certificate is not yet possible
+## The display change to build before issuing the first 22-lesson certificate
 
-A certificate row records `syllabus_size` (migration `005a`), but nothing
-shows it:
+**Not built yet, deliberately.** Build it when the first real claim arrives,
+not before. There may never be one.
+
+Today a certificate row records `syllabus_size` (migration `005a`), but
+nothing shows it:
 
 - The certificate page prints the *current* total: "26 Lessons · 8 Modules ·
   Full Programme" (`CertificatePage.js`).
 - `/verify` prints "Full course completion · All 26 lessons"
-  (`VerifyClient.js`). `verify_certificate()` (migration `001`) doesn't even
-  return `syllabus_size`.
+  (`VerifyClient.js`). `verify_certificate()` (migration `001`) doesn't return
+  `syllabus_size`.
 
-So a certificate inserted by hand for 22 lessons would state, on its face and
-on its public verification page, something that isn't true. Honouring a claim
-honestly first needs both displays to read the certificate's own
-`syllabus_size` (falling back to the current total when it's null), and
-`verify_certificate()` to return it. That's a small change, but not built
-yet, and it should be decided before the first claim, not during it.
+So a 22-lesson certificate issued today would claim 26 on its face and on its
+public page. What the change needs:
+
+- `verify_certificate()` returns `syllabus_size`: a new migration, with the
+  same revoke-then-grant pattern as `001`.
+- The certificate page and `/verify` show the certificate's own
+  `syllabus_size`, falling back to the current total when it is null (every
+  certificate issued before `005a`).
+- The module list and module count on both pages reflect a 22-lesson
+  syllabus too, not only the lesson number: Module 08 must not appear on a
+  certificate for a course without it.
+- Verify by looking at the issued certificate and its `/verify` page, not by
+  reading the row.
+
+How to issue, once that is live: there is no route for it. It is a manual
+insert as `postgres` in the SQL editor, with the name taken from the
+person's profile and `syllabus_size = 22`. Write the exact statement when the
+claim arrives, against the schema as it is then. Don't write it from this
+note.
 
 ## Related
 
