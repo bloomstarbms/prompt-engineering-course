@@ -317,9 +317,9 @@ export default function Landing({ startHref, loginHref }) {
             builders, and AI practitioners. Free. No credit card needed.
           </p>
 
-          {/* Stats */}
-          <div style={{
-            display: 'flex', gap: 'clamp(24px,5vw,52px)', flexWrap: 'wrap',
+          {/* Stats — layout (flex, or a 2×2 grid at phone width) is the
+              .hero-stats rule in globals.css; see the note there. */}
+          <div className="hero-stats" style={{
             marginBottom: 44, animation: 'fadeUp 0.5s 0.3s ease both', opacity: 0,
           }}>
             {[

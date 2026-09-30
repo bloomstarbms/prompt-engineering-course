@@ -10,6 +10,7 @@ import AuthPage        from '@/components/auth/AuthPage';
 import Landing         from '@/components/course/Landing';
 import Sidebar         from '@/components/course/Sidebar';
 import LessonArt       from '@/components/course/LessonArt';
+import DiagramLightbox from '@/components/course/DiagramLightbox';
 import QuizView        from '@/components/quiz/QuizView';
 import CertificatePage from '@/components/cert/CertificatePage';
 import ProfilePage     from '@/components/profile/ProfilePage';
@@ -1097,7 +1098,14 @@ function LessonView({ lesson, mod, lKey, lessonBody, bodyError, onRetryBody, com
           that visually explains the core idea — replaces the old videos. */}
       <div style={{ background: T.bg1, borderBottom: `1px solid ${T.border}` }}>
         <div style={{ maxWidth: 1000, margin: '0 auto', padding: 'clamp(10px,2.5vw,24px)' }}>
-          <LessonArt mi={mi} li={li} color={mod.color} tag={mod.tag} title={lesson.title} />
+          {/* Tap/click (or Enter on the button) opens the diagram full screen —
+              at phone width the inline size is unreadable. See DiagramLightbox. */}
+          <DiagramLightbox
+            title={lesson.title}
+            renderDiagram={(idPrefix) => (
+              <LessonArt mi={mi} li={li} color={mod.color} tag={mod.tag} title={lesson.title} idPrefix={idPrefix} />
+            )}
+          />
         </div>
       </div>
 

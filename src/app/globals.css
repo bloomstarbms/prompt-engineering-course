@@ -192,6 +192,16 @@ pre, code {
   body { background: white; color: black; }
 }
 
+/* ── HERO STATS (Landing) ─────────────────────────────────────────────────── */
+/* Flex on desktop, as it always was. At phone width the four items did not fit
+   one row and "1 CERTIFICATE" dropped alone onto a second line (audit finding
+   13); a 2×2 grid keeps the pairs together. `display` lives here rather than
+   inline because an inline `display` cannot be overridden by a media query. */
+.hero-stats { display: flex; gap: clamp(24px,5vw,52px); flex-wrap: wrap; }
+@media (max-width: 480px) {
+  .hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 16px; }
+}
+
 /* ── MOBILE OVERRIDES ─────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   :root {

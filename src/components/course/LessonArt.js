@@ -867,8 +867,11 @@ const DIAGRAMS = {
 };
 
 /* ── Main component ──────────────────────────────────────────────────────── */
-export default function LessonArt({ mi, li, color, tag, title }) {
-  const f = 'la-wob';
+// idPrefix: the filter and pattern are referenced by id, and DiagramLightbox
+// renders a second copy of the SVG in its overlay. Two copies in one document
+// must not share ids, so each render gets its own prefix ('la' inline).
+export default function LessonArt({ mi, li, color, tag, title, idPrefix = 'la' }) {
+  const f = `${idPrefix}-wob`;
   const D = DIAGRAMS[`${mi}-${li}`] || DFallback;
   return (
     <svg viewBox="0 0 900 400" role="img"
@@ -879,14 +882,14 @@ export default function LessonArt({ mi, li, color, tag, title }) {
           <feTurbulence type="fractalNoise" baseFrequency="0.016" numOctaves="2" seed="11" result="n" />
           <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" />
         </filter>
-        <pattern id="la-grid" width="26" height="26" patternUnits="userSpaceOnUse">
+        <pattern id={`${idPrefix}-grid`} width="26" height="26" patternUnits="userSpaceOnUse">
           <circle cx="1.5" cy="1.5" r="1.1" fill="rgba(255,255,255,0.05)" />
         </pattern>
       </defs>
 
       {/* canvas */}
       <rect x="1" y="1" width="898" height="398" rx="16" fill="#0b0b10" stroke="rgba(255,255,255,0.08)" />
-      <rect x="1" y="1" width="898" height="398" rx="16" fill="url(#la-grid)" />
+      <rect x="1" y="1" width="898" height="398" rx="16" fill={`url(#${idPrefix}-grid)`} />
 
       {/* corner ticks */}
       {[[14, 14, 1, 1], [886, 14, -1, 1], [14, 386, 1, -1], [886, 386, -1, -1]].map(([x, y, sx, sy], i) => (
