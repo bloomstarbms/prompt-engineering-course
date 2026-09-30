@@ -19,7 +19,7 @@ import { TOTAL_LESSONS, MODULES } from '@/data/courseData';
  * out of the collision; that name has since been removed from the codebase
  * entirely, so there is nothing left to stay out of.
  */
-export const alt = 'Prompten — a free, career-grade prompt engineering course';
+export const alt = 'Prompten — a free prompt engineering course, from no AI background to production-level prompting';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -71,7 +71,7 @@ export default function OpengraphImage() {
             Master the art of prompting.
           </div>
           <div style={{ marginTop: 22, fontSize: 30, color: MUTED, lineHeight: 1.35 }}>
-            A technically rigorous, career-grade curriculum.
+            From no AI background to production-level prompting.
           </div>
         </div>
 

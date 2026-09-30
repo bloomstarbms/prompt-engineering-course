@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { T } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS, QUIZZES } from '@/data/courseData';
 import { AccentBtn, LINK_AS_BUTTON } from '@/components/ui';
+import { IconDiagram, IconChecklist, IconProgress, IconCertificate } from '@/components/ui/icons';
+import CertificateFace from '@/components/cert/CertificateFace';
 import { moduleHref } from '@/lib/courseRoutes';
 import { DOCS_PUBLISHED, DOC_PAGES } from '@/lib/docs';
 
@@ -313,8 +315,7 @@ export default function Landing({ startHref, loginHref }) {
             color: T.muted, lineHeight: 1.7, maxWidth: 520,
             marginBottom: 40, animation: 'fadeUp 0.5s 0.22s ease both', opacity: 0,
           }}>
-            A technically rigorous, career-grade curriculum for developers,
-            builders, and AI practitioners. Free. No credit card needed.
+            From no AI background to production-level prompting. Free. No credit card needed.
           </p>
 
           {/* Stats — layout (flex, or a 2×2 grid at phone width) is the
@@ -508,17 +509,68 @@ export default function Landing({ startHref, loginHref }) {
       <section style={{ background: T.bg1, padding: 'clamp(40px,6vw,64px) clamp(20px,6vw,80px)', borderTop: `1px solid ${T.border}` }}>
         <div style={{ maxWidth: 760, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px,1fr))', gap: 28 }}>
           {[
-            { icon: '🎨', title: 'Visual Lessons', desc: 'Every lesson opens with a concept diagram plus full written notes.' },
-            { icon: '📝', title: 'Lesson Quizzes', desc: 'Test your understanding after every lesson with graded quizzes.' },
-            { icon: '📊', title: 'Progress Tracking', desc: 'Your progress is saved automatically. Resume any time.' },
-            { icon: '🎓', title: 'Certificate of Completion', desc: 'Finish the course and earn a certificate with a unique ID anyone can look up.' },
+            { Icon: IconDiagram,     title: 'Visual Lessons', desc: 'Every lesson opens with a concept diagram plus full written notes.' },
+            { Icon: IconChecklist,   title: 'Lesson Quizzes', desc: 'Test your understanding after every lesson with graded quizzes.' },
+            { Icon: IconProgress,    title: 'Progress Tracking', desc: 'Your progress is saved automatically. Resume any time.' },
+            { Icon: IconCertificate, title: 'Certificate of Completion', desc: 'Finish the course and earn a certificate with a unique ID anyone can look up.' },
           ].map(f => (
             <div key={f.title}>
-              <div style={{ fontSize: 28, marginBottom: 10 }}>{f.icon}</div>
+              {/* Line icons in the module-icon idiom (see ui/icons.js); the
+                  emoji they replaced never matched the diagrams' line work. */}
+              <div style={{
+                width: 40, height: 40, borderRadius: 10, marginBottom: 12,
+                background: T.accentLight, border: `1px solid ${T.accentBorder}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <f.Icon color={T.accent} size={22} />
+              </div>
               <div style={{ fontFamily: T.font, fontWeight: 700, fontSize: 14, color: T.text, marginBottom: 4 }}>{f.title}</div>
               <div style={{ fontFamily: T.font, fontSize: 13, color: T.muted, lineHeight: 1.6 }}>{f.desc}</div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── The certificate (sample) ──
+          The REAL certificate face (components/cert/CertificateFace) with
+          sample props: a placeholder name, an obviously non-real credential
+          ID, no score or grade, and a SAMPLE mark. Not a lookalike — a second
+          copy of the design would drift from the first. "Your Name Here"
+          rather than an invented name, so nobody reads it as a real graduate.
+          Nothing here touches issuance. */}
+      <section style={{
+        background: T.bg,
+        borderTop: `1px solid ${T.border}`,
+        padding: 'clamp(40px,6vw,64px) clamp(16px,6vw,80px)',
+      }}>
+        <div style={{ maxWidth: 820, margin: '0 auto' }}>
+          <div style={{ fontFamily: T.mono, fontSize: 11, color: T.accent, letterSpacing: '0.12em', marginBottom: 10 }}>
+            THE CERTIFICATE
+          </div>
+          <h2 style={{
+            fontFamily: T.display, fontWeight: 700,
+            fontSize: 'clamp(17px,2.5vw,22px)', color: T.text,
+            letterSpacing: '-0.025em', margin: '0 0 12px',
+          }}>
+            What you earn
+          </h2>
+          <p style={{
+            fontFamily: T.font, fontSize: 14, color: T.muted,
+            lineHeight: 1.7, margin: '0 0 26px', maxWidth: 620,
+          }}>
+            A sample. Real certificates carry the graduate&apos;s name, score, grade,
+            issue date and a verification link anyone can check.
+          </p>
+          <CertificateFace
+            name="Your Name Here"
+            certId="PE-SAMPLE00"
+            pct={null}
+            grade={null}
+            issuedDate={null}
+            verifyUrl="/verify/PE-SAMPLE00"
+            sample
+            animate={false}
+          />
         </div>
       </section>
 
@@ -568,11 +620,12 @@ export default function Landing({ startHref, loginHref }) {
           </>
         )}
         <span style={{ fontFamily: T.mono, fontSize: 11, color: T.faint, letterSpacing: '0.04em' }}>
-          Powered by{' '}
-          <a
-            href="https://x.com/bloomstarbms"
-            target="_blank"
-            rel="noopener noreferrer"
+          {/* Internal link: /about says who BMS is and carries the X link.
+              "Made by", not "Powered by" — it is an author credit, not a
+              hosting one. */}
+          Made by{' '}
+          <Link
+            href="/about"
             style={{
               color: T.dim, textDecoration: 'none',
               borderBottom: '1px solid transparent',
@@ -582,7 +635,7 @@ export default function Landing({ startHref, loginHref }) {
             onMouseLeave={e => { e.currentTarget.style.color = T.dim; e.currentTarget.style.borderBottomColor = 'transparent'; }}
           >
             BMS
-          </a>
+          </Link>
         </span>
       </footer>
     </div>

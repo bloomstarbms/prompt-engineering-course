@@ -11,6 +11,7 @@ import Landing         from '@/components/course/Landing';
 import Sidebar         from '@/components/course/Sidebar';
 import LessonArt       from '@/components/course/LessonArt';
 import DiagramLightbox from '@/components/course/DiagramLightbox';
+import { IconModules, IconBook, IconCheckCircle, IconSprout } from '@/components/ui/icons';
 import QuizView        from '@/components/quiz/QuizView';
 import CertificatePage from '@/components/cert/CertificatePage';
 import ProfilePage     from '@/components/profile/ProfilePage';
@@ -1050,17 +1051,17 @@ function LessonView({ lesson, mod, lKey, lessonBody, bodyError, onRetryBody, com
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
               {[
-                { icon: '📚', label: `${MODULES.length} Modules` },
-                { icon: '📖', label: `${TOTAL_LESSONS} Lessons` },
-                { icon: '✅', label: 'Quizzes & Certificate' },
-                { icon: '⚡', label: 'Beginner Friendly' },
-              ].map(({ icon, label }) => (
+                { Icon: IconModules,     label: `${MODULES.length} Modules` },
+                { Icon: IconBook,        label: `${TOTAL_LESSONS} Lessons` },
+                { Icon: IconCheckCircle, label: 'Quizzes & Certificate' },
+                { Icon: IconSprout,      label: 'Beginner Friendly' },
+              ].map(({ Icon, label }) => (
                 <div key={label} style={{
                   display: 'flex', alignItems: 'center', gap: 6,
                   background: T.bg2, border: `1px solid ${T.border}`,
                   borderRadius: 8, padding: '6px 12px',
                 }}>
-                  <span style={{ fontSize: 12 }}>{icon}</span>
+                  <Icon color={mod.color} size={13} />
                   <span style={{ fontFamily: T.mono, fontSize: 10, color: T.dim, letterSpacing: '0.05em' }}>{label}</span>
                 </div>
               ))}

@@ -36,7 +36,7 @@ export function courseJsonLd() {
     '@type': 'Course',
     name: 'Prompt Engineering',
     description:
-      `A free, career-grade prompt engineering course: ${MODULES.length} modules, `
+      `A free prompt engineering course, from no AI background to production-level prompting: ${MODULES.length} modules, `
       + `${TOTAL_LESSONS} lessons, graded quizzes and a certificate of completion.`,
     url: SITE_URL,
     inLanguage: 'en',

@@ -1,6 +1,6 @@
 # Prompten — Prompt Engineering Course
 
-A technically rigorous, career-grade prompt engineering course built with Next.js.
+A free prompt engineering course — from no AI background to production-level prompting — built with Next.js.
 
 ## Features
 

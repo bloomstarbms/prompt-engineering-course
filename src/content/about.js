@@ -23,7 +23,7 @@ You can find me at [@bloomstarbms](https://x.com/bloomstarbms).
 
 ## What this course is
 
-Eight modules, 26 lessons, a quiz after each one, and a certificate of completion at the end. It's aimed at developers and builders who want to work with language models deliberately rather than by trial and error.
+Eight modules, 26 lessons, a quiz after each one, and a certificate of completion at the end. It starts from no AI background — the first module explains how these models work in plain terms — and the later modules cover the practices production systems depend on. It's for anyone who wants to work with language models deliberately rather than by trial and error — developers and builders, but not only them.
 
 Every technique here is drawn from published research or from the model providers' own documentation, and the sources are listed on the home page. Where the field is genuinely unsettled, the lessons say so.
 

@@ -171,7 +171,7 @@ export default function DiagramLightbox({ title, renderDiagram }) {
           display: 'block', textAlign: 'right', marginTop: 6,
           fontFamily: T.mono, fontSize: 10, letterSpacing: '0.1em', color: T.dim,
         }}>
-          ⤢ TAP TO ENLARGE
+          ⤢ ENLARGE
         </span>
       </button>
       {overlay}

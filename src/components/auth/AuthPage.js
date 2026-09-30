@@ -183,7 +183,7 @@ export default function AuthPage({ onAuth }) {
             }}>prompting.</span>
           </div>
           <p style={{ fontFamily: T.font, fontSize: 14, color: T.muted, lineHeight: 1.65, maxWidth: 300, margin: 0 }}>
-            A technically rigorous, career-grade curriculum. Free forever.
+            From no AI background to production-level prompting. Free forever.
           </p>
         </div>
 
