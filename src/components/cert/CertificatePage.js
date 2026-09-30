@@ -454,8 +454,13 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
             collapse the extra layout space left by transform: scale().     */}
         {!(certError && !cert) && (
         <div className="cert-print-scale">
+        {/* cert.name, not user.name: a certificate is a record at issue and must
+            match what /verify shows. The profile name stands in only while the
+            row is still loading, so the card is not blank in the meantime.
+            Verified on the stand-in: profile renamed after issue, certificate
+            unchanged. */}
         <CertificateFace
-          name={user.name}
+          name={cert?.name ?? user.name}
           certId={cert?.certId}
           pct={pct}
           grade={grade}
