@@ -4,11 +4,11 @@ import { SITE_URL, indexableUrls } from '@/lib/seo';
  * The sitemap lists exactly the indexable set and nothing else.
  *
  * It reads indexableUrls() rather than its own list, so it cannot drift from
- * what the pages' robots tags actually say. Today that is one URL — the
- * landing page — because every other route carries noindex. It grows to four
- * in the same commit that makes the three public lessons indexable, not
- * before: a sitemap is an invitation, and inviting a crawler to a page whose
- * body loads in a client effect is asking to have three empty pages indexed.
+ * what the pages' robots tags actually say. Today that is seven URLs: the
+ * landing page, /about, /privacy, /terms, and the three public Module 01
+ * lessons, whose bodies are server-rendered. (It was one URL until the
+ * public lessons became indexable; a sitemap is an invitation, and a page
+ * whose body loads in a client effect must not be invited.)
  *
  * No lastModified. We do not track per-page modification dates, and a value
  * of "now" regenerated on every deploy is a claim we cannot support — Google

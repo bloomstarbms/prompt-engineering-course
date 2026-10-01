@@ -268,6 +268,12 @@ export default function Landing({ startHref, loginHref }) {
           <circle cx="730" cy="80"  r="1.5" fill="#818cf8" opacity="0.35"/>
         </svg>
         <div style={{ maxWidth: 960, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+          {/* The hero fades in with the fadeUp keyframes (fill-mode both, so the
+              from-frame holds opacity 0 through each delay). Deliberately NO
+              inline opacity: 0 on these elements: with it, a stylesheet that
+              failed to load left the hero invisible, verified by disabling
+              the stylesheet. Without it the same failure degrades to "no
+              animation", and the page's most important content stays visible. */}
           {/* Badge */}
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -291,7 +297,7 @@ export default function Landing({ startHref, loginHref }) {
             fontFamily: T.display, fontWeight: 700,
             fontSize: 'clamp(40px,7.5vw,84px)', lineHeight: 0.95,
             letterSpacing: '-0.04em', color: T.text,
-            marginBottom: 10, animation: 'fadeUp 0.5s 0.08s ease both', opacity: 0,
+            marginBottom: 10, animation: 'fadeUp 0.5s 0.08s ease both',
           }}>
             Master the Art of
           </span>{' '}
@@ -304,7 +310,6 @@ export default function Landing({ startHref, loginHref }) {
             backgroundSize: '200% auto',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             animation: 'fadeUp 0.5s 0.14s ease both, shimmer 5s linear infinite',
-            opacity: 0,
           }}>
             Prompting
           </span>
@@ -313,7 +318,7 @@ export default function Landing({ startHref, loginHref }) {
           <p style={{
             fontFamily: T.font, fontSize: 'clamp(15px,2vw,18px)',
             color: T.muted, lineHeight: 1.7, maxWidth: 520,
-            marginBottom: 40, animation: 'fadeUp 0.5s 0.22s ease both', opacity: 0,
+            marginBottom: 40, animation: 'fadeUp 0.5s 0.22s ease both',
           }}>
             From no AI background to production-level prompting. Free. No credit card needed.
           </p>
@@ -321,7 +326,7 @@ export default function Landing({ startHref, loginHref }) {
           {/* Stats — layout (flex, or a 2×2 grid at phone width) is the
               .hero-stats rule in globals.css; see the note there. */}
           <div className="hero-stats" style={{
-            marginBottom: 44, animation: 'fadeUp 0.5s 0.3s ease both', opacity: 0,
+            marginBottom: 44, animation: 'fadeUp 0.5s 0.3s ease both',
           }}>
             {[
               [String(MODULES.length), 'Modules'],
@@ -340,7 +345,7 @@ export default function Landing({ startHref, loginHref }) {
           </div>
 
           {/* CTAs */}
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', animation: 'fadeUp 0.5s 0.38s ease both', opacity: 0 }}>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', animation: 'fadeUp 0.5s 0.38s ease both' }}>
             <AccentBtn href={startHref} style={{ fontSize: 15, padding: '14px 32px' }}>
               Start Learning →
             </AccentBtn>
