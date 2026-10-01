@@ -5,6 +5,7 @@ import { MODULES, TOTAL_LESSONS, QUIZZES } from '@/data/courseData';
 import { AccentBtn, LINK_AS_BUTTON } from '@/components/ui';
 import { IconDiagram, IconChecklist, IconProgress, IconCertificate } from '@/components/ui/icons';
 import CertificateFace from '@/components/cert/CertificateFace';
+import ReviewsSection from '@/components/course/ReviewsSection';
 import { moduleHref } from '@/lib/courseRoutes';
 import { DOCS_PUBLISHED, DOC_PAGES } from '@/lib/docs';
 
@@ -134,7 +135,7 @@ const MODULE_SVGS = [
  * navigates is a real <a href>, so it is reachable and activatable from the
  * keyboard and followable by a crawler; none is a button or a clickable div.
  */
-export default function Landing({ startHref, loginHref }) {
+export default function Landing({ startHref, loginHref, reviews = [] }) {
   return (
     <div style={{ minHeight: '100vh', background: T.bg, overflowX: 'hidden' }}>
 
@@ -578,6 +579,11 @@ export default function Landing({ startHref, loginHref }) {
           />
         </div>
       </section>
+
+      {/* ── Reviews ──
+          Approved reviews, baked in by app/page.js. Absent when there are
+          none, including every failure to fetch: the page is never a shell. */}
+      <ReviewsSection reviews={reviews} />
 
       {/* ── Footer CTA ── */}
       <section style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 120%, rgba(99,102,241,0.15) 0%, transparent 70%), linear-gradient(180deg, #09090b 0%, #101014 100%)', padding: 'clamp(48px,7vw,72px) clamp(20px,6vw,80px)', textAlign: 'center', borderTop: `1px solid ${T.border}` }}>

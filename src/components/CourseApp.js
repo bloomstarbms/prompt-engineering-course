@@ -134,7 +134,10 @@ function SplashScreen() {
   );
 }
 
-export default function CourseApp({ initialM = null, initialL = null, serverBody = null }) {
+export default function CourseApp({ initialM = null, initialL = null, serverBody = null, reviews = [] }) {
+  // reviews: the approved set, read by app/page.js on the server and baked
+  // into the static home page. Only the landing view uses it; every other
+  // mount of CourseApp leaves the default.
   // initialM/initialL arrive from /course/[moduleSlug]/[lessonSlug], already
   // resolved from slugs by the server component. They are plain indices — the
   // same indices that key progress — so nothing downstream changes shape.
@@ -692,6 +695,7 @@ export default function CourseApp({ initialM = null, initialL = null, serverBody
     <Landing
       startHref={user ? '/course' : '/auth'}
       loginHref={user ? '/course' : '/auth'}
+      reviews={reviews}
     />
   );
 

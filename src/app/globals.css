@@ -206,6 +206,12 @@ pre, code {
   .hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 16px; }
 }
 
+/* The reviews row on the landing page (4+ reviews): native horizontal scroll,
+   focusable so arrow keys scroll it; the ring says where focus is. The thin
+   scrollbar stays visible — it is the affordance that the row scrolls. */
+.reviews-row { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) transparent; }
+.reviews-row:focus-visible { outline: 2px solid #818cf8; outline-offset: -2px; border-radius: 8px; }
+
 /* ── MOBILE OVERRIDES ─────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   :root {
