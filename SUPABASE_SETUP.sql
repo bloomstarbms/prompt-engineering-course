@@ -303,7 +303,31 @@ revoke insert on public.certificates from public;
 --    unauthorised access in that window, but the table predates it by far. The
 --    accurate position is: exposed, access unknown.
 --
---  · The syllabus grew from 22 lessons to 26 on 2026-04-20. Accounts created
---    before that date qualify for a certificate at 22 completions; everyone
---    since must complete all 26. See src/data/courseData.js.
+--  · The syllabus grew from 22 lessons to 26 on 2026-04-20. A certificate
+--    requires every lesson in the current syllabus, for everyone: the
+--    created_at grandfather clause was removed on 29 Sep 2026 because no
+--    account predated the cutoff (see src/data/courseData.js and
+--    CERTIFICATE-CLAIMS.md for how pre-Supabase claims are handled).
+-- ═══════════════════════════════════════════════════════════════════════════
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+--  REVIEWS (migration 014, 1 October 2026)
+--
+--  APPENDED, NOT REGENERATED. SECURITY-NOTES.md still says this file should be
+--  regenerated from the live schema rather than patched; that needs pg_dump or
+--  the dashboard's schema export, neither of which this change had. Until it
+--  is regenerated, the authoritative definition of `reviews` is
+--  supabase/migrations/014_reviews.sql, which also carries the assertions and
+--  the verify-by-attempting steps. The summary below is for orientation.
+--
+--  create table public.reviews (
+--    id uuid pk, user_id uuid unique references auth.users ON DELETE CASCADE,
+--    body text (20–600), attribution text ('first_initial'|'full'),
+--    display_name text, status text ('pending'|'approved'|'rejected'|'unpublished'),
+--    consent_version text, submitted_at, updated_at, decided_at,
+--    decided_by uuid references auth.users ON DELETE SET NULL
+--  );
+--  RLS enabled, NO policies. ALL revoked from PUBLIC, anon, authenticated;
+--  ALL granted to service_role. The browser never touches it.
 -- ═══════════════════════════════════════════════════════════════════════════
