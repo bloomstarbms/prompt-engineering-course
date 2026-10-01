@@ -18,6 +18,18 @@ import { REVIEWS_ENABLED } from '@/lib/docs';
 /** How many to show at most. The row scrolls past 4; a dozen is plenty. */
 export const HOME_REVIEWS_MAX = 12;
 
+/**
+ * Hard ceiling on the fetch. "Unreachable" in testing was connection
+ * refused, which fails instantly; a real outage tends to ACCEPT and then
+ * hang, and this runs during prerender, where a hung fetch stalls the page
+ * until the platform gives up and fails the deploy. Four seconds is far
+ * longer than the query takes (tens of milliseconds) and far shorter than
+ * any build timeout. On expiry the fetch rejects, the catch below returns
+ * [], and the page renders without the section. Verified against a socket
+ * that accepts and never answers.
+ */
+export const REVIEWS_FETCH_TIMEOUT_MS = 4000;
+
 export async function getApprovedReviews() {
   if (!REVIEWS_ENABLED) return [];
   try {
@@ -28,7 +40,8 @@ export async function getApprovedReviews() {
       .select('id, body, display_name, decided_at')
       .eq('status', 'approved')
       .order('decided_at', { ascending: false })
-      .limit(HOME_REVIEWS_MAX);
+      .limit(HOME_REVIEWS_MAX)
+      .abortSignal(AbortSignal.timeout(REVIEWS_FETCH_TIMEOUT_MS));
     if (error) {
       console.error('[reviewsPublic] fetch failed:', error.message);
       return [];
