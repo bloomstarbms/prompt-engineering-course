@@ -1,5 +1,6 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { createAdminClient } from '@/lib/supabaseAdmin';
+import { requireAdmin } from '@/lib/adminAuth';
 import { TOTAL_LESSONS } from '@/data/courseData';
 
 /**
@@ -56,19 +57,30 @@ function secretsMatch(a, b) {
 }
 
 export async function POST(req) {
-  /* Auth check — token travels in the request body, not the URL, to avoid
-     it appearing in server logs or browser history. */
-  const body = await req.json().catch(() => ({}));
-  const token = body.token;
-  const secret = process.env.ADMIN_SECRET;
-
-  if (!secret || !secretsMatch(token, secret)) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   const db = createAdminClient();
   if (!db) {
     return Response.json({ error: 'Supabase not configured' }, { status: 503 });
+  }
+
+  /* ── Auth: two paths, for one deploy ─────────────────────────────────
+     NEW: a signed-in session whose user id is in ADMIN_USER_IDS
+     (lib/adminAuth.js). Tried first whenever a bearer token is sent.
+     OLD: the shared ADMIN_SECRET in the request body. Kept until the owner
+     has verified the new path on production; then it is removed in its own
+     commit. The order matters because the only person a mistake here can
+     lock out is the owner. */
+  const hasBearer = (req.headers.get('authorization') || '').startsWith('Bearer ');
+  if (hasBearer) {
+    const { response } = await requireAdmin(req, db);
+    if (response) return response;
+  } else {
+    /* Token travels in the request body, not the URL, to avoid it appearing
+       in server logs or browser history. */
+    const body = await req.json().catch(() => ({}));
+    const secret = process.env.ADMIN_SECRET;
+    if (!secret || !secretsMatch(body.token, secret)) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
   }
 
   // Migration 012's one-argument function: completion is every lesson in the

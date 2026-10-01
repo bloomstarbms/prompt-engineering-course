@@ -1,6 +1,10 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import Link from 'next/link';
 import { T } from '@/lib/theme';
+import { useAuthCtx } from '@/providers/AuthProvider';
+import { fetchStatsAsAdmin } from '@/lib/adminApi';
+import ReviewsPanel from '@/components/admin/ReviewsPanel';
 
 function StatCard({ label, value, sub, color, icon }) {
   return (
@@ -87,6 +91,41 @@ export default function AdminDashboard() {
   const [authed, setAuthed]     = useState(false);
   const [token, setToken]       = useState('');
 
+  /* ── Session-based admin ──────────────────────────────────────────────
+     If the visitor is signed in and their user id is in ADMIN_USER_IDS, the
+     dashboard opens without a password and moderation is available (each
+     decision records who made it). The password form below is the OLD path,
+     kept until the owner has verified this one on production; it is then
+     removed in its own commit. */
+  const { user, userId, ready, callAuthed } = useAuthCtx();
+  const [mode, setMode]             = useState('password');   // 'password' | 'session'
+  const [sessionMsg, setSessionMsg] = useState('');
+  const [sessionTried, setSessionTried] = useState(false);
+
+  useEffect(() => {
+    if (!ready || !userId || sessionTried) return;
+    setSessionTried(true);
+    (async () => {
+      setLoading(true);
+      try {
+        const data = await callAuthed(fetchStatsAsAdmin);
+        setStats(data); setAuthed(true); setMode('session');
+      } catch (e) {
+        setSessionMsg(e?.notAdmin
+          ? `Signed in as ${user?.email || 'this account'}, which is not an admin.`
+          : `Signed in, but the admin check failed: ${e?.message || 'unknown error'}`);
+      } finally { setLoading(false); }
+    })();
+  }, [ready, userId, sessionTried, callAuthed, user]);
+
+  const refresh = useCallback(async () => {
+    if (mode !== 'session') return fetchStats(token);
+    setLoading(true); setError('');
+    try { setStats(await callAuthed(fetchStatsAsAdmin)); }
+    catch (e) { setError(e.message); }
+    setLoading(false);
+  }, [mode, token, callAuthed]);  // eslint-disable-line react-hooks/exhaustive-deps
+
   const fetchStats = useCallback(async (tkn) => {
     setLoading(true);
     setError('');
@@ -127,8 +166,19 @@ export default function AdminDashboard() {
             <h1 style={{ fontFamily: T.display, fontWeight: 800, fontSize: 22, color: T.text,
               margin: 0, letterSpacing: '-0.03em' }}>Admin Dashboard</h1>
             <p style={{ fontFamily: T.font, fontSize: 13, color: T.muted, marginTop: 6, marginBottom: 0 }}>
-              Enter your admin password to continue
+              {ready && userId ? 'Or enter the admin password' : 'Sign in with the admin account, or enter the admin password'}
             </p>
+            {ready && !userId && (
+              <p style={{ fontFamily: T.font, fontSize: 13, margin: '10px 0 0' }}>
+                <Link href="/auth" style={{ color: T.accent }}>Sign in →</Link>
+              </p>
+            )}
+            {sessionMsg && (
+              <p role="status" style={{ fontFamily: T.font, fontSize: 12, color: T.warning, margin: '10px 0 0', lineHeight: 1.5 }}>{sessionMsg}</p>
+            )}
+            {!ready && (
+              <p style={{ fontFamily: T.mono, fontSize: 11, color: T.dim, margin: '10px 0 0' }}>checking session…</p>
+            )}
           </div>
           <input
             type="password"
@@ -191,8 +241,12 @@ export default function AdminDashboard() {
             Course Analytics
           </span>
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span style={{ fontFamily: T.mono, fontSize: 10, color: T.dim }}>
+          {mode === 'session' ? `admin · ${user?.email || userId}` : 'admin · password'}
+        </span>
         <button
-          onClick={() => fetchStats(token)}
+          onClick={refresh}
           style={{
             background: 'none', border: `1px solid ${T.border}`,
             color: T.muted, cursor: 'pointer', padding: '6px 12px',
@@ -203,6 +257,7 @@ export default function AdminDashboard() {
         >
           ↻ Refresh
         </button>
+        </div>
       </div>
 
       <div style={{ padding: 'clamp(24px,4vw,40px) clamp(20px,5vw,40px)', maxWidth: 1100, margin: '0 auto' }}>
@@ -285,6 +340,16 @@ export default function AdminDashboard() {
               </span>
             )}
           </div>
+        )}
+
+        {/* Moderation needs an identity (decided_by), so it is only offered on
+            the session path. */}
+        {mode === 'session' ? (
+          <ReviewsPanel callAuthed={callAuthed}/>
+        ) : (
+          <p style={{ marginTop: 28, fontFamily: T.mono, fontSize: 11, color: T.dim }}>
+            reviews: sign in with the admin account to moderate.
+          </p>
         )}
 
         {!stats.totalEnrollments && (
