@@ -1,5 +1,5 @@
 import DocPage from '@/components/docs/DocPage';
-import { TERMS_MD } from '@/content/legal';
+import { TERMS_MD, TERMS_UPDATED } from '@/content/legal';
 import { isIndexable, absolute, SITE_NAME } from '@/lib/seo';
 
 export const metadata = {
@@ -21,7 +21,7 @@ export default function TermsPage() {
   return (
     <DocPage
       title="Terms of Use"
-      updated="9 August 2026"
+      updated={TERMS_UPDATED}
       markdown={TERMS_MD}
       links={[{ href: '/privacy', label: 'Privacy Policy' }, { href: '/about', label: 'About' }]}
     />

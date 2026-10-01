@@ -5,8 +5,9 @@ policy §7 and §8; terms §10). No one had asked as of 29 September 2026, so th
 has never been run end to end. Read it through before the first time, and
 correct it afterwards with anything it got wrong.
 
-**What erasure deletes** (privacy policy §7): profile, progress, usage events
-and certificate. The certificate's verification link stops working.
+**What erasure deletes** (privacy policy §7): profile, progress, usage events,
+certificate and any review. The certificate's verification link stops working;
+a published review comes off the home page.
 
 Respond within 30 days (policy §8). Do each step in order and check the
 result each time. Every step below has a way to look like it worked while
@@ -48,6 +49,7 @@ select
   (select count(*) from public.profiles     where id      = 'THE-ID') as profiles,
   (select count(*) from public.progress     where user_id = 'THE-ID') as progress,
   (select count(*) from public.certificates where user_id = 'THE-ID') as certificates,
+  (select count(*) from public.reviews      where user_id = 'THE-ID') as reviews,
   (select count(*) from public.course_events where email  = 'the-lowercased-address') as events;
 ```
 
@@ -56,6 +58,13 @@ also note the `cert_id` (for step 6's link check):
 
 ```sql
 select cert_id from public.certificates where user_id = 'THE-ID';
+```
+
+If `reviews` is 1, note its status and display name (for step 6's homepage
+check):
+
+```sql
+select status, display_name from public.reviews where user_id = 'THE-ID';
 ```
 
 ## 4. Delete usage events — this one is manual
@@ -76,7 +85,7 @@ Supabase dashboard → **Authentication → Users** → find the address →
 **Delete user**.
 
 Deleting the auth user cascades (`on delete cascade`) to `profiles`,
-`progress` and `certificates`. That cascade is a declaration in the schema;
+`progress`, `certificates` and `reviews`. That cascade is a declaration in the schema;
 step 6 is what establishes it happened.
 
 ## 6. Verify by looking, not by trusting the cascade
@@ -90,6 +99,14 @@ select count(*) from auth.users where id = 'THE-ID';   -- must be 0
 If they had a certificate, open `https://www.prompten.xyz/verify/<cert_id>`
 and confirm it no longer shows their name.
 
+If they had an **approved** review, the home page is static and still holds
+it until it is rebuilt. Deleting the row does not rebuild the page: open
+`/admin`, use the reviews panel's **Rebuild home page** action (it calls
+`revalidatePath('/')`), then load `https://www.prompten.xyz/` fresh (a private
+window, or hard reload) and confirm the display name from step 3 is no longer
+on the page. Search `view-source:` for the name, not just the visible page.
+The timed revalidation would eventually do this on its own; don't wait for it.
+
 ## 7. Reply
 
 Tell them it's done and what was deleted. Keep a note of the date and the
@@ -102,8 +119,8 @@ address the request came from, and nothing else about them.
 - **Any new table holding personal data** needs a step here, unless it has a
   foreign key to `auth.users` with `on delete cascade`, and even then step 6
   must check it.
-- **Course reviews (planned).** A `reviews` table would cascade, but a
-  published review is also baked into the static homepage. Erasure would then
-  need to trigger a homepage revalidation, and check that the name is gone
-  from `https://www.prompten.xyz/` itself, not just from the table.
+- **Course reviews** cascade (migration 014, verified by reading the
+  constraint's delete rule), but a published review is also baked into the
+  static home page, so step 6 rebuilds it and checks the live page. If the
+  home page ever stops being static, drop that part of step 6.
 - **If `course_events` is retired**, delete step 4 and its row in step 3.

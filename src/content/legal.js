@@ -33,9 +33,15 @@
  *
  *  4. Malformed markdown links (`[www.prompten.xyz**](https://...**)`) fixed.
  *
- * The document titles and "Last updated" lines live in the page components so
- * they render as real headings rather than markdown.
+ * The document titles live in the page components so they render as real
+ * headings rather than markdown. The "Last updated" dates are exported from
+ * here because the review route records PRIVACY_UPDATED as consent_version:
+ * the policy a person saw when they submitted. One constant, so the page and
+ * the record cannot disagree. Bump a date whenever its document changes.
  */
+
+export const PRIVACY_UPDATED = '1 October 2026';
+export const TERMS_UPDATED   = '1 October 2026';
 
 export const PRIVACY_MD = `## 1. Who we are
 
@@ -77,6 +83,12 @@ We collect only what the course needs to work. We do not sell data, we do not ru
 |---|---|
 | Your name, score, grade, issue date, and a unique credential ID | To issue and verify the certificate |
 
+### If you leave a review
+
+| Data | Why |
+|---|---|
+| Your review text, the name format you chose, and when you submitted it | To show your review on the home page, after we approve it |
+
 ---
 
 ## 3. Certificates are publicly verifiable — please read this
@@ -91,6 +103,12 @@ Every certificate has a verification page at \`www.prompten.xyz/verify/<credenti
 
 If you would prefer your certificate not to be publicly verifiable, email privacy@prompten.xyz and we will remove it.
 
+### Reviews you choose to publish
+
+Leaving a review is optional and never required for your certificate. If we approve one, it appears on the home page, which is public and indexed by search engines, under the name format you chose when you submitted it: your first name and last initial, or your full name. There is no anonymous option, because an unattributed review on our own home page would be indistinguishable from one we made up.
+
+You can withdraw or change your review at any time from your profile page, or by emailing privacy@prompten.xyz. A changed review comes down until we approve it again. A withdrawn review is removed from the site within 7 days; search engines may keep a copy for a while after that.
+
 ---
 
 ## 4. Our lawful basis for processing
@@ -98,7 +116,7 @@ If you would prefer your certificate not to be publicly verifiable, email privac
 Under section 25 of the NDPA, we rely on:
 
 - **Contract** — for your account, progress and certificate. We cannot provide the course without this data.
-- **Consent** — for optional profile fields, and for any future emails. You may withdraw consent at any time.
+- **Consent** — for optional profile fields, for publishing a review you submit, and for any future emails. You may withdraw consent at any time.
 - **Legitimate interest** — for basic usage analytics, to improve the course. This is limited and you may object.
 
 ---
@@ -126,8 +144,9 @@ We use no analytics cookies, no advertising cookies, and no third-party trackers
 - **Account, profile and progress** — until you delete your account.
 - **Certificates** — for as long as your account exists, unless you ask us to remove yours sooner.
 - **Usage events** — kept for 24 months, then deleted.
+- **Reviews** — until you withdraw them or delete your account.
 
-When you ask us to delete your account, we delete your profile, progress, usage events and certificate. Your certificate's verification link stops working at that point, so if you've shared it — on a CV or LinkedIn, for example — save a copy of the certificate before you ask.
+When you ask us to delete your account, we delete your profile, progress, usage events, certificate and any review. Your certificate's verification link stops working at that point, so if you've shared it — on a CV or LinkedIn, for example — save a copy of the certificate before you ask.
 
 ---
 
@@ -251,6 +270,8 @@ We may remove access, and revoke a certificate, if we find it was obtained by ma
 **Third-party material.** Where we cite published research papers or vendor documentation, those belong to their authors and publishers. We link to sources rather than reproduce them.
 
 **Your content.** Anything you enter — your name, bio, avatar — remains yours. You give us permission to display it within the service and, where you've earned one, on your certificate.
+
+**Reviews.** If you submit a review of the course, you give us a non-exclusive, royalty-free licence to display it on the site, under the name format you chose, for as long as it is published. We may decline to publish a review or remove one at any time. We won't change your words: a review is shown as you wrote it or not at all. You can withdraw it at any time from your profile page.
 
 ---
 

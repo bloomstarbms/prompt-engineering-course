@@ -1,5 +1,5 @@
 import DocPage from '@/components/docs/DocPage';
-import { PRIVACY_MD } from '@/content/legal';
+import { PRIVACY_MD, PRIVACY_UPDATED } from '@/content/legal';
 import { isIndexable, absolute, SITE_NAME } from '@/lib/seo';
 
 export const metadata = {
@@ -24,7 +24,7 @@ export default function PrivacyPage() {
   return (
     <DocPage
       title="Privacy Policy"
-      updated="29 September 2026"
+      updated={PRIVACY_UPDATED}
       markdown={PRIVACY_MD}
       links={[{ href: '/terms', label: 'Terms of Use' }, { href: '/about', label: 'About' }]}
     />
