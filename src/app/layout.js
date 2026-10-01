@@ -1,4 +1,31 @@
 import './globals.css';
+import { Inter, Space_Grotesk, Instrument_Serif, JetBrains_Mono, Playfair_Display } from 'next/font/google';
+
+/**
+ * SELF-HOSTED FONTS. All five families used to be pulled from Google Fonts at
+ * runtime: four by an @import in globals.css on every page, Playfair by the
+ * certificate face. The privacy policy says no third-party trackers; every
+ * visitor was still making requests to fonts.googleapis.com and
+ * fonts.gstatic.com. next/font downloads the files once, at build time, and
+ * serves them from /_next/static/media on our own origin. Google is never
+ * contacted by a visitor's browser.
+ *
+ * Each family is exposed as a CSS variable on <html>. globals.css maps them
+ * onto --font / --display / --mono / --serif / --playfair, which theme.js and
+ * the inline styles read. If a variable is not wired through, the fallbacks
+ * are generic system faces, not the Google-hosted family, so a missing wire
+ * is visible rather than silently fetched.
+ *
+ * Weights/styles mirror what the old @import requested. Inter, Space Grotesk,
+ * JetBrains Mono and Playfair Display are variable fonts on Google Fonts, so
+ * no weight list is needed; Instrument Serif is static, 400 only.
+ */
+const inter      = Inter({ subsets: ['latin'], style: ['normal', 'italic'], display: 'swap', variable: '--font-inter' });
+const grotesk    = Space_Grotesk({ subsets: ['latin'], display: 'swap', variable: '--font-grotesk' });
+const instrument = Instrument_Serif({ subsets: ['latin'], weight: '400', style: ['normal', 'italic'], display: 'swap', variable: '--font-instrument' });
+const jetbrains  = JetBrains_Mono({ subsets: ['latin'], display: 'swap', variable: '--font-jetbrains' });
+const playfair   = Playfair_Display({ subsets: ['latin'], style: ['normal', 'italic'], display: 'swap', variable: '--font-playfair' });
+const FONT_VARS  = [inter, grotesk, instrument, jetbrains, playfair].map(f => f.variable).join(' ');
 import { AuthProvider } from '@/providers/AuthProvider';
 import ConsentNotice from '@/components/auth/ConsentNotice';
 import { SITE_URL, SITE_NAME } from '@/lib/seo';
@@ -52,7 +79,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" className={FONT_VARS}>
       <body>
         {/* AuthProvider lives at root so auth state is loaded once and
             shared across all routes — no re-auth, no splash on navigation */}

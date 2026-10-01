@@ -22,8 +22,9 @@ import { SITE_URL } from '@/lib/seo';
  *   sample      adds a SAMPLE mark across the corner
  *   animate     the reveal animation (on by default)
  *
- * The <style> here holds only what the face needs anywhere it renders: the
- * Playfair import, its three keyframes and .cert-body-em. The print sheet
+ * The <style> here holds only what the face needs anywhere it renders: its
+ * three keyframes and .cert-body-em. Playfair Display is self-hosted via
+ * next/font (app/layout.js) and reached as var(--playfair). The print sheet
  * stays in CertificatePage.js: it sets @page and html/body for printing, and
  * the landing page must not inherit that.
  */
@@ -219,7 +220,6 @@ export default function CertificateFace({ name, certId, pct, grade, issuedDate, 
           &amp; in the server HTML) and then reports a hydration mismatch against
           the unescaped client text. Same CSS either way; this way it hydrates. */}
       <style dangerouslySetInnerHTML={{ __html: `
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&display=swap');
         @keyframes certReveal {
           from { opacity: 0; transform: translateY(24px) scale(0.97); }
           to   { opacity: 1; transform: translateY(0)    scale(1);    }
@@ -335,7 +335,7 @@ export default function CertificateFace({ name, certId, pct, grade, issuedDate, 
             color: 'rgba(255,255,255,0.28)', letterSpacing: '0.2em',
           }}>PRESENTED BY</span>
           <span className="cert-issuer-name" style={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: 'var(--playfair), Georgia, serif',
             fontSize: 15, fontWeight: 700, letterSpacing: '0.06em',
             background: `linear-gradient(135deg, #e0e7ff 0%, ${ACCENT} 60%, #c4b5fd 100%)`,
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
@@ -352,7 +352,7 @@ export default function CertificateFace({ name, certId, pct, grade, issuedDate, 
 
         {/* ── Course title ── */}
         <div className="cert-course-title" style={{
-          fontFamily: '"Playfair Display", Georgia, serif',
+          fontFamily: 'var(--playfair), Georgia, serif',
           fontWeight: 900, fontSize: 'clamp(28px,4.5vw,40px)',
           letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 8,
           background: `linear-gradient(135deg, #ffffff 0%, ${ACCENT2} 55%, #c4b5fd 100%)`,
@@ -385,7 +385,7 @@ export default function CertificateFace({ name, certId, pct, grade, issuedDate, 
         {/* ── Recipient name ── */}
         <div className="cert-name-wrap" style={{ marginBottom: 12 }}>
           <div className="cert-name" style={{
-            fontFamily: '"Playfair Display", Georgia, serif',
+            fontFamily: 'var(--playfair), Georgia, serif',
             fontStyle: 'italic', fontWeight: 700,
             fontSize: 'clamp(34px,6vw,58px)',
             letterSpacing: '-0.01em', lineHeight: 1.1,
@@ -458,7 +458,7 @@ export default function CertificateFace({ name, certId, pct, grade, issuedDate, 
           {/* Signature — left */}
           <div style={{ textAlign: 'left', minWidth: 150 }}>
             <div className="cert-sig-name" style={{
-              fontFamily: '"Playfair Display", Georgia, serif',
+              fontFamily: 'var(--playfair), Georgia, serif',
               fontStyle: 'italic', fontSize: 24,
               color: ACCENT2, letterSpacing: '0.03em',
               borderBottom: `1px solid rgba(129,140,248,0.20)`,

@@ -9,8 +9,11 @@
  * Note, Node, Mark…) so the whole set looks like one illustrator drew it.
  * ──────────────────────────────────────────────────────────────────────── */
 
-const MONO  = "'JetBrains Mono', 'Fira Code', monospace";
-const SERIF = "'Instrument Serif', Georgia, serif";
+// Self-hosted via next/font (app/layout.js); the variables are defined in
+// globals.css. var() is valid in SVG presentation attributes (they are parsed
+// as CSS values), and resolving it is checked, not assumed — see the commit.
+const MONO  = "var(--mono), monospace";
+const SERIF = "var(--serif), Georgia, serif";
 const INK   = '#e4e4e7';   // primary label ink
 const SUB   = '#a1a1aa';   // secondary
 const DIM   = '#71717a';   // annotations

@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&family=Space+Grotesk:wght@500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&display=swap');
+/* Fonts are self-hosted via next/font in app/layout.js, which sets
+   --font-inter, --font-grotesk, --font-instrument, --font-jetbrains and
+   --font-playfair on <html>. No request leaves this origin for a font. */
 
 /* ── RESET & BASE ─────────────────────────────────────────────────────────── */
 *, *::before, *::after {
@@ -35,9 +37,11 @@
   --info:    #60a5fa;
 
   /* Typography */
-  --font:    'Inter', system-ui, -apple-system, sans-serif;
-  --display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-  --mono:    'JetBrains Mono', 'Fira Code', monospace;
+  --font:     var(--font-inter), system-ui, -apple-system, sans-serif;
+  --display:  var(--font-grotesk), var(--font-inter), system-ui, sans-serif;
+  --mono:     var(--font-jetbrains), 'Fira Code', monospace;
+  --serif:    var(--font-instrument), Georgia, serif;
+  --playfair: var(--font-playfair), Georgia, serif;
 
   /* Radii */
   --r-sm: 6px;

@@ -117,7 +117,7 @@ export default function ResetPasswordPage() {
           </span>
         </div>
         <h1 style={{
-          fontFamily: "'Inter', sans-serif", fontWeight: 700,
+          fontFamily: 'var(--font), sans-serif', fontWeight: 700,
           fontSize: 'clamp(24px,5vw,30px)', letterSpacing: '-0.04em',
           color: T.text, lineHeight: 1.1, marginBottom: 6,
         }}>

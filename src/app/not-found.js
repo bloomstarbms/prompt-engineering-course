@@ -10,7 +10,7 @@ export default function NotFound() {
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
       padding: '24px', textAlign: 'center',
-      fontFamily: "'Inter', system-ui, sans-serif",
+      fontFamily: 'var(--font), system-ui, sans-serif',
     }}>
       <div style={{
         display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -18,13 +18,13 @@ export default function NotFound() {
         borderRadius: 100, padding: '5px 14px', marginBottom: 28,
       }}>
         <span style={{
-          fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
+          fontFamily: 'var(--mono), monospace', fontSize: 11,
           color: '#818cf8', letterSpacing: '0.1em',
         }}>ERROR 404</span>
       </div>
 
       <h1 style={{
-        fontFamily: "'Space Grotesk', 'Inter', sans-serif", fontWeight: 700,
+        fontFamily: 'var(--display), sans-serif', fontWeight: 700,
         fontSize: 'clamp(28px, 6vw, 44px)', color: '#fafafa',
         letterSpacing: '-0.04em', lineHeight: 1.1, margin: '0 0 12px',
       }}>

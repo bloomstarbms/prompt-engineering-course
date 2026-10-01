@@ -142,7 +142,7 @@ export default function VerifyClient({ certId }) {
                   AWARDED TO
                 </div>
                 <div style={{
-                  fontFamily: "'Instrument Serif', Georgia, serif", fontStyle: 'italic',
+                  fontFamily: 'var(--serif), Georgia, serif', fontStyle: 'italic',
                   fontSize: 'clamp(28px,5vw,38px)', color: T.text, letterSpacing: '-0.01em',
                 }}>
                   {cert.name}

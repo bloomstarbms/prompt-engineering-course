@@ -43,10 +43,13 @@ export const T = {
   info:    '#60a5fa',
 
   // Typography — Inter + Space Grotesk + Instrument Serif + JetBrains Mono
-  font:    "'Inter', system-ui, -apple-system, sans-serif",
-  display: "'Space Grotesk', 'Inter', system-ui, sans-serif",
-  serif:   "'Instrument Serif', Georgia, serif",   // italic/certificate accents
-  mono:    "'JetBrains Mono', 'Fira Code', monospace",
+  // Self-hosted via next/font (app/layout.js); the variables are defined in
+  // globals.css. The fallbacks are generic faces on purpose: if a variable is
+  // ever unwired the page looks wrong instead of quietly fetching from Google.
+  font:    'var(--font), system-ui, -apple-system, sans-serif',
+  display: 'var(--display), system-ui, sans-serif',
+  serif:   'var(--serif), Georgia, serif',   // italic/certificate accents
+  mono:    'var(--mono), monospace',
 
   // Shadows — deep dark glow
   shadowSm: '0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3)',
