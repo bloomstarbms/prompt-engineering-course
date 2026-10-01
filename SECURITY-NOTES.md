@@ -17,7 +17,9 @@ Every Supabase and Postgres variable in the Vercel project is scoped to
 **Production only** (checked through the Vercel API, names and targets only):
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
 `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_SECRET_KEY`, `SUPABASE_JWT_SECRET`,
-the `POSTGRES_*` set and the rest. Only `ADMIN_SECRET` reaches Preview. So a
+the `POSTGRES_*` set and the rest. `ADMIN_USER_IDS` is Production-only too;
+`ADMIN_SECRET` (the retired admin password; see "Admin access" below) was the
+only one that reached Preview. So a
 preview deployment has no database: `/api/certificates/issue` returns 503 there,
 and nothing that reads or writes user data can be exercised on a preview.
 
@@ -42,6 +44,30 @@ What this means in practice:
 - **Check it after any change to Vercel environment variables:** list the
   targets through the API and confirm that no Supabase or Postgres variable
   includes `preview` or `development`.
+
+---
+
+## Admin access: a listed account, not a shared password
+
+**Changed 1 October 2026.** `/admin`, `/api/stats` and `/api/admin/reviews` accept a
+signed-in session whose user id is in `ADMIN_USER_IDS` (Vercel, Production
+only, comma-separated). The server verifies the bearer token with Supabase
+and checks the id (`src/lib/adminAuth.js`); nothing in a request body can
+assert it. Without a session: 401. With one that is not listed: 403.
+
+The shared `ADMIN_SECRET` password is retired. It had no identity (anyone
+holding the string was "the admin" with no record of who) and no revocation
+short of rotating it. It was removed in two commits — the session path added
+alongside it and verified on production by the owner, then the password path
+deleted — because the only person a mistake there can lock out is the owner.
+The `ADMIN_SECRET` environment variable itself still exists in Vercel and
+is read by nothing; delete it from the project settings when convenient.
+
+If `ADMIN_USER_IDS` is ever unset or wrong, every admin route answers 403 for
+everyone including the owner. The fix is the environment variable (the id
+is `auth.users.id` for the owner's account; read it with a select in the
+SQL editor), followed by a redeploy — env vars are read at build/runtime
+start, not live.
 
 ---
 

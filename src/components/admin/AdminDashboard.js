@@ -84,71 +84,34 @@ function UserTable({ title, rows, color }) {
 }
 
 export default function AdminDashboard() {
-  const [password, setPassword] = useState('');
-  const [stats, setStats]       = useState(null);
-  const [error, setError]       = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [authed, setAuthed]     = useState(false);
-  const [token, setToken]       = useState('');
-
-  /* ── Session-based admin ──────────────────────────────────────────────
-     If the visitor is signed in and their user id is in ADMIN_USER_IDS, the
-     dashboard opens without a password and moderation is available (each
-     decision records who made it). The password form below is the OLD path,
-     kept until the owner has verified this one on production; it is then
-     removed in its own commit. */
-  const { user, userId, ready, callAuthed } = useAuthCtx();
-  const [mode, setMode]             = useState('password');   // 'password' | 'session'
+  const [stats, setStats]     = useState(null);
+  const [error, setError]     = useState('');
+  const [loading, setLoading] = useState(false);
   const [sessionMsg, setSessionMsg] = useState('');
-  const [sessionTried, setSessionTried] = useState(false);
 
-  useEffect(() => {
-    if (!ready || !userId || sessionTried) return;
-    setSessionTried(true);
-    (async () => {
-      setLoading(true);
-      try {
-        const data = await callAuthed(fetchStatsAsAdmin);
-        setStats(data); setAuthed(true); setMode('session');
-      } catch (e) {
-        setSessionMsg(e?.notAdmin
-          ? `Signed in as ${user?.email || 'this account'}, which is not an admin.`
-          : `Signed in, but the admin check failed: ${e?.message || 'unknown error'}`);
-      } finally { setLoading(false); }
-    })();
-  }, [ready, userId, sessionTried, callAuthed, user]);
+  /* ── Admin is a signed-in account listed in ADMIN_USER_IDS ───────────
+     The shared admin password is gone (the owner verified this path on
+     production before it was removed). The server decides from the bearer
+     token (lib/adminAuth.js); this component only reports what it was told:
+     401 → sign in, 403 → that account is not an admin. */
+  const { user, userId, ready, callAuthed } = useAuthCtx();
 
-  const refresh = useCallback(async () => {
-    if (mode !== 'session') return fetchStats(token);
+  const load = useCallback(async () => {
     setLoading(true); setError('');
-    try { setStats(await callAuthed(fetchStatsAsAdmin)); }
-    catch (e) { setError(e.message); }
-    setLoading(false);
-  }, [mode, token, callAuthed]);  // eslint-disable-line react-hooks/exhaustive-deps
-
-  const fetchStats = useCallback(async (tkn) => {
-    setLoading(true);
-    setError('');
     try {
-      const res = await fetch('/api/stats', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: tkn }),
-      });
-      if (res.status === 401) { setError('Wrong password.'); setLoading(false); return; }
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setStats(data);
-      setAuthed(true);
-      setToken(tkn);
+      setStats(await callAuthed(fetchStatsAsAdmin));
+      setSessionMsg('');
     } catch (e) {
-      setError(e.message);
-    }
-    setLoading(false);
-  }, []);
+      setStats(null);
+      setSessionMsg(e?.notAdmin
+        ? `Signed in as ${user?.email || 'this account'}, which is not an admin.`
+        : `Signed in, but the admin check failed: ${e?.message || 'unknown error'}`);
+    } finally { setLoading(false); }
+  }, [callAuthed, user]);
 
-  if (!authed) {
+  useEffect(() => { if (ready && userId) load(); }, [ready, userId, load]);
+
+  if (!stats) {
     return (
       <div style={{
         minHeight: '100vh', background: T.bg,
@@ -159,58 +122,37 @@ export default function AdminDashboard() {
           width: '100%', maxWidth: 380,
           background: T.bg1, border: `1px solid ${T.border}`,
           borderRadius: 20, padding: '40px 32px',
-          boxShadow: '0 8px 40px rgba(0,0,0,0.2)',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.2)', textAlign: 'center',
         }}>
-          <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{ fontSize: 36, marginBottom: 10 }}>🔒</div>
-            <h1 style={{ fontFamily: T.display, fontWeight: 800, fontSize: 22, color: T.text,
-              margin: 0, letterSpacing: '-0.03em' }}>Admin Dashboard</h1>
-            <p style={{ fontFamily: T.font, fontSize: 13, color: T.muted, marginTop: 6, marginBottom: 0 }}>
-              {ready && userId ? 'Or enter the admin password' : 'Sign in with the admin account, or enter the admin password'}
-            </p>
-            {ready && !userId && (
-              <p style={{ fontFamily: T.font, fontSize: 13, margin: '10px 0 0' }}>
-                <Link href="/auth" style={{ color: T.accent }}>Sign in →</Link>
-              </p>
-            )}
-            {sessionMsg && (
-              <p role="status" style={{ fontFamily: T.font, fontSize: 12, color: T.warning, margin: '10px 0 0', lineHeight: 1.5 }}>{sessionMsg}</p>
-            )}
-            {!ready && (
-              <p style={{ fontFamily: T.mono, fontSize: 11, color: T.dim, margin: '10px 0 0' }}>checking session…</p>
-            )}
-          </div>
-          <input
-            type="password"
-            placeholder="Admin password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && fetchStats(password)}
-            autoFocus
-            style={{
-              width: '100%', background: T.bg2, border: `1px solid ${T.border}`,
-              color: T.text, borderRadius: 8, padding: '10px 14px',
-              fontFamily: T.font, fontSize: 14, outline: 'none', boxSizing: 'border-box',
-              marginBottom: 12, transition: 'border-color 0.15s',
-            }}
-          />
-          {error && (
-            <div style={{ fontFamily: T.font, fontSize: 12, color: '#f87171', marginBottom: 12, textAlign: 'center' }}>
-              {error}
-            </div>
+          <div style={{ fontSize: 36, marginBottom: 10 }}>🔒</div>
+          <h1 style={{ fontFamily: T.display, fontWeight: 800, fontSize: 22, color: T.text,
+            margin: 0, letterSpacing: '-0.03em' }}>Admin Dashboard</h1>
+          {!ready && (
+            <p style={{ fontFamily: T.mono, fontSize: 11, color: T.dim, margin: '12px 0 0' }}>checking session…</p>
           )}
-          <button
-            onClick={() => fetchStats(password)}
-            disabled={loading}
-            style={{
-              width: '100%', background: '#6366f1', border: 'none', color: '#fff',
-              borderRadius: 8, padding: '11px', cursor: loading ? 'wait' : 'pointer',
-              fontFamily: T.font, fontWeight: 700, fontSize: 14,
-              opacity: loading ? 0.7 : 1, transition: 'all 0.15s',
-            }}
-          >
-            {loading ? 'Loading…' : 'View Dashboard →'}
-          </button>
+          {ready && !userId && (
+            <>
+              <p style={{ fontFamily: T.font, fontSize: 13, color: T.muted, margin: '8px 0 0' }}>
+                Sign in with the admin account to continue.
+              </p>
+              <p style={{ fontFamily: T.font, fontSize: 14, margin: '16px 0 0' }}>
+                <Link href="/auth" style={{ color: T.accent, fontWeight: 700 }}>Sign in →</Link>
+              </p>
+            </>
+          )}
+          {ready && userId && loading && (
+            <p style={{ fontFamily: T.mono, fontSize: 11, color: T.dim, margin: '12px 0 0' }}>loading…</p>
+          )}
+          {sessionMsg && (
+            <p role="status" style={{ fontFamily: T.font, fontSize: 12.5, color: T.warning, margin: '12px 0 0', lineHeight: 1.5 }}>{sessionMsg}</p>
+          )}
+          {ready && userId && !loading && (
+            <button onClick={load} style={{
+              marginTop: 16, background: 'none', border: `1px solid ${T.border}`,
+              color: T.muted, cursor: 'pointer', padding: '7px 14px', borderRadius: 8,
+              fontFamily: T.font, fontSize: 12,
+            }}>Try again</button>
+          )}
         </div>
       </div>
     );
@@ -243,10 +185,10 @@ export default function AdminDashboard() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <span style={{ fontFamily: T.mono, fontSize: 10, color: T.dim }}>
-          {mode === 'session' ? `admin · ${user?.email || userId}` : 'admin · password'}
+          {`admin · ${user?.email || userId}`}
         </span>
         <button
-          onClick={refresh}
+          onClick={load}
           style={{
             background: 'none', border: `1px solid ${T.border}`,
             color: T.muted, cursor: 'pointer', padding: '6px 12px',
@@ -342,15 +284,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Moderation needs an identity (decided_by), so it is only offered on
-            the session path. */}
-        {mode === 'session' ? (
-          <ReviewsPanel callAuthed={callAuthed}/>
-        ) : (
-          <p style={{ marginTop: 28, fontFamily: T.mono, fontSize: 11, color: T.dim }}>
-            reviews: sign in with the admin account to moderate.
-          </p>
-        )}
+        <ReviewsPanel callAuthed={callAuthed}/>
 
         {!stats.totalEnrollments && (
           <div style={{

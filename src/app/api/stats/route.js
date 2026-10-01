@@ -1,4 +1,3 @@
-import { createHash, timingSafeEqual } from 'node:crypto';
 import { createAdminClient } from '@/lib/supabaseAdmin';
 import { requireAdmin } from '@/lib/adminAuth';
 import { TOTAL_LESSONS } from '@/data/courseData';
@@ -43,45 +42,17 @@ import { TOTAL_LESSONS } from '@/data/courseData';
  * needs editing.
  */
 
-/* Constant-time secret comparison.
-   `!==` on strings short-circuits at the first differing byte, so response
-   timing leaks how much of the token a caller guessed correctly. timingSafeEqual
-   fixes that but throws when the two buffers differ in length — so we SHA-256
-   both sides first: always 32 bytes, and the digest of a wrong-length guess is
-   just as uncorrelated as any other wrong guess. */
-function secretsMatch(a, b) {
-  if (typeof a !== 'string' || typeof b !== 'string') return false;
-  const ha = createHash('sha256').update(a).digest();
-  const hb = createHash('sha256').update(b).digest();
-  return timingSafeEqual(ha, hb);
-}
-
 export async function POST(req) {
   const db = createAdminClient();
   if (!db) {
     return Response.json({ error: 'Supabase not configured' }, { status: 503 });
   }
 
-  /* ── Auth: two paths, for one deploy ─────────────────────────────────
-     NEW: a signed-in session whose user id is in ADMIN_USER_IDS
-     (lib/adminAuth.js). Tried first whenever a bearer token is sent.
-     OLD: the shared ADMIN_SECRET in the request body. Kept until the owner
-     has verified the new path on production; then it is removed in its own
-     commit. The order matters because the only person a mistake here can
-     lock out is the owner. */
-  const hasBearer = (req.headers.get('authorization') || '').startsWith('Bearer ');
-  if (hasBearer) {
-    const { response } = await requireAdmin(req, db);
-    if (response) return response;
-  } else {
-    /* Token travels in the request body, not the URL, to avoid it appearing
-       in server logs or browser history. */
-    const body = await req.json().catch(() => ({}));
-    const secret = process.env.ADMIN_SECRET;
-    if (!secret || !secretsMatch(body.token, secret)) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
+  /* ── Auth: a signed-in session listed in ADMIN_USER_IDS (lib/adminAuth.js).
+     The shared-password path was removed after the owner verified this one
+     on production. Without a session: 401. With one that is not listed: 403. */
+  const { response } = await requireAdmin(req, db);
+  if (response) return response;
 
   // Migration 012's one-argument function: completion is every lesson in the
   // syllabus, for everyone — the same rule as isCourseComplete(). REQUIRES 012
