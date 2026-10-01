@@ -81,6 +81,28 @@ export const CONSENT_MODE = 'notice';   // 'off' | 'notice' | 'blocking'
 export const CONSENT_PROMPT_ENABLED = CONSENT_MODE === 'blocking';
 export const CONSENT_NOTICE_ENABLED = CONSENT_MODE === 'notice';
 
+/**
+ * ─── COURSE REVIEWS ──────────────────────────────────────────────────────
+ *
+ * One flag, three surfaces, same reasoning as DOCS_PUBLISHED: holding only
+ * one of them would be worse than holding none.
+ *
+ *   1. /api/reviews/mine and /api/admin/reviews — every method is a 404.
+ *   2. The invitation on the certificate page and the form on the profile.
+ *   3. The home page section.
+ *
+ * It stays false until the privacy policy and terms that describe reviews
+ * are LIVE on production (not merged — live: a person must be able to read
+ * what they are consenting to before the form exists). The integrity guard
+ * refuses a build where this is true and the legal text is not in it.
+ *
+ * The migration (014) is applied and the table is empty. Flipping this is a
+ * code change, reviewed like any other; it is not an environment variable,
+ * so a preview cannot be switched on by mistake and the build log shows the
+ * state. Rollback is flipping it back: the table and its rows are untouched.
+ */
+export const REVIEWS_ENABLED = false;
+
 /** The document pages, in footer order. Single source for links and sitemap. */
 export const DOC_PAGES = [
   { href: '/about', label: 'About' },

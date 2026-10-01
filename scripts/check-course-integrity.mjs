@@ -286,6 +286,41 @@ for (const [mi, m] of MODULES.entries()) {
   }
 }
 
+// ── Check 10: reviews cannot be switched on ahead of the legal text ──────
+// REVIEWS_ENABLED gates the routes, the form and the home page section. The
+// privacy policy and terms describing reviews shipped first, with the flag
+// off; this check keeps that order honest for any later edit — if someone
+// trims the "Reviews you choose to publish" section or the terms licence
+// while the flag is true, the build stops. The flag must be a literal
+// true/false in docs.js, not an env var, so a preview cannot differ from
+// what the file says and the build log is the record.
+{
+  const rel = 'src/lib/docs.js';
+  const src = readFileSync(join(root, rel), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '))
+    .replace(/\/\/[^\n]*/g, '');
+  const flag = src.match(/export\s+const\s+REVIEWS_ENABLED\s*=\s*(true|false)\s*;/);
+  if (!flag) {
+    fail(`${rel}: REVIEWS_ENABLED is missing or not a literal true/false — the review routes, form and home page section key on it`);
+  } else if (flag[1] === 'true') {
+    const L = await import(pathToFileURL(join(root, 'src/content/legal.js')).href);
+    for (const [doc, text, needle] of [
+      ['PRIVACY_MD', L.PRIVACY_MD, '### Reviews you choose to publish'],
+      ['PRIVACY_MD', L.PRIVACY_MD, 'for publishing a review you submit'],
+      ['TERMS_MD',   L.TERMS_MD,   '**Reviews.** If you submit a review'],
+    ]) {
+      if (typeof text !== 'string' || !text.includes(needle)) {
+        fail(`REVIEWS_ENABLED is true but ${doc} no longer contains ${JSON.stringify(needle)} — the legal text must describe reviews while they are live`);
+      }
+    }
+    // consent_version is this string; a placeholder or an empty one would be
+    // recorded as evidence of consent to nothing in particular.
+    if (!/^\d{1,2} [A-Z][a-z]+ \d{4}$/.test(L.PRIVACY_UPDATED || '')) {
+      fail(`REVIEWS_ENABLED is true but PRIVACY_UPDATED is ${JSON.stringify(L.PRIVACY_UPDATED)} — must be a date like "1 October 2026"; it is stored as consent_version`);
+    }
+  }
+}
+
 // ── Report ───────────────────────────────────────────────────────────────
 if (problems.length) {
   console.error('\n  COURSE INTEGRITY CHECK FAILED\n');
