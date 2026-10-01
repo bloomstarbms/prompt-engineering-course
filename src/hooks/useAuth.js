@@ -473,20 +473,25 @@ export function useAuth() {
     try { return await p; } finally { refreshingRef.current = null; }
   }, []);
 
-  const handleIssueCertificate = useCallback(async () => {
+  // Runs `fn(accessToken)` with the current token; on a 401 (token expired
+  // between refresh and request) retries once with a fresh one, preferring
+  // the lock-free path. Certificate issuance and the review calls share it,
+  // so the retry rule is written once.
+  const callAuthed = useCallback(async (fn) => {
     const token = tokenRef.current;
     if (!token) throw new Error('You appear to be signed out. Please sign in again.');
     try {
-      return await issueCertificateViaApi(token);
+      return await fn(token);
     } catch (e) {
       if (e?.status !== 401) throw e;
-      // Token expired between refresh and request. Prefer the lock-free path.
       let next = await waitForFreshToken(token);
       if (!next) next = await forceRefresh();
       if (!next || next === token) throw e;
-      return await issueCertificateViaApi(next);
+      return await fn(next);
     }
   }, [waitForFreshToken, forceRefresh]);
+
+  const handleIssueCertificate = useCallback(() => callAuthed(issueCertificateViaApi), [callAuthed]);
 
   const handleUpdateProfile = useCallback(async ({ name, bio, avatarUrl }) => {
     if (!userId) return { ok: false, error: 'Not logged in.' };
@@ -536,6 +541,7 @@ export function useAuth() {
     updateProgress,
     acceptTerms,
     issueCertificate: handleIssueCertificate,
+    callAuthed,
     updateProfile:  handleUpdateProfile,
     updatePassword: handleUpdatePassword,
   };

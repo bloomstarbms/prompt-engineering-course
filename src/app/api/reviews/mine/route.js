@@ -10,7 +10,7 @@ import {
 /**
  * /api/reviews/mine — the signed-in person's own review.
  *
- *   GET     { eligible, review }     eligible = holds a certificate
+ *   GET     { eligible, certName, review }   eligible = holds a certificate
  *   POST    { body, attribution }    submit, or resubmit (overwrites, re-pends)
  *   DELETE                           withdraw
  *
@@ -91,7 +91,9 @@ export async function GET(req) {
   if (response) return response;
   try {
     const [cert, review] = await Promise.all([certificateFor(admin, userId), reviewFor(admin, userId)]);
-    return NextResponse.json({ eligible: !!cert, review: normalizeReview(review) });
+    // certName lets the form show "First L." / full exactly as the server will
+    // store it; it is the person's own certificate name, already theirs.
+    return NextResponse.json({ eligible: !!cert, certName: cert?.name ?? null, review: normalizeReview(review) });
   } catch (e) {
     return serverError('GET', e);
   }

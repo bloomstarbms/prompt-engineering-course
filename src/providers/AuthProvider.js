@@ -22,6 +22,7 @@ const DEFAULTS = {
   updateProgress: () => {},
   acceptTerms:    async () => ({ ok: false, error: 'Not initialised' }),
   issueCertificate: async () => { throw new Error('Not initialised'); },
+  callAuthed:     async () => { throw new Error('Not initialised'); },
   updateProfile:  async () => ({ ok: false }),
   updatePassword: async () => ({ ok: false }),
 };

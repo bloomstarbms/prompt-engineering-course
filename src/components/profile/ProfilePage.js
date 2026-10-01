@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { T, getGrade } from '@/lib/theme';
 import { MODULES, TOTAL_LESSONS, PASS_THRESHOLD, isCourseComplete } from '@/data/courseData';
+import ReviewBox from '@/components/reviews/ReviewBox';
 
 /* ── Deterministic avatar gradient ─────────────────────────────────── */
 const AVATAR_GRADIENTS = [
@@ -116,7 +117,7 @@ function Field({ label, value, onChange, type='text', multiline=false, readOnly=
 export default function ProfilePage({
   user, userId, progress, canSeeCert,
   onBack, onLogout, onCert,
-  updateProfile, updatePassword,
+  updateProfile, updatePassword, callAuthed,
 }){
   const { completed, quizScores } = progress;
   const completedCount = Object.keys(completed).length;
@@ -447,6 +448,9 @@ export default function ProfilePage({
             </button>
           </div>
         )}
+
+        {/* ── Review (certificate holders only; the box decides server-side) ── */}
+        {canSeeCert && <ReviewBox callAuthed={callAuthed} variant="profile"/>}
 
         {/* ── Course progress ── */}
         <div style={{ marginTop:32 }}>

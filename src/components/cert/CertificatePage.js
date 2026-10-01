@@ -4,6 +4,7 @@ import { T, MOD_COLORS, getGrade } from '@/lib/theme';
 import { MODULES } from '@/data/courseData';
 import { getUserCert } from '@/lib/db';
 import CertificateFace, { getSiteOrigin, displayUrl } from '@/components/cert/CertificateFace';
+import ReviewBox from '@/components/reviews/ReviewBox';
 
 /* ── LinkedIn button ──────────────────────────────────────── */
 function LinkedInBtn({ cert, verifyUrl }) {
@@ -55,7 +56,7 @@ function LinkedInBtn({ cert, verifyUrl }) {
 /* ══════════════════════════════════════════════════════════ */
 /*  MAIN PAGE                                                 */
 /* ══════════════════════════════════════════════════════════ */
-export default function CertificatePage({ user, userId, quizScores, onBack, updateProfile, issueCertificate }) {
+export default function CertificatePage({ user, userId, quizScores, onBack, updateProfile, issueCertificate, callAuthed }) {
   const [cert,       setCert]       = useState(null);
   const [certLoading, setCertLoading] = useState(true); // true until cert fetch completes
   const [certError,  setCertError]  = useState('');    // set when issuance fails
@@ -543,6 +544,10 @@ export default function CertificatePage({ user, userId, quizScores, onBack, upda
             </a>
           </p>
         )}
+
+        {/* The review invitation, after issuance: the box is keyed on a
+            certificate existing server-side and renders nothing otherwise. */}
+        {cert && <ReviewBox callAuthed={callAuthed} variant="cert"/>}
 
         <div className="no-print" style={{ height: 40 }}/>
       </div>

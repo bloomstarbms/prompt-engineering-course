@@ -170,6 +170,33 @@ export async function getUserCert(userId, accessToken) {
   return data ? normalizeCert(data) : null;
 }
 
+// ── Reviews ───────────────────────────────────────────────────────────────
+// The browser cannot touch public.reviews (migration 014: service role only);
+// everything goes through /api/reviews/mine with the bearer token, exactly as
+// certificate issuance does. Errors carry `status` so callAuthed() in useAuth
+// can retry a 401 with a fresh token.
+async function reviewRequest(method, accessToken, payload) {
+  const res = await fetch('/api/reviews/mine', {
+    method,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      ...(payload !== undefined ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body: payload !== undefined ? JSON.stringify(payload) : undefined,
+  });
+  let json = null;
+  try { json = await res.json(); } catch { /* non-JSON error page */ }
+  if (!res.ok) {
+    const err = new Error(json?.error || `Review service returned ${res.status}.`);
+    err.status = res.status;
+    throw err;
+  }
+  return json;
+}
+export const getMyReview    = (accessToken)          => reviewRequest('GET',    accessToken);
+export const submitReview   = (accessToken, payload) => reviewRequest('POST',   accessToken, payload);
+export const withdrawReview = (accessToken)          => reviewRequest('DELETE', accessToken);
+
 // ── Public verification ───────────────────────────────────────────────────
 // Maps the reduced column set returned by the verify_certificate() RPC.
 // Deliberately has no `email` field: the public verify page never needed the
