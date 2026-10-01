@@ -101,7 +101,7 @@ export const CONSENT_NOTICE_ENABLED = CONSENT_MODE === 'notice';
  * so a preview cannot be switched on by mistake and the build log shows the
  * state. Rollback is flipping it back: the table and its rows are untouched.
  */
-export const REVIEWS_ENABLED = false;
+export const REVIEWS_ENABLED = true;
 
 /** The document pages, in footer order. Single source for links and sitemap. */
 export const DOC_PAGES = [
