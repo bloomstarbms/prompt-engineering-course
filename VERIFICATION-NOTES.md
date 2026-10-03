@@ -172,8 +172,9 @@ says the same in one line. This is why.
 
 Two read-only counts were needed after the reviews canary. The SQL editor
 was opened at its "new query" address, `/dashboard/project/<ref>/sql/new`.
-It loaded blank, and a few seconds later it switched itself to one of the 29
-saved "Untitled query" snippets. That snippet's buffer began:
+Ten seconds after loading, the editor had no buffer yet. Six seconds after
+that, it was showing one of the 29 saved "Untitled query" snippets, under that
+snippet's own address. Its buffer began:
 
 ```
 -- 009_revoke_all_sessions.sql
@@ -200,9 +201,9 @@ queries then ran from that tab after the same two checks.
 
 What this shows:
 
-- **"New query" doesn't promise an empty editor.** The address can land on a
-  saved snippet, and it can do so after the page looks loaded. Check the
-  buffer just before Run, not just after the tab opens.
+- **"New query" doesn't promise an empty editor.** The address can end up on
+  a saved snippet, and why it did so here isn't known. Check the buffer just
+  before Run, not just after the tab opens.
 - **Saved snippets keep what has been run.** Every query run here is saved
   automatically as "Untitled query", including one-off migrations that must
   never run twice. Delete those snippets once their migration is recorded in
