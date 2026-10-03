@@ -21,7 +21,8 @@ const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
  *   reset-password  `if (!supabase) return;`
  *                → the form renders and silently never works.
  *
- * A fourth consumer, /api/track, returned `{ ok: true, configured: false }` —
+ * A fourth consumer, /api/track (since removed, with course_events, on
+ * 3 October 2026), returned `{ ok: true, configured: false }` —
  * a 200 with a success shape, for a write that never happened. Analytics were
  * dead and every signal available said fine.
  *

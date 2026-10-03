@@ -25,11 +25,11 @@ export const revalidate = 3600;
 /**
  * The landing page.
  *
- * JsonLd renders on the server, so the Course markup is in the HTML source
- * even though CourseApp itself is a client component whose content is not yet
- * server-rendered. Structured data and rendered content are separate problems;
- * this fixes the first one only. The second is the SSR step, and until it
- * lands this page still ships an empty shell to a crawler.
+ * Server-rendered: the hero, module cards, sample certificate and any
+ * approved reviews are in the HTML a crawler receives, and the Course
+ * structured data is emitted alongside by JsonLd. CourseApp is a client
+ * component, but client components render on the server too; only the
+ * signed-in views depend on the browser.
  */
 export default async function Page() {
   // Never throws; [] on any failure, and the section is absent for [].

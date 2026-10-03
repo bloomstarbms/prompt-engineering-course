@@ -367,13 +367,6 @@ export function useAuth() {
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) return { ok: false, error: friendlyAuthError(signInError) };
 
-    // 3. Track enrollment (fire-and-forget)
-    fetch('/api/track', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ event: 'enroll', email, name }),
-    }).catch(() => {});
-
     return { ok: true }; // no needsConfirm — user is logged in right away
   }, []);
 

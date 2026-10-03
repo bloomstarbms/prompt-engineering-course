@@ -384,19 +384,6 @@ export default function CourseApp({ initialM = null, initialL = null, serverBody
     }
   }, [page, ready, user, certResolved, canSeeCert]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* Track course completion once — fire-and-forget */
-  const trackedComplete = useRef(false);
-  useEffect(() => {
-    if (allDone && user && !trackedComplete.current) {
-      trackedComplete.current = true;
-      fetch('/api/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event: 'complete', email: user.email, name: user.name }),
-      }).catch(() => {});
-    }
-  }, [allDone, user]);
-
   /* quiz score helpers */
   const quizScore  = quizScores[lKey];
   const quizPct    = quizScore ? Math.round(quizScore.score / quizScore.total * 100) : 0;

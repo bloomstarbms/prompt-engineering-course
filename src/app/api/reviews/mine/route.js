@@ -32,8 +32,11 @@ import {
  *   consent   consent_version is PRIVACY_UPDATED from legal.js — the policy
  *             date on the page the person could read when they pressed
  *             submit. Written from the server's constant, never the client.
- *   when      submitted_at is left to the database default on first insert
- *             and NOT included in the upsert, so a resubmission keeps it.
+ *   when      on first submission submitted_at and updated_at are the same
+ *             server timestamp (they used to come from two clocks, the
+ *             database's and this server's, and "edited" could read a few
+ *             milliseconds before "submitted"). A resubmission sends only
+ *             updated_at, so submitted_at keeps the original.
  *
  * Feature flag: with REVIEWS_ENABLED false every method is a 404. The table
  * and the route exist; nothing can reach them until the flag flips, and the
@@ -136,6 +139,7 @@ export async function POST(req) {
   let previous;
   try { previous = await reviewFor(admin, userId); } catch (e) { return serverError('POST', e); }
 
+  const now = new Date().toISOString();
   const { data: saved, error: saveError } = await admin
     .from('reviews')
     .upsert({
@@ -145,7 +149,8 @@ export async function POST(req) {
       display_name:    displayName,
       status:          'pending',
       consent_version: PRIVACY_UPDATED,
-      updated_at:      new Date().toISOString(),
+      updated_at:      now,
+      ...(previous ? {} : { submitted_at: now }),
       decided_at:      null,
       decided_by:      null,
     }, { onConflict: 'user_id' })
