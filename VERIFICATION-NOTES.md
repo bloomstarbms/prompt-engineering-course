@@ -88,6 +88,41 @@ landing page has its module cards": each is a search too. A zero-paragraph
 result on a gated lesson means something only when the same selector finds the
 paragraphs on a public lesson in the same run.
 
+### Request logs can't see a route that no longer exists
+
+On 3 October 2026 `/api/track` was removed, and the job was to confirm from
+Vercel's request logs that nothing still called it. The logs failed twice.
+
+1. **The query.** `vercel logs --query "/api/track"` returned nothing over
+   72 hours. A control request (a harmless `GET /api/track`, answered 405)
+   was in the unfiltered logs a minute later, and the same query still
+   didn't find it. With the leading slash the search matches nothing;
+   `api/track` and `requestPath:/api/track` both found it. Without the
+   control, that empty result would have been reported as "no callers".
+2. **The removal itself.** After the deploy, three more control requests to
+   `/api/track` (POST and GET, all answered 404) never appeared in the logs.
+   A control 404 for a page path, `/no-such-page-control`, appeared within 90
+   seconds. Once a route doesn't exist, Vercel turns its requests away before
+   any function runs, and those requests aren't logged. **A zero for a
+   removed route therefore can't fail:** it would read zero with a thousand
+   callers.
+
+Retention adds to this: `--since 72h` returned about an hour of records.
+That was the window these logs could speak for, even for the routes they do
+record.
+
+**The instrument that could fail was the shipped JavaScript.** Load the page
+that used to make the call, list every `.js` file the browser fetched
+(`performance.getEntriesByType('resource')`, not the page's `<script>`
+tags, which miss chunks loaded later), and search each for the route.
+Control: on production *before* the deploy, the same check on `/auth` found
+2 of 14 files containing `/api/track`, one per call site. After the deploy:
+0 of 14, with the file holding `/api/auth/register` (the code that made the
+registration call) among those checked.
+
+So before trusting a zero from logs, ask whether the thing you're counting
+can reach the logs at all, and send one yourself to find out.
+
 ---
 
 ## Configuration: verify the behaviour, not the declaration
