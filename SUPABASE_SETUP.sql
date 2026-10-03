@@ -155,51 +155,14 @@ create policy "certificates: insert own"
 --  No UPDATE or DELETE policy: both denied by RLS default-deny.
 
 
--- ── 4. COURSE_EVENTS ──────────────────────────────────────────────────────
-create table if not exists public.course_events (
-  id         uuid        default gen_random_uuid() primary key,
-  event      text        not null,           -- 'enroll' | 'complete'
-  email      text        not null,
-  name       text        default '',
-  created_at timestamptz default now()
-);
-
---  LOAD-BEARING, AND IT WAS MISSING FROM PRODUCTION UNTIL 2026-08-13.
---  /api/track upserts with onConflict: 'email,event'. Postgres rejects that
---  statement outright when no matching unique constraint exists — not at
---  write time, at PLANNING time:
---
---    there is no unique or exclusion constraint matching the
---    ON CONFLICT specification
---
---  This file declared the index. The database never had it. Every analytics
---  write failed with a 500 from 2026-04-25 until migration 010 created it,
---  and because both call sites are fire-and-forget (`.catch(() => {})`) the
---  failure was invisible for 110 days while the admin dashboard kept showing
---  April's numbers.
---
---  That is the same defect this file's header warns about: a declaration here
---  is not evidence of an object there. Verify, do not assume.
-create unique index if not exists course_events_email_event_idx
-  on public.course_events (email, event);
-
-alter table public.course_events enable row level security;
-
---  NAME MATTERS: production calls this "allow inserts". The old version of this
---  file called it "course_events: insert", which is what first revealed the
---  drift. If you rename it, rename it here too.
-create policy "allow inserts" on public.course_events
-  for insert with check (true);
-
---  THERE IS NO SELECT POLICY, and that is correct. The old file claimed a
---  "course_events: read service" policy using(false); it does not exist in
---  production. Reads are blocked by RLS default-deny instead — same outcome,
---  different mechanism. service_role bypasses RLS entirely, which is how
---  /api/stats reads this table.
---
---  OPEN ISSUE (migration 006): with_check(true) plus anon's INSERT grant means
---  anyone holding the anon key can write arbitrary rows straight past the
---  validation in /api/track. Treat the contents as untrusted until fixed.
+-- ── 4. COURSE_EVENTS — DROPPED ────────────────────────────────────────────
+--  Retired by supabase/migrations/015_drop_course_events.sql. It held name and
+--  email per registration and completion, written by /api/track (removed in
+--  6b02b77), had no foreign key to auth.users, and nothing read it after the
+--  admin stats moved to auth.users, progress and certificates. Its definition
+--  is deleted here, not commented out, so a fresh setup doesn't recreate it.
+--  The table's history is in migrations 000, 010 and 011 and in
+--  SECURITY-NOTES.md.
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
