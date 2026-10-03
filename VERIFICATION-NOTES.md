@@ -157,3 +157,58 @@ To verify it, check the behaviour, not that setting:
 curl.exe -I https://prompten.xyz/some/path?q=1
 # expect: 308, Location: https://www.prompten.xyz/some/path?q=1
 ```
+
+---
+
+## Running SQL on production: the buffer is what runs
+
+**Run only what you have just read in the editor.** Run executes the buffer,
+not the query you meant to open. So the procedure is, every time: a fresh
+tab, check the buffer is empty, put the query in, check the buffer holds
+exactly that query and nothing else, then Run. ERASURE-PROCEDURE.md step 2
+says the same in one line. This is why.
+
+### The 009 snippet, 3 October 2026
+
+Two read-only counts were needed after the reviews canary. The SQL editor
+was opened at its "new query" address, `/dashboard/project/<ref>/sql/new`.
+It loaded blank, and a few seconds later it switched itself to one of the 29
+saved "Untitled query" snippets. That snippet's buffer began:
+
+```
+-- 009_revoke_all_sessions.sql
+--
+-- Revokes every active auth session, for every user.
+```
+
+That is the migration that signs every user out of the site. One click of
+Run in that tab would have done it again.
+
+Two checks stopped it, both run in the page against the editor's model
+rather than by eye:
+
+1. **Before writing:** the buffer must be empty. It wasn't, so nothing was
+   typed into the snippet and its text was left as it was.
+2. **Before Run:** the buffer must equal the intended query character for
+   character, and contain no INSERT, UPDATE, DELETE, DROP, ALTER, TRUNCATE,
+   GRANT or REVOKE. That check refused too.
+
+The results pane still read "Click Run to execute your query", so nothing
+had run. The editor's **+** button didn't open a new snippet either. A second
+load of the "new query" address gave a blank buffer that stayed blank. Both
+queries then ran from that tab after the same two checks.
+
+What this shows:
+
+- **"New query" doesn't promise an empty editor.** The address can land on a
+  saved snippet, and it can do so after the page looks loaded. Check the
+  buffer just before Run, not just after the tab opens.
+- **Saved snippets keep what has been run.** Every query run here is saved
+  automatically as "Untitled query", including one-off migrations that must
+  never run twice. Delete those snippets once their migration is recorded in
+  `supabase/migrations/`.
+- **"Fresh tab" alone isn't enough.** The tab was fresh. The buffer check is
+  what caught it, and the check before Run is what made it safe.
+
+This belongs with the rest of this file: an opened "new query" looked like
+evidence of an empty editor. Only reading the buffer showed what Run would do.
