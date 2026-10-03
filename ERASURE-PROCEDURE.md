@@ -5,8 +5,8 @@ policy §7 and §8; terms §10). No one had asked as of 29 September 2026, so th
 has never been run end to end. Read it through before the first time, and
 correct it afterwards with anything it got wrong.
 
-**What erasure deletes** (privacy policy §7): profile, progress, usage events,
-certificate and any review. The certificate's verification link stops working;
+**What erasure deletes** (privacy policy §7): profile, progress, certificate
+and any review. The certificate's verification link stops working;
 a published review comes off the home page.
 
 Respond within 30 days (policy §8). Do each step in order and check the
@@ -25,10 +25,9 @@ doing nothing.
 
 ## 2. Find the account — lowercase the address first
 
-Everything below keys on the address in lowercase. `/api/track` stores
-`course_events.email` lowercased and trimmed, so a mixed-case address silently
-matches nothing there. The lookup below lowercases both sides, so it doesn't
-depend on how Auth stored it.
+Everything after this step keys on the account `id`, not the address. The
+lookup below lowercases and trims both sides, so it doesn't depend on how the
+person typed their address or how Auth stored it.
 
 In the SQL editor (fresh tab; check the buffer is empty before running):
 
@@ -49,46 +48,33 @@ select
   (select count(*) from public.profiles     where id      = 'THE-ID') as profiles,
   (select count(*) from public.progress     where user_id = 'THE-ID') as progress,
   (select count(*) from public.certificates where user_id = 'THE-ID') as certificates,
-  (select count(*) from public.reviews      where user_id = 'THE-ID') as reviews,
-  (select count(*) from public.course_events where email  = 'the-lowercased-address') as events;
+  (select count(*) from public.reviews      where user_id = 'THE-ID') as reviews;
 ```
 
-Keep these numbers. Step 6 compares against them. If `certificates` is 1,
-also note the `cert_id` (for step 6's link check):
+Keep these numbers. Step 5 compares against them. If `certificates` is 1,
+also note the `cert_id` (for step 5's link check):
 
 ```sql
 select cert_id from public.certificates where user_id = 'THE-ID';
 ```
 
-If `reviews` is 1, note its status and display name (for step 6's homepage
+If `reviews` is 1, note its status and display name (for step 5's homepage
 check):
 
 ```sql
 select status, display_name from public.reviews where user_id = 'THE-ID';
 ```
 
-## 4. Delete usage events — this one is manual
-
-`course_events` has **no foreign key** to the account, so deleting the account
-does not touch it (SECURITY-NOTES.md, "course_events does not cascade").
-
-```sql
-delete from public.course_events where email = 'the-lowercased-address';
-```
-
-**Check the row count against step 3.** `DELETE 0` when step 3 found events
-means the address didn't match (case, whitespace, typo).
-
-## 5. Delete the account
+## 4. Delete the account
 
 Supabase dashboard → **Authentication → Users** → find the address →
 **Delete user**.
 
 Deleting the auth user cascades (`on delete cascade`) to `profiles`,
 `progress`, `certificates` and `reviews`. That cascade is a declaration in the schema;
-step 6 is what establishes it happened.
+step 5 is what establishes it happened.
 
-## 6. Verify by looking, not by trusting the cascade
+## 5. Verify by looking, not by trusting the cascade
 
 Run step 3's query again. **Every count must be 0.** Also:
 
@@ -107,7 +93,7 @@ window, or hard reload) and confirm the display name from step 3 is no longer
 on the page. Search `view-source:` for the name, not just the visible page.
 The timed revalidation would eventually do this on its own; don't wait for it.
 
-## 7. Reply
+## 6. Reply
 
 Tell them it's done and what was deleted. Keep a note of the date and the
 address the request came from, and nothing else about them.
@@ -117,10 +103,12 @@ address the request came from, and nothing else about them.
 ## When this procedure must change
 
 - **Any new table holding personal data** needs a step here, unless it has a
-  foreign key to `auth.users` with `on delete cascade`, and even then step 6
+  foreign key to `auth.users` with `on delete cascade`, and even then step 5
   must check it.
 - **Course reviews** cascade (migration 014, verified by reading the
   constraint's delete rule), but a published review is also baked into the
-  static home page, so step 6 rebuilds it and checks the live page. If the
-  home page ever stops being static, drop that part of step 6.
-- **If `course_events` is retired**, delete step 4 and its row in step 3.
+  static home page, so step 5 rebuilds it and checks the live page. If the
+  home page ever stops being static, drop that part of step 5.
+- **`course_events` had a manual step here** (it was step 4), because it had
+  no foreign key to `auth.users`. Migration 015 dropped the table, and the
+  step went with it.

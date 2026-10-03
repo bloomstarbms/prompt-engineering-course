@@ -17,7 +17,7 @@ export const metadata = { alternates: { canonical: '/' } };
  *     withdrawal that touches the approved set — the real mechanism;
  *   · this one-hour timer, as a backstop for a missed call.
  * A review the owner approves is on the home page on the next request; one
- * that is withdrawn is gone on the next request. ERASURE-PROCEDURE step 6
+ * that is withdrawn is gone on the next request. ERASURE-PROCEDURE step 5
  * relies on exactly that.
  */
 export const revalidate = 3600;

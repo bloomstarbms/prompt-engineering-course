@@ -21,7 +21,7 @@ import { REVIEWS_ENABLED } from '@/lib/docs';
  *   reject      pending                           → rejected
  *   unpublish   approved                          → unpublished
  *   delete      any                               → row gone
- *   rebuild     no row; revalidates the home page (ERASURE-PROCEDURE step 6)
+ *   rebuild     no row; revalidates the home page (ERASURE-PROCEDURE step 5)
  *
  * The home page is static and holds the approved set, so every action that
  * can change that set revalidates '/'. A reject of a pending review cannot,
