@@ -75,7 +75,6 @@ We collect only what the course needs to work. We do not sell data, we do not ru
 | Lessons you have completed | To save your progress and let you resume |
 | Quiz scores | To track completion and determine certificate eligibility |
 | Last lesson visited | To return you to where you stopped |
-| Usage events (event type, timestamp, and your name and email) | To understand how the course is used and where people get stuck |
 
 ### When you earn a certificate
 
@@ -117,7 +116,6 @@ Under section 25 of the NDPA, we rely on:
 
 - **Contract** — for your account, progress and certificate. We cannot provide the course without this data.
 - **Consent** — for optional profile fields, for publishing a review you submit, and for any future emails. You may withdraw consent at any time.
-- **Legitimate interest** — for basic usage analytics, to improve the course. This is limited and you may object.
 
 ---
 
@@ -143,10 +141,9 @@ We use no analytics cookies, no advertising cookies, and no third-party trackers
 
 - **Account, profile and progress** — until you delete your account.
 - **Certificates** — for as long as your account exists, unless you ask us to remove yours sooner.
-- **Usage events** — kept for 24 months, then deleted.
 - **Reviews** — until you withdraw them or delete your account.
 
-When you ask us to delete your account, we delete your profile, progress, usage events, certificate and any review. Your certificate's verification link stops working at that point, so if you've shared it — on a CV or LinkedIn, for example — save a copy of the certificate before you ask.
+When you ask us to delete your account, we delete your profile, progress, certificate and any review. Your certificate's verification link stops working at that point, so if you've shared it — on a CV or LinkedIn, for example — save a copy of the certificate before you ask.
 
 ---
 
