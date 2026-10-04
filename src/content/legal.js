@@ -40,7 +40,7 @@
  * the record cannot disagree. Bump a date whenever its document changes.
  */
 
-export const PRIVACY_UPDATED = '1 October 2026';
+export const PRIVACY_UPDATED = '4 October 2026';
 export const TERMS_UPDATED   = '1 October 2026';
 
 export const PRIVACY_MD = `## 1. Who we are
@@ -144,6 +144,8 @@ We use no analytics cookies, no advertising cookies, and no third-party trackers
 - **Reviews** — until you withdraw them or delete your account.
 
 When you ask us to delete your account, we delete your profile, progress, certificate and any review. Your certificate's verification link stops working at that point, so if you've shared it — on a CV or LinkedIn, for example — save a copy of the certificate before you ask.
+
+Until 4 October 2026 we also kept a record of when each person registered and finished the course, with their name and email. We no longer collect it, and we have deleted it from our database.
 
 ---
 

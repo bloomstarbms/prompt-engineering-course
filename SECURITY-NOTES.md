@@ -71,7 +71,20 @@ start, not live.
 
 ---
 
-## Open — HIGHEST PRIORITY: `course_events` does not cascade on deletion, and the Privacy Policy says it does
+## RESOLVED 4 October 2026 — `course_events` dropped (migration 015). It did not cascade on deletion, and the Privacy Policy said it did.
+
+**Resolved by retiring the table, as this entry argued.** In order:
+`/api/track` and both callers removed (`6b02b77`, live 2026-10-03 15:31:49
+UTC; verified by the shipped JavaScript, 2 files calling it before and 0
+after); the privacy policy stopped describing usage events; the manual erasure
+step was removed from ERASURE-PROCEDURE.md; then migration 015 dropped the
+table at 2026-10-04 08:13:09 UTC. 1,136 rows of names and emails went with it. The migration
+aborted unless the count matched the owner-confirmed 1,136 and no row post-dated
+the removal, and it ran only after at least one account had registered since
+the removal, so that check was evidence rather than vacuous. Supabase's own
+backups may hold the rows until they age out; the policy says "deleted from our
+database". The entry is kept below as written, for the reasoning.
+
 
 **This is a published commitment we are not meeting. It outranks everything
 else in this file, because everything else is a risk and this one has already
@@ -395,7 +408,11 @@ none"*. It is describing itself.
 
 ---
 
-## Open: `course_events` table grants are wide open
+## RESOLVED 4 October 2026 — `course_events` table grants (the table no longer exists; migration 015)
+
+The entry is kept as written: its reasoning about reachability (a grant on
+paper versus what the public API can reach) applies to the next table too.
+
 
 **Every role holds every privilege**, confirmed 13 August 2026:
 
