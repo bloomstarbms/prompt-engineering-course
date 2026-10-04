@@ -241,9 +241,38 @@ export default function CourseApp({ initialM = null, initialL = null, serverBody
   // the gate exists to capture an email, and the quiz is what it trades for.
   const onPublicLesson = atLessonUrl && page === 'course' && isPublicLesson(activeM, activeL);
 
+  /* ── Where to go after signing in: one answer, shared ─────────────────
+     Two things navigate when a sign-in completes: the redirect effect below
+     (a signed-in user on /auth is moved on) and AuthPage's onAuth callback.
+     They used to disagree. The callback read pe_return_to and pushed the
+     saved path; the effect, firing when `user` arrived, replaced it with
+     /course. On the local stub the effect won every time, so neither the
+     lesson return-to nor the /admin one landed (found 4 Oct 2026). Which one
+     wins depends on timing, so production may have behaved differently.
+
+     Now both ask this function. The first caller reads and clears the saved
+     path (allow-listed: lesson paths, and exactly '/admin'); the second gets
+     the same answer from the ref. Reset whenever we leave /auth, so a later,
+     unrelated visit can't inherit it. */
+  const postAuthDest = useRef(null);
+  const resolvePostAuthDest = useCallback(() => {
+    if (postAuthDest.current) return postAuthDest.current;
+    let dest = '/course';
+    try {
+      const saved = sessionStorage.getItem('pe_return_to');
+      if (saved && (saved.startsWith('/course/') || saved === '/admin')) dest = saved;
+      sessionStorage.removeItem('pe_return_to');
+    } catch { /* private mode — fall back to /course */ }
+    postAuthDest.current = dest;
+    return dest;
+  }, []);
+  useEffect(() => { if (page !== 'auth') postAuthDest.current = null; }, [page]);
+
   useEffect(() => {
     if (!ready) return;
-    if (user && (page === 'landing' || page === 'auth')) {
+    if (user && page === 'auth') {
+      router.replace(resolvePostAuthDest());
+    } else if (user && page === 'landing') {
       router.replace('/course');
     } else if (!user && !['landing', 'auth'].includes(page) && !onPublicLesson) {
       // Remember where they were headed so login can return them here (3a).
@@ -690,16 +719,10 @@ export default function CourseApp({ initialM = null, initialL = null, serverBody
     <AuthPage onAuth={async (mode, name, email, password) => {
       const result = await handleAuth(mode, name, email, password);
       if (result.ok && !result.needsConfirm) {
-        // Deep-link-then-login: return them to the lesson they asked for,
-        // not a generic dashboard. Cleared immediately so it cannot leak into
-        // a later, unrelated sign-in.
-        let dest = '/course';
-        try {
-          const saved = sessionStorage.getItem('pe_return_to');
-          if (saved && saved.startsWith('/course/')) dest = saved;
-          sessionStorage.removeItem('pe_return_to');
-        } catch { /* private mode — fall back to /course */ }
-        router.push(dest);
+        // Deep-link-then-login: return them where they asked to go, not a
+        // generic dashboard. Same answer the redirect effect uses; see
+        // resolvePostAuthDest above.
+        router.push(resolvePostAuthDest());
       }
       return result;
     }} />

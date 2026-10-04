@@ -136,7 +136,14 @@ export default function AdminDashboard() {
                 Sign in with the admin account to continue.
               </p>
               <p style={{ fontFamily: T.font, fontSize: 14, margin: '16px 0 0' }}>
-                <Link href="/auth" style={{ color: T.accent, fontWeight: 700 }}>Sign in →</Link>
+                {/* Same return-to key the lesson sign-in links use, so signing in
+                    from here comes back here rather than to /course. CourseApp
+                    honours it only for lesson paths and exactly '/admin'. */}
+                <Link
+                  href="/auth"
+                  onClick={() => { try { sessionStorage.setItem('pe_return_to', '/admin'); } catch { /* private mode — falls back to /course */ } }}
+                  style={{ color: T.accent, fontWeight: 700 }}
+                >Sign in →</Link>
               </p>
             </>
           )}
