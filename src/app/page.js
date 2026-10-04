@@ -16,9 +16,11 @@ export const metadata = { alternates: { canonical: '/' } };
  *   · revalidatePath('/') from every moderation action, review edit and
  *     withdrawal that touches the approved set — the real mechanism;
  *   · this one-hour timer, as a backstop for a missed call.
- * A review the owner approves is on the home page on the next request; one
- * that is withdrawn is gone on the next request. ERASURE-PROCEDURE step 5
- * relies on exactly that.
+ * After revalidation, the FIRST request can still be served the old page
+ * while the new one is generated; the request after that gets the new page
+ * (seen on production on 4 October 2026). So an approval or a takedown is
+ * visible from the second load, not necessarily the first. ERASURE-PROCEDURE
+ * step 5 and the admin reviews panel both say to load the home page twice.
  */
 export const revalidate = 3600;
 

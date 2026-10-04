@@ -10,6 +10,9 @@ import { listReviews, moderateReview, rebuildHomePage } from '@/lib/adminApi';
  * every action so the screen never shows a state the database has left.
  */
 
+/* Shown after anything that takes a review off the home page. */
+const TAKEDOWN_CHECK = 'Load the home page twice, a few seconds apart, and check the second load: the first request after a rebuild can still be the old page.';
+
 const STATUS_COLOR = { pending: T.warning, approved: T.success, rejected: T.dim, unpublished: T.info };
 const FILTERS = ['pending', 'approved', 'unpublished', 'rejected', 'all'];
 
@@ -63,7 +66,8 @@ export default function ReviewsPanel({ callAuthed }) {
     setBusy(true); setError(''); setNotice('');
     try {
       const r = await callAuthed(tok => moderateReview(tok, action, id));
-      setNotice(action === 'delete' ? 'Deleted.' : `Now ${r.review?.status}.`);
+      const done = action === 'delete' ? 'Deleted.' : `Now ${r.review?.status}.`;
+      setNotice(action === 'delete' || action === 'unpublish' ? `${done} ${TAKEDOWN_CHECK}` : done);
       setConfirm(null);
     } catch (e) {
       setError(e?.message || `Could not ${action}.`);
@@ -74,7 +78,7 @@ export default function ReviewsPanel({ callAuthed }) {
   }
   async function rebuild() {
     setBusy(true); setError(''); setNotice('');
-    try { await callAuthed(rebuildHomePage); setNotice('Home page revalidated. Load https://www.prompten.xyz/ fresh to confirm.'); }
+    try { await callAuthed(rebuildHomePage); setNotice(`Home page revalidated. ${TAKEDOWN_CHECK}`); }
     catch (e) { setError(e?.message || 'Could not rebuild.'); }
     finally { setBusy(false); }
   }
@@ -104,6 +108,17 @@ export default function ReviewsPanel({ callAuthed }) {
           <ActionBtn onClick={rebuild} disabled={busy}>Rebuild home page</ActionBtn>
         </div>
       </div>
+
+      {/* Standing instruction, next to the actions it applies to. Same rule
+          as ERASURE-PROCEDURE.md step 5 and its "Taking a published review
+          down" section: the first request after a rebuild can still be the
+          old page (seen on production, 4 Oct 2026). */}
+      <p style={{ fontFamily: T.font, fontSize: 12.5, color: T.muted, lineHeight: 1.6, margin: '0 0 14px', maxWidth: 720 }}>
+        After <strong style={{ color: T.text }}>Unpublish</strong> or <strong style={{ color: T.text }}>Delete</strong>:{' '}
+        load the <a href="https://www.prompten.xyz/" target="_blank" rel="noreferrer" style={{ color: T.accent }}>home page</a> twice,
+        a few seconds apart, and check the second load before considering it done. The first request after a
+        rebuild can still be the old page.
+      </p>
 
       {error  && <p role="alert"  style={{ fontFamily: T.font, fontSize: 13, color: T.error,   margin: '0 0 12px' }}>{error}</p>}
       {notice && <p role="status" style={{ fontFamily: T.font, fontSize: 13, color: T.success, margin: '0 0 12px' }}>{notice}</p>}

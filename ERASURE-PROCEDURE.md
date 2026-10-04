@@ -86,17 +86,35 @@ If they had a certificate, open `https://www.prompten.xyz/verify/<cert_id>`
 and confirm it no longer shows their name.
 
 If they had an **approved** review, the home page is static and still holds
-it until it is rebuilt. Deleting the row does not rebuild the page: open
-`/admin`, use the reviews panel's **Rebuild home page** action (it calls
-`revalidatePath('/')`), then load `https://www.prompten.xyz/` fresh (a private
-window, or hard reload) and confirm the display name from step 3 is no longer
-on the page. Search `view-source:` for the name, not just the visible page.
-The timed revalidation would eventually do this on its own; don't wait for it.
+it until it is rebuilt. Deleting the row does not rebuild the page. Open
+`/admin` and use the reviews panel's **Rebuild home page** action (it calls
+`revalidatePath('/')`).
+
+Then **load `https://www.prompten.xyz/` twice, and check the second load.**
+The first request after a rebuild can still be served the old page while the
+new one is generated; this was seen on 4 October 2026. So: load it once,
+wait a few seconds, and load it again. On the second load, confirm the display
+name from step 3 is gone. Search `view-source:` for the name, not just the
+visible page. A single load can show the old page, name included, even when
+the rebuild worked. The timed revalidation would eventually do this on its
+own; don't wait for it.
 
 ## 6. Reply
 
 Tell them it's done and what was deleted. Keep a note of the date and the
 address the request came from, and nothing else about them.
+
+---
+
+## Taking a published review down from /admin
+
+This isn't an erasure, but it has the same last step. **Unpublish** and
+**Delete** in the reviews panel each rebuild the home page. The first request
+after a rebuild can still be served the old page, with the review on it. After
+either action, load `https://www.prompten.xyz/` twice: once to trigger the
+rebuild, and again a few seconds later. Check the second load, in
+`view-source:`, before considering it done. The panel says the same next to
+its actions.
 
 ---
 
