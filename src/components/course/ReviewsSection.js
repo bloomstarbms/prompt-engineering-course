@@ -1,5 +1,5 @@
 'use client';
-import { T } from '@/lib/theme';
+import { T, MOD_COLORS } from '@/lib/theme';
 
 /**
  * "What graduates say" on the landing page.
@@ -14,13 +14,30 @@ import { T } from '@/lib/theme';
  *
  * Every string shown comes from the database as approved: body and the
  * display_name chosen at submission. Nothing here is editorial.
+ *
+ * COLOUR IS DECORATION ONLY. Each card takes an accent from MOD_COLORS (the
+ * module palette the sidebar and icons use) by its position in the list:
+ * first card, first colour, cycling through all eight. Nothing about the
+ * review chooses it, so no colour can read as a rating or as "featured". The
+ * accent appears as a 3px top edge (an inset shadow, so the card's size is
+ * unchanged) and a wash of the accent at about 15% that fades out 85% of the
+ * way down. Text colours are the same as before: body T.text, name T.muted.
+ * Contrast was measured for both against the strongest point of the wash,
+ * for every palette colour (AA, 4.5:1, passes for all eight). That is
+ * conservative: no text sits at the very top. If you raise WASH_ALPHA,
+ * measure again.
  */
 
-function Card({ r, width }) {
+const WASH_ALPHA = '26';   // hex alpha on the accent: 0x26 = 38/255, about 15%
+const WASH_END   = '85%';  // where the wash has faded out, measured down the card
+
+function Card({ r, width, accent }) {
   return (
     <figure style={{
       margin: 0, width, flexShrink: 0, scrollSnapAlign: 'start',
-      background: T.bg1, border: `1px solid ${T.border}`, borderRadius: 14,
+      background: `linear-gradient(180deg, ${accent}${WASH_ALPHA} 0%, transparent ${WASH_END}), ${T.bg1}`,
+      border: `1px solid ${T.border}`, borderRadius: 14,
+      boxShadow: `inset 0 3px 0 ${accent}`,
       padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14,
       boxSizing: 'border-box',
     }}>
@@ -78,7 +95,7 @@ export default function ReviewsSection({ reviews }) {
             WebkitOverflowScrolling: 'touch',
           }}
         >
-          {reviews.map(r => <Card key={r.id} r={r} width="min(340px, 82vw)"/>)}
+          {reviews.map((r, i) => <Card key={r.id} r={r} width="min(340px, 82vw)" accent={MOD_COLORS[i % MOD_COLORS.length]}/>)}
         </div>
       ) : (
         <div style={{
@@ -86,7 +103,7 @@ export default function ReviewsSection({ reviews }) {
           display: 'grid', gap: 16,
           gridTemplateColumns: `repeat(auto-fit, minmax(min(280px, 100%), 1fr))`,
         }}>
-          {reviews.map(r => <Card key={r.id} r={r} width="auto"/>)}
+          {reviews.map((r, i) => <Card key={r.id} r={r} width="auto" accent={MOD_COLORS[i % MOD_COLORS.length]}/>)}
         </div>
       )}
     </section>
